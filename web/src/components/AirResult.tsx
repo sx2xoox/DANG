@@ -25,7 +25,7 @@ export function AirResultCard({ result }: { result: AirResult }) {
         <ChannelButtons compact lead="다음 방송도 같이 봐요" />
         {result.host_note && (
           <blockquote className="air-note">
-            <span className="air-note-who">다웅의 한마디</span>
+            <span className="air-note-who">방송에서 남긴 한마디</span>
             <p>{result.host_note}</p>
           </blockquote>
         )}
@@ -37,8 +37,8 @@ export function AirResultCard({ result }: { result: AirResult }) {
 /** "확인 필요" 사연에 다웅이 보낸 짧은 개인 메시지 */
 export function PrivateMessage({ text }: { text: string }) {
   return (
-    <section className="private-msg" aria-label="다웅이 보낸 메시지">
-      <h2>다웅이 보낸 메시지</h2>
+    <section className="private-msg" aria-label="꼭 전하고 싶은 말">
+      <h2>꼭 전하고 싶은 말</h2>
       <p>{text}</p>
     </section>
   );

@@ -188,7 +188,7 @@ export const GOMIN: BoxConfig = {
       },
       {
         id: "etc-dawoong",
-        text: "다웅이라면 [[상황]]일 때 어떻게 할 거예요?",
+        text: "[[상황]]일 때 다들 어떻게 하는지 궁금해요.",
         examples: ["친구 생일 선물을 고르"],
       },
     ],

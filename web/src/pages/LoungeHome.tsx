@@ -7,7 +7,7 @@ import { ChannelButtons } from "../components/Channels";
 const STEPS = [
   { n: "01", title: "1분이면 사연 접수", desc: "이름 없이 보내도 괜찮아요" },
   { n: "02", title: "바로 받는 고민 동물", desc: "내 고민이 어떤 동물을 닮았는지" },
-  { n: "03", title: "방송에서 같이 이야기", desc: "다웅이 읽고, 채팅이랑 함께 풀어요" },
+  { n: "03", title: "방송에서 같이 이야기", desc: "방송에서 읽고, 채팅이랑 함께 풀어요" },
 ];
 
 /** 누구나 부담 없이 꺼낼 수 있다는 걸 보여주는 예시 고민 */
@@ -43,7 +43,7 @@ export default function LoungeHome({ info, loggedIn }: { info: HomeInfo; loggedI
           </h1>
           <p className="lg-lead">
             나이도, 고민 크기도 상관없어요. 이름 없이 보내도 괜찮아요.
-            <br className="lg-br" /> 다웅이 방송에서 읽고 같이 이야기해요.
+            <br className="lg-br" /> 방송에서 읽고 같이 이야기해요.
           </p>
           <p className="lg-hand">— 오늘도 고생 많았어요</p>
 

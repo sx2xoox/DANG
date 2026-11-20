@@ -34,7 +34,7 @@ export function GoldenBox({ storyId, dex, onChange }: { storyId: string; dex: De
       <p className="golden-kicker">특별한 행운</p>
       <h2 id="gold-title">황금 고민 동물 발견!</h2>
       <p className="golden-desc">
-        <b>인증하면 다웅이 치지직 구독권을 드려요.</b> 아래 인증 코드와 구독권 받을 치지직 닉네임을 남겨주세요. 다웅이 확인한 뒤 지급해요.
+        <b>인증하면 치지직 구독권을 드려요.</b> 아래 인증 코드와 구독권 받을 치지직 닉네임을 남겨주세요. 확인되면 보내드려요.
       </p>
       <div className="golden-code">
         <span>인증 코드</span>
@@ -61,7 +61,7 @@ export function GoldenBox({ storyId, dex, onChange }: { storyId: string; dex: De
         </form>
       ) : (
         <p className="golden-state">
-          <b>{dex.claim_name}</b> 닉네임으로 인증 신청했어요. 다웅이 확인하면 구독권을 보내드려요.{" "}
+          <b>{dex.claim_name}</b> 닉네임으로 인증 신청했어요. 확인되면 구독권을 보내드려요.{" "}
           <button type="button" className="post-link" onClick={() => setEditing(true)}>
             닉네임 고치기
           </button>

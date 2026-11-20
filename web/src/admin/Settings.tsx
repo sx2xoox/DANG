@@ -134,7 +134,7 @@ export default function Settings() {
         </div>
         <div className="field">
           <label htmlFor="st-sched">방송 시간 안내 (40자)</label>
-          <input id="st-sched" className="input" maxLength={40} placeholder="예) 매주 금 밤 9시 라이브" value={s.schedule_text} onChange={(e) => set("schedule_text", e.target.value)} />
+          <input id="st-sched" className="input" maxLength={40} placeholder="예) 매주 토요일 밤 9시" value={s.schedule_text} onChange={(e) => set("schedule_text", e.target.value)} />
         </div>
 
         <h2 className="adm-h3">방송 결과</h2>

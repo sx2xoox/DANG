@@ -46,11 +46,11 @@ export function ageGender(age: number | null | undefined, gender: string | null 
 }
 
 export const VIEWER_STATUS: Record<string, { label: string; tone: string; desc: string }> = {
-  reviewing: { label: "검토 중", tone: "neutral", desc: "다웅이 방송 전에 사연을 확인하고 있어요." },
+  reviewing: { label: "검토 중", tone: "neutral", desc: "방송 전에 사연을 확인하고 있어요." },
   approved: { label: "방송 대기", tone: "blue", desc: "방송 대기 중이에요. 도착한 순서대로 방송에서 읽어요." },
   scheduled: { label: "방송 예정", tone: "blue", desc: "다음 방송에서 읽힐 수도 있어요!" },
   read: { label: "방송에서 읽음", tone: "yellow", desc: "방송에서 사연을 읽었어요! 다시보기 링크를 정리해서 곧 방송 결과를 열어드릴게요." },
-  aired: { label: "방송에서 읽혔어요", tone: "yellow", desc: "방송 결과가 도착했어요. 다시보기로 다웅의 이야기를 다시 들어보세요." },
+  aired: { label: "방송에서 읽혔어요", tone: "yellow", desc: "방송 결과가 도착했어요. 다시보기로 그날 이야기를 다시 들어보세요." },
   not_selected: { label: "이번엔 소개 안 됨", tone: "neutral", desc: "이번엔 방송에 소개되지 않아요. 고민 동물 결과는 그대로 간직할 수 있어요." },
 };
 
