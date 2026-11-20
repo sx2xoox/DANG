@@ -11,6 +11,11 @@ type StatsData = {
   total: number;
   by_status: { pending: number; approved: number; read: number; rejected: number };
   approval_rate: number;
+  adoption_rate: number;
+  review_count: number;
+  review_rate: number;
+  published_count: number;
+  reactions: { id: string; label: string; count: number; percent: number }[];
   top_animals: [string, number][];
   ai: { today: number; month: number; failed_today: number; enabled: boolean; model: string };
 };
@@ -54,10 +59,17 @@ export default function Stats() {
         <Kpi label="방송에서 읽음" value={d.by_status.read} unit="개" />
         <Kpi label="반려" value={d.by_status.rejected} unit="개" />
         <Kpi label="승인률" value={d.approval_rate} unit="%" sub="검토한 사연 중 승인한 비율" />
+        <Kpi label="방송 채택률" value={d.adoption_rate} unit="%" sub="들어온 사연 중 방송에서 읽은 비율" />
+        <Kpi label="후기 작성률" value={d.review_rate} unit="%" sub={`결과 공개 ${d.published_count}개 중 후기 ${d.review_count}개`} />
         <Kpi label="AI 호출 오늘" value={d.ai.today} unit="번" sub={d.ai.failed_today ? `실패 ${d.ai.failed_today}번` : "실패 없음"} />
         <Kpi label="AI 호출 이번 달" value={d.ai.month} unit="번" sub={d.ai.enabled ? d.ai.model : "AI 키 없음 (기본 동물만)"} />
       </div>
       <div className="adm-stat-grid">
+        <Bars
+          title="후기 반응"
+          rows={d.reactions.map((r) => ({ label: `${r.label} ${r.percent}%`, value: r.count }))}
+          empty="아직 후기가 없어요."
+        />
         <Bars title="이번 주 종류별" rows={cat} />
         <Bars title="이번 주 감정 우표" rows={stamps} />
         <Bars title="이번 주 나이대" rows={ages} empty="이번 주 사연이 아직 없어요." />

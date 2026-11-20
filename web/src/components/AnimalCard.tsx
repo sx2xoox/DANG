@@ -26,11 +26,17 @@ type Props = {
   compact?: boolean;
   /** 뒷면에 보여줄 안내 문구 */
   mysteryText?: string;
+  /** 방송에서 읽힌 사연이면 "방송에서 읽혔어요" 도장 */
+  aired?: boolean;
+  /** 상담 후기를 남겼으면 "후기 남김" 도장 */
+  reviewed?: boolean;
+  /** 황금 동물 */
+  golden?: boolean;
 };
 
 /** 트레이딩 카드처럼 생긴 고민 동물 카드. 뒤집히며 공개됩니다. */
 export const AnimalCard = forwardRef<HTMLDivElement, Props>(function AnimalCard(
-  { animal, revealed, onReveal, serial, stamp, date, siteName, compact = false, mysteryText },
+  { animal, revealed, onReveal, serial, stamp, date, siteName, compact = false, mysteryText, aired = false, reviewed = false, golden = false },
   ref,
 ) {
   const color = GOMIN.stamps.find((s) => s.id === stamp)?.color ?? "#FFD400";
@@ -54,7 +60,7 @@ export const AnimalCard = forwardRef<HTMLDivElement, Props>(function AnimalCard(
   return (
     <div
       ref={ref}
-      className={`tc ${compact ? "tc-compact" : ""} ${revealed ? "is-revealed" : ""}`}
+      className={`tc ${compact ? "tc-compact" : ""} ${revealed ? "is-revealed" : ""} ${golden ? "tc-golden" : ""}`}
       style={{ ["--tc-accent" as string]: color }}
     >
       {canFlip ? (
@@ -69,13 +75,19 @@ export const AnimalCard = forwardRef<HTMLDivElement, Props>(function AnimalCard(
             {animal && (
               <>
                 <div className="tc-top">
-                  <span>고민 동물 도감</span>
+                  <span>{golden ? "★ 황금 고민 동물 ★" : "고민 동물 도감"}</span>
                   {serial !== undefined && <span>No.{String(serial).padStart(3, "0")}</span>}
                 </div>
                 <div className="tc-window">
                   <span className="tc-emoji" aria-hidden="true">
                     {animal.emoji}
                   </span>
+                  {(aired || reviewed) && (
+                    <span className="tc-marks">
+                      {aired && <span className="tc-mark tc-mark-aired">방송에서 읽혔어요</span>}
+                      {reviewed && <span className="tc-mark tc-mark-review">후기 남김</span>}
+                    </span>
+                  )}
                 </div>
                 <h3 className="tc-name display">{animal.name}</h3>
                 {animal.why && <p className="tc-why">{animal.why}</p>}

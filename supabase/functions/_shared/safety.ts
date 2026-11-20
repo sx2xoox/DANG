@@ -71,6 +71,18 @@ export function detectFlags(text: string): string[] {
   return flags;
 }
 
+/**
+ * 상담 후기 검사: 욕설, 특정인 저격(저격 단어, @아이디, "김OO 씨" 같은 실명 호칭), 개인정보.
+ * 하나라도 걸리면 "확인 필요"로 두고, 방장이 승인하기 전에는 후기 벽에 절대 올라가지 않아요.
+ */
+export function detectReviewFlags(text: string): string[] {
+  const flags = detectFlags(text);
+  PERSON.lastIndex = 0;
+  if (!flags.includes("targeting") && PERSON.test(text)) flags.push("targeting");
+  PERSON.lastIndex = 0;
+  return flags;
+}
+
 /** AI 에게 보내기 전에 이름, 연락처처럼 보이는 부분을 가립니다. */
 export function redact(text: string, extraNames: string[] = []): string {
   let t = text;

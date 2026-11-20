@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import type { HomeInfo } from "../lib/site";
+import { ReviewWall } from "../components/ReviewWall";
 
 const STEPS = [
   { n: "1", title: "사연 붙이기", desc: "가입 없이 1분이면 끝" },
   { n: "2", title: "고민 동물 결과", desc: "붙이자마자 나만의 고민 동물이 나와요" },
   { n: "3", title: "검토", desc: "방송 전에 다웅이 한 장씩 확인해요" },
-  { n: "4", title: "방송에서 개봉", desc: "붙은 순서대로 떼어 읽고 채팅과 얘기해요" },
+  { n: "4", title: "방송에서 개봉", desc: "붙은 순서대로 떼어 읽고 다웅이 직접 풀어줘요. 다시보기 링크도 와요" },
 ];
 
 const NOTE_COLORS = ["#ffe58a", "#ffc2d1", "#bfe3f5", "#cdedb4", "#dccbf3"];
@@ -129,6 +130,8 @@ export default function CorkHome({ info, loggedIn }: { info: HomeInfo; loggedIn:
           방송을 기다리는 사연 <b>{info.queue_count}</b>장 · 방송에서 뗀 사연 <b>{info.total_aired}</b>장
         </p>
       </section>
+
+      <ReviewWall />
     </div>
   );
 }

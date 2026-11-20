@@ -751,3 +751,431 @@ button.post-link {
   color: var(--text);
   border-color: currentColor;
 }
+
+.status-waiting {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-left: 4px solid var(--yellow);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 15px;
+}
+
+/* ---------------------------------------------------------------- 방송 결과 */
+.result-back-top {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 20px 16px 0;
+}
+
+.air-result {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 22px clamp(16px, 3vw, 26px);
+  background: var(--paper-env, #f6f1e6);
+  color: var(--ink, #0b1220);
+  box-shadow: 0 20px 40px -14px rgba(0, 0, 0, 0.5);
+  border-top: 6px solid var(--red);
+}
+
+:root[data-preset="gacha"] .air-result {
+  background: #fff;
+  border: 4px solid #2b2340;
+  border-radius: 24px;
+  box-shadow: 8px 8px 0 #2b2340;
+}
+
+.air-badge {
+  padding: 8px 10px;
+  border: 3px solid var(--red);
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  font-size: 14px;
+  transform: rotate(-6deg);
+  margin-top: 4px;
+}
+
+.air-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.air-main h2 {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: clamp(24px, 4vw, 30px);
+}
+
+.air-date {
+  margin: 0;
+  font-weight: 700;
+  color: #4b4536;
+}
+
+.air-vod {
+  align-self: flex-start;
+}
+
+.air-hint,
+.air-novod {
+  margin: 0;
+  font-size: 14px;
+  color: #5c5546;
+}
+
+.air-note {
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  border-left: 4px solid var(--yellow);
+  background: rgba(255, 212, 0, 0.16);
+}
+
+.air-note-who {
+  font-size: 12px;
+  font-weight: 800;
+  color: #6b6352;
+}
+
+.air-note p {
+  margin: 4px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 520px) {
+  .air-result {
+    grid-template-columns: 1fr;
+  }
+  .air-badge {
+    justify-self: start;
+  }
+}
+
+.private-msg {
+  padding: 18px 20px;
+  border: 2px solid var(--blue);
+  background: var(--info-bg);
+  color: var(--text);
+}
+
+.private-msg h2 {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.private-msg p {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+}
+
+/* ---------------------------------------------------------------- 상담 후기 */
+.review-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px clamp(16px, 3vw, 24px);
+  border: 2px dashed var(--border-strong);
+  color: var(--text);
+}
+
+:root[data-preset="cork"] .review-box {
+  background: #fffdf7;
+  border-style: solid;
+  box-shadow: 0 10px 16px rgba(40, 22, 8, 0.26);
+}
+
+.review-box h2 {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: 22px;
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.review-reactions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .review-reactions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.review-reaction {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  min-height: 76px;
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.review-reaction input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.review-reaction:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.review-reaction.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.review-reaction-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.review-box .field {
+  position: relative;
+}
+
+.review-count {
+  align-self: flex-end;
+  font-size: 13px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+.review-count.is-over {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.review-share {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.review-share input {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.review-share small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+}
+
+.review-box .post-btn-sub {
+  color: var(--text);
+  border-color: currentColor;
+}
+
+.review-done {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-done-main {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 17px;
+}
+
+.review-done-main q {
+  font-weight: 600;
+}
+
+.review-chip {
+  padding: 4px 12px;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.review-status {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------- 황금 동물 */
+.golden-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px clamp(16px, 3vw, 26px);
+  border: 4px solid #b8860b;
+  background: linear-gradient(150deg, #fff8cf, #ffe27a 55%, #f5c542);
+  color: #3b2a00;
+  box-shadow: 0 16px 36px -12px rgba(184, 134, 11, 0.6);
+}
+
+.golden-kicker {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #7a5200;
+}
+
+.golden-box h2 {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: clamp(24px, 4vw, 30px);
+}
+
+.golden-desc {
+  margin: 0;
+}
+
+.golden-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 14px;
+  border: 2px dashed #7a5200;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.golden-code span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.golden-code strong {
+  font-family: var(--font-mono);
+  font-size: clamp(18px, 3.4vw, 24px);
+  letter-spacing: 0.06em;
+}
+
+.golden-code .post-btn-sub,
+.golden-box .post-link {
+  color: #3b2a00;
+  border-color: currentColor;
+}
+
+.golden-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.golden-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.golden-form-row .input {
+  flex: 1 1 200px;
+  background: #fff;
+  color: #1f1a12;
+}
+
+.golden-state {
+  margin: 0;
+  font-weight: 600;
+}
+
+.golden-state.is-paid {
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- 도감 */
+.dex-rule {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.gold-text {
+  color: #c08a00;
+}
+
+:root[data-preset="classic"] .gold-text {
+  color: #ffd84a;
+}
+
+.dex-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dex-gold-note {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.chip-gold {
+  background: linear-gradient(150deg, #ffe27a, #e8b10f);
+  color: #3b2a00;
+  border-color: #b8860b;
+}
+
+/* 결과 화면 안의 보조 버튼/링크: 프리셋 배경 위에서도 또렷하게 */
+.review-box .post-btn-sub,
+.golden-box .post-btn-sub {
+  background: transparent;
+}
+
+.review-box .post-link,
+.followup .post-link {
+  color: var(--text-dim);
+}
+
+.review-box .post-link.danger-text {
+  color: var(--danger);
+}
+
+.post-link.danger-text {
+  color: var(--danger);
+}

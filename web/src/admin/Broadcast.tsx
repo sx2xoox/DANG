@@ -10,6 +10,7 @@ import { useSite } from "../lib/site";
 import { copyText } from "../lib/image";
 import { store } from "../lib/supabase";
 import ReadMode from "./ReadMode";
+import { BroadcastSessionBar, readStartMessage } from "./BroadcastSession";
 
 type RouletteData = { id: string; duration_ms: number; result_index: number; candidates: RouletteCandidate[]; day?: string };
 type PickRes = {
@@ -18,6 +19,7 @@ type PickRes = {
   day: string;
   same_day_count: number;
   queue_count: number;
+  from_scheduled: boolean;
 };
 type Pick = { picked_at: string; id: string; receipt_no: number; summary: string; broadcast_name: string; status: string };
 
@@ -36,6 +38,7 @@ export default function Broadcast() {
   const [reading, setReading] = useState(false);
   const [font, setFont] = useState<number>(() => store.get("dg.admin.consoleFont", 24));
   const [error, setError] = useState("");
+  const [sessionTick, setSessionTick] = useState(0);
   const storyIdRef = useRef<string | null>(null);
 
   const loadQueue = useCallback(async () => {
@@ -88,7 +91,9 @@ export default function Broadcast() {
     return [...m.entries()];
   }, [queue]);
 
-  const waiting = (queue ?? []).filter((s) => s.status === "approved");
+  const approvedAll = (queue ?? []).filter((s) => s.status === "approved");
+  const scheduledWaiting = approvedAll.filter((s) => s.scheduled);
+  const waiting = scheduledWaiting.length ? scheduledWaiting : approvedAll;
   const nextDay = waiting[0]?.created_day;
   const nextDayCount = waiting.filter((s) => s.created_day === nextDay).length;
 
@@ -123,12 +128,13 @@ export default function Broadcast() {
     }
   };
 
-  const markRead = async () => {
+  const readStart = async () => {
     if (!story) return;
     try {
-      await call("set_status", { id: story.story.id, status: "read" });
-      toast(`#${story.story.receipt_no} 읽음 처리했어요. 다음 사연을 뽑아주세요`);
+      const res = await call<{ offset_sec: number; auto_started: boolean; receipt_no: number }>("read_start", { id: story.story.id });
+      toast(readStartMessage(res));
       storyIdRef.current = null;
+      setSessionTick((t) => t + 1);
       await refresh();
     } catch (e) {
       toast(errMsg(e));
@@ -161,11 +167,18 @@ export default function Broadcast() {
       <p className="adm-pickbar-info">
         {waiting.length === 0 ? (
           <>
-            방송 대기열이 비었어요. <Link to="/admin">검토 대기</Link>에서 사연을 승인해 주세요.
+            방송 대기 목록이 비었어요. <Link to="/admin">검토 대기</Link>에서 사연을 승인해 주세요.
           </>
         ) : (
           <>
-            대기 <b className="adm-mono">{waiting.length}</b>개 · 다음 차례는 <b>{dayLabel(nextDay!)}</b> 사연
+            대기 <b className="adm-mono">{approvedAll.length}</b>개
+            {scheduledWaiting.length > 0 && (
+              <>
+                {" "}
+                · <b>방송 예정</b> {scheduledWaiting.length}개를 먼저 뽑아요
+              </>
+            )}{" "}
+            · 다음 차례는 <b>{dayLabel(nextDay!)}</b> 사연
             {nextDayCount > 1 ? (
               <>
                 {" "}
@@ -257,6 +270,11 @@ export default function Broadcast() {
             </div>
             <StatusChip status={s.status} />
           </div>
+          {s.read_started_at && (
+            <p className="adm-readstamp">
+              읽기 시작 {new Date(s.read_started_at).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })} 기록됨
+            </p>
+          )}
           <div className="adm-console-text" style={{ fontSize: font }}>
             {s.body}
           </div>
@@ -307,10 +325,12 @@ export default function Broadcast() {
               크게 읽기 모드
             </button>
             <span className="spacer" />
-            {isOwner && s.status !== "read" && (
-              <button className="btn btn-done" onClick={markRead}>
-                읽음 처리
+            {s.status !== "read" ? (
+              <button className="btn btn-done" onClick={readStart} title="지금 시각을 기록하고 읽음으로 바꿔요. 다시보기 시간이 자동으로 계산돼요.">
+                ▶ 읽기 시작
               </button>
+            ) : (
+              <span className="adm-tag ok">읽음</span>
             )}
           </div>
         </div>
@@ -319,12 +339,12 @@ export default function Broadcast() {
   );
 
   const queuePanel = (
-    <section className="adm-queue" aria-label="방송 대기열">
+    <section className="adm-queue" aria-label="방송 대기 목록">
       <h2 className="adm-h2">
-        방송 대기열 <span className="adm-mono adm-dim">{queue.length}</span>
+        방송 대기 목록 <span className="adm-mono adm-dim">{queue.length}</span>
       </h2>
-      <p className="adm-dim adm-small">오래된 날짜부터 읽어요. 같은 날짜 사연이 여럿이면 그중에서 룰렛을 돌려요.</p>
-      {groups.length === 0 && <p className="adm-dim">대기열이 비어 있어요.</p>}
+      <p className="adm-dim adm-small">오래 기다린 순서예요. 같은 날짜 사연이 여럿이면 그중에서 룰렛을 돌려요. "방송 예정" 사연은 먼저 뽑아요.</p>
+      {groups.length === 0 && <p className="adm-dim">방송 대기 목록이 비어 있어요.</p>}
       {groups.map(([day, rows], gi) => (
         <div key={day} className="adm-qgroup">
           <p className="adm-qday">
@@ -340,9 +360,10 @@ export default function Broadcast() {
                   <b>{r.summary}</b>
                   <span className="adm-dim">
                     {r.broadcast_name}
-                    {r.starred ? " · ★" : ""}
+                    {r.starred ? " · ★" : ""} · {r.waited_days}일째 기다림
                   </span>
                 </span>
+                {r.scheduled && <span className="adm-tag blue">방송 예정</span>}
                 <FlagChips flags={r.flags.filter((f) => f === "care")} />
                 {r.status === "on_air" ? (
                   <span className="adm-st st-on_air">방송 중</span>
@@ -379,9 +400,10 @@ export default function Broadcast() {
       <header className="adm-head">
         <div>
           <h1 className="adm-title">방송</h1>
-          <p className="adm-dim">사연을 뽑으면 OBS 방송 화면에 본문까지 열려요. 다 읽으면 "읽음 처리"를 누르고 다음 사연을 뽑으세요.</p>
+          <p className="adm-dim">방송을 켜면 "방송 시작"부터 누르세요. 사연을 뽑아 OBS에 띄우고, 읽기 시작할 때 "읽기 시작"을 누르면 다시보기 시간이 자동으로 기록돼요.</p>
         </div>
       </header>
+      <BroadcastSessionBar key={sessionTick} />
       {pickBar}
       <div className={wide ? "adm-bc-grid" : "stack"}>
         {wide ? (
@@ -397,7 +419,17 @@ export default function Broadcast() {
         )}
       </div>
       {isOwner ? <ObsSetup /> : <p className="adm-dim adm-small">OBS 주소는 방장만 볼 수 있어요.</p>}
-      {reading && s && <ReadMode id={s.id} onClose={() => setReading(false)} onChanged={refresh} />}
+      {reading && s && (
+        <ReadMode
+          id={s.id}
+          onClose={() => setReading(false)}
+          onChanged={async () => {
+            setSessionTick((t) => t + 1);
+            storyIdRef.current = null;
+            await refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

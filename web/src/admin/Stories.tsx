@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { GOMIN, optionLabel } from "@shared/boxes.ts";
+import { reactionLabel } from "@shared/results.ts";
 import { STATUS_LABEL, errMsg, useAdmin, useWide, type ListItem } from "./api";
 import { FlagChips, StatusChip, Temp } from "./parts";
 import { StampSticker } from "../components/ui";
@@ -183,7 +184,10 @@ export default function Stories() {
                       <span aria-hidden="true">{s.animal.emoji}</span> {s.animal.name}
                     </span>
                   )}
+                  {s.scheduled && <span className="adm-tag blue">방송 예정</span>}
+                  {s.status === "read" && !s.result_published_at && <span className="adm-tag warn">결과 미공개</span>}
                   {s.follow_up_count > 0 && <span className="adm-dim">후속 보고 {s.follow_up_count}</span>}
+                  {s.review_reaction && <span className="adm-dim">후기 {reactionLabel(s.review_reaction)}</span>}
                 </span>
               </span>
               <Temp t={s.temperature} />

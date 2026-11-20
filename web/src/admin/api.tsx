@@ -18,6 +18,15 @@ function saveSession(s: AdminSession | null, remember: boolean) {
   if (s) store.set(KEY, s, !remember);
 }
 
+export type Alerts = {
+  pending_count: number;
+  care_followups: { id: string; story_id: string; receipt_no: number; body: string; created_at: string }[];
+  new_reviews: number;
+  golden_waiting: number;
+};
+
+const NO_ALERTS: Alerts = { pending_count: 0, care_followups: [], new_reviews: 0, golden_waiting: 0 };
+
 type Ctx = {
   session: AdminSession | null;
   role: Role | null;
@@ -25,6 +34,9 @@ type Ctx = {
   /** 검토 대기 사연 수 (메뉴 배지) */
   pendingCount: number;
   setPendingCount: (n: number) => void;
+  /** 메뉴 배지와 맨 위 알림 */
+  alerts: Alerts;
+  refreshAlerts: () => Promise<void>;
   call: <T = any>(action: string, body?: Record<string, unknown>) => Promise<T>;
   login: (password: string, remember: boolean) => Promise<void>;
   logout: () => Promise<void>;
@@ -34,7 +46,9 @@ const AdminCtx = createContext<Ctx>(null as unknown as Ctx);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AdminSession | null>(loadSession);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [alerts, setAlerts] = useState<Alerts>(NO_ALERTS);
+  const pendingCount = alerts.pending_count;
+  const setPendingCount = useCallback((n: number) => setAlerts((a) => ({ ...a, pending_count: n })), []);
 
   const call = useCallback(
     async <T,>(action: string, body: Record<string, unknown> = {}): Promise<T> => {
@@ -68,6 +82,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, [session]);
 
+  const refreshAlerts = useCallback(async () => {
+    if (!session) return;
+    try {
+      setAlerts(await callFn<Alerts>("admin", { action: "alerts" }, { "x-admin-token": session.token }));
+    } catch {
+      /* 다음 주기에 다시 */
+    }
+  }, [session]);
+
   // 저장된 세션이 아직 유효한지 서버에 한 번 확인
   useEffect(() => {
     if (!session) return;
@@ -82,7 +105,18 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   return (
     <AdminCtx.Provider
-      value={{ session, role: session?.role ?? null, isOwner: session?.role === "owner", pendingCount, setPendingCount, call, login, logout }}
+      value={{
+        session,
+        role: session?.role ?? null,
+        isOwner: session?.role === "owner",
+        pendingCount,
+        setPendingCount,
+        alerts,
+        refreshAlerts,
+        call,
+        login,
+        logout,
+      }}
     >
       {children}
     </AdminCtx.Provider>
@@ -129,15 +163,21 @@ export type ListItem = {
   badge: string;
   status: Status;
   starred: boolean;
+  scheduled: boolean;
   flags: string[];
   animal_state: string;
   created_at: string;
   created_day: string;
   reviewed_at: string | null;
   aired_at: string | null;
+  read_started_at: string | null;
+  result_published_at: string | null;
+  waiting_notice: boolean;
+  waited_days: number;
   logged_in: boolean;
   animal: { name: string; emoji: string; source: string } | null;
   follow_up_count: number;
+  review_reaction: string | null;
 };
 
 export type FullStory = ListItem & {
@@ -146,6 +186,11 @@ export type FullStory = ListItem & {
   template_id: string | null;
   template_answers: string[] | null;
   viewer_status: string;
+  broadcast_id: string | null;
+  vod_offset_sec: number | null;
+  vod_url: string | null;
+  host_note: string | null;
+  private_message: string | null;
 };
 
 export type AnimalRow = {
@@ -161,11 +206,36 @@ export type AnimalRow = {
   change_reason: string | null;
 };
 
+export type AdminFollowUp = { id: string; body: string; created_at: string; flags?: string[]; care_checked?: boolean };
+
+export type AdminReview = {
+  story_id: string;
+  reaction: string;
+  comment: string;
+  share: boolean;
+  status: "new" | "approved" | "hidden";
+  flags: string[];
+  created_at: string;
+  updated_at: string;
+  reviewed_at: string | null;
+};
+
 export type StoryBundle = {
   story: FullStory;
   animal: AnimalRow | null;
-  follow_ups: { id: string; body: string; created_at: string }[];
+  follow_ups: AdminFollowUp[];
   picks: { picked_at: string }[];
+  review: AdminReview | null;
+  dex: { golden: boolean; golden_code: string | null; claim_name: string | null; claimed_at: string | null; paid_at: string | null; collected_at: string } | null;
+  broadcast: Broadcast | null;
+};
+
+export type Broadcast = { id: string; started_at: string; vod_url: string | null; published_at: string | null };
+
+export const REVIEW_STATUS_LABEL: Record<string, string> = {
+  new: "새 후기",
+  approved: "승인됨",
+  hidden: "숨김",
 };
 
 export type BroadcastState = {

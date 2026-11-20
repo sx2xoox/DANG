@@ -2,38 +2,32 @@ import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { addPendingClaim, ApiError, callFn, store } from "../lib/supabase";
 import { useSite } from "../lib/site";
-import { ResultView, StatusTrack, type ResultStory } from "../components/ResultCard";
-import type { Animal } from "../components/AnimalCard";
+import type { StoryBundle } from "../lib/mystory";
+import { MyStoryView } from "../components/MyStoryView";
 import { Dialog, Spinner, useToast } from "../components/ui";
 import { CREDS_KEY, type Creds } from "./Check";
 
-type LookupData = {
-  story: ResultStory & { viewer_status: string; claimed: boolean; body: string };
-  animal: Animal | null;
-  follow_ups: { id: string; body: string; created_at: string }[];
-};
-
-/** 접수번호 + 비밀 코드로 보는 내 사연 (고민 동물 결과 + 방송 진행 상황) */
+/** 접수번호 + 비밀 코드로 보는 내 사연 (고민 동물 결과 + 방송 결과 + 진행 상황 + 후기 + 후속 보고) */
 export default function StoryLookup() {
   const { no } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { info, session } = useSite();
+  const { session } = useSite();
   const creds = store.get<Creds | null>(CREDS_KEY, null, true);
   const valid = creds && String(creds.receipt_no) === no;
-  const [data, setData] = useState<LookupData | null>(null);
+  const [data, setData] = useState<StoryBundle | null>(null);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!valid) return;
-    callFn<LookupData>("public", { action: "lookup", ...creds })
+    callFn<StoryBundle>("public", { action: "lookup", ...creds })
       .then(setData)
       .catch((e) => setError(e instanceof ApiError ? e.message : "불러오지 못했어요."));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [valid]);
 
-  if (!valid) return <Navigate to={`/check?no=${no ?? ""}`} replace />;
+  if (!valid || !creds) return <Navigate to={`/check?no=${no ?? ""}`} replace />;
   if (error)
     return (
       <div className="page-narrow">
@@ -54,7 +48,6 @@ export default function StoryLookup() {
   };
 
   const moveToAccount = async () => {
-    if (!creds) return;
     if (!session) {
       addPendingClaim(creds);
       navigate("/login?next=/me");
@@ -70,23 +63,15 @@ export default function StoryLookup() {
   };
 
   return (
-    <div className="result-page">
-      {data.animal && <ResultView story={data.story} animal={data.animal} siteName={info.site_name} />}
-      <div className="result-after">
-        <StatusTrack status={data.story.viewer_status} createdAt={data.story.created_at} />
-
-        <details className="my-letter">
-          <summary>내가 보낸 사연 다시 보기</summary>
-          <p className="story-body">{data.story.body}</p>
-        </details>
-
+    <>
+      <MyStoryView data={data} auth={{ receipt_no: creds.receipt_no, code: creds.code }} onChange={setData} canClaimGolden={false}>
         <section className="lookup-manage" aria-label="이 사연 관리">
           {!data.story.claimed && (
             <div className="lookup-row">
               <p>
                 <strong>내 사연함에 모아두기</strong>
                 <br />
-                로그인하면 코드 없이도 결과를 모아 보고, 후속 보고도 쓸 수 있어요.
+                로그인하면 코드 없이도 결과를 모아 보고, 방송에서 읽힌 사연의 고민 동물을 도감에 모을 수 있어요. 1% 확률로 황금 동물이 나오면 구독권도 받아요!
               </p>
               <button type="button" className="post-btn post-btn-sub" onClick={moveToAccount}>
                 {session ? "내 사연함으로 옮기기" : "로그인하고 옮기기"}
@@ -100,11 +85,11 @@ export default function StoryLookup() {
             </button>
           </div>
         </section>
-      </div>
+      </MyStoryView>
 
       {confirmDelete && (
         <Dialog title="사연을 지울까요?" onClose={() => setConfirmDelete(false)}>
-          <p style={{ margin: 0 }}>사연과 고민 동물 결과가 모두 지워지고 되돌릴 수 없어요.</p>
+          <p style={{ margin: 0 }}>사연, 고민 동물 결과, 후기, 후속 보고가 모두 지워지고 되돌릴 수 없어요.</p>
           <div className="row">
             <button type="button" className="btn btn-danger" onClick={removeStory}>
               지우기
@@ -115,6 +100,6 @@ export default function StoryLookup() {
           </div>
         </Dialog>
       )}
-    </div>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useSite } from "../lib/site";
 import CorkHome from "./CorkHome";
+import { ReviewWall } from "../components/ReviewWall";
 
 /** 오늘 날짜를 소인 형식으로 (2026.11.20) */
 function postmarkDate() {
@@ -12,7 +13,7 @@ const TRACK = [
   { code: "01", title: "사연 부치기", desc: "가입 없이 1분이면 보낼 수 있어요" },
   { code: "02", title: "고민 동물 결과", desc: "보내자마자 사연을 읽고 나만의 고민 동물을 알려줘요" },
   { code: "03", title: "검토", desc: "방송 전에 다웅이 한 통씩 확인해요" },
-  { code: "04", title: "방송에서 개봉", desc: "도착한 순서대로 방송에서 열어 읽고 채팅과 이야기해요" },
+  { code: "04", title: "방송에서 개봉", desc: "도착한 순서대로 방송에서 읽고 다웅이 직접 풀어줘요. 읽힌 뒤엔 다시보기 링크가 도착해요" },
 ];
 
 export default function Home() {
@@ -119,6 +120,8 @@ export default function Home() {
           지금 방송을 기다리는 사연 <b>{info.queue_count}</b>통 · 지금까지 방송에서 연 사연 <b>{info.total_aired}</b>통
         </p>
       </section>
+
+      <ReviewWall />
     </div>
   );
 }

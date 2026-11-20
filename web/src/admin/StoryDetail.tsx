@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { STATUS_LABEL, ANIMAL_STATE_LABEL, errMsg, useAdmin, type AnimalRow, type Status, type StoryBundle } from "./api";
-import { CareNote, Facts, StatusChip, Who } from "./parts";
+import { CareNote, Facts, FlagChips, StatusChip, Who } from "./parts";
 import { AnimalCard } from "../components/AnimalCard";
 import { Dialog, Spinner, StampSticker, useToast } from "../components/ui";
 import { FLAG_LABEL, daysSince, formatDate } from "../lib/format";
 import { useSite } from "../lib/site";
 import ReadMode from "./ReadMode";
+import { PrivateMessagePanel, ResultPanel, ReviewPanel } from "./StoryExtras";
 
 type Props = {
   id: string;
@@ -27,9 +28,9 @@ const NEXT: Record<Status, { to: Status; label: string; kind?: string }[]> = {
   ],
   on_air: [
     { to: "read", label: "읽음 처리", kind: "btn-done" },
-    { to: "approved", label: "대기열로 되돌리기" },
+    { to: "approved", label: "방송 대기로 되돌리기" },
   ],
-  read: [{ to: "approved", label: "대기열로 되돌리기" }],
+  read: [{ to: "approved", label: "방송 대기로 되돌리기" }],
   rejected: [
     { to: "approved", label: "승인", kind: "btn-primary" },
     { to: "pending", label: "검토 대기로" },
@@ -150,6 +151,16 @@ export default function StoryDetail({ id, onChanged, onDeleted, onBack }: Props)
                 {n.label}
               </button>
             ))}
+          {isOwner && (s.status === "approved" || s.status === "on_air") && (
+            <button
+              className={`btn btn-sm ${s.scheduled ? "btn-blue" : ""}`}
+              aria-pressed={s.scheduled}
+              title="방송 예정 사연은 다음 사연 뽑기에서 먼저 뽑히고, 사연자에게 '다음 방송에서 읽힐 수도 있어요!'로 보여요"
+              onClick={() => run(() => call("set_scheduled", { id: s.id, scheduled: !s.scheduled }), s.scheduled ? "방송 예정을 풀었어요" : "방송 예정으로 표시했어요")}
+            >
+              {s.scheduled ? "방송 예정 풀기" : "방송 예정으로 표시"}
+            </button>
+          )}
           <button
             className="btn btn-sm"
             aria-pressed={s.starred}
@@ -190,13 +201,23 @@ export default function StoryDetail({ id, onChanged, onDeleted, onBack }: Props)
         </p>
       </section>
 
+      {s.waiting_notice && s.status !== "read" && (
+        <p className="adm-dim adm-small">오래 기다린 사연이라 사연자에게 "사연은 잘 받았어요. 다음 방송 후보에 남아 있어요" 안내가 보이고 있어요.</p>
+      )}
+
+      <PrivateMessagePanel data={data} onChanged={changed} />
+      <ResultPanel data={data} onChanged={changed} />
+      <ReviewPanel data={data} onChanged={changed} />
+
       {data.follow_ups.length > 0 && (
         <section className="adm-panel">
           <h3 className="adm-h3">후속 보고 {data.follow_ups.length}</h3>
           <ol className="adm-follow">
             {data.follow_ups.map((f) => (
               <li key={f.id}>
-                <span className="adm-dim adm-small">{formatDate(f.created_at, true)}</span>
+                <span className="adm-dim adm-small">
+                  {formatDate(f.created_at, true)} <FlagChips flags={f.flags ?? []} />
+                </span>
                 <p>{f.body}</p>
               </li>
             ))}
@@ -212,7 +233,7 @@ export default function StoryDetail({ id, onChanged, onDeleted, onBack }: Props)
 
       {confirmDelete && (
         <Dialog title="사연을 삭제할까요?" onClose={() => setConfirmDelete(false)}>
-          <p>#{s.receipt_no} 사연과 고민 동물, 후속 보고가 모두 지워져요. 사연자도 더 이상 볼 수 없어요. 되돌릴 수 없어요.</p>
+          <p>#{s.receipt_no} 사연과 고민 동물, 후기, 후속 보고, 도감 카드가 모두 지워져요. 사연자도 더 이상 볼 수 없어요. 되돌릴 수 없어요.</p>
           <div className="row">
             <button className="btn" onClick={() => setConfirmDelete(false)}>
               취소

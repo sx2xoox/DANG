@@ -1,16 +1,22 @@
 // =====================================================================
 // 시청자용 서버 함수
 //   submit         사연 제출 (로그인/비로그인)
-//   lookup         접수번호 + 비밀 코드로 내 사연(고민 동물, 검토/방송 상태) 조회
+//   lookup         접수번호 + 비밀 코드로 내 사연(고민 동물, 방송 결과, 진행 상황) 조회
+//   my_story       로그인 사용자의 내 사연 하나 (lookup 과 같은 내용)
 //   delete_by_code 접수번호 + 비밀 코드로 사연 삭제
 //   claim          비로그인으로 낸 사연을 로그인 계정으로 옮기기
+//   follow_up_add / follow_up_delete   후속 보고 (로그인 또는 접수번호+비밀 코드)
+//   review_save / review_delete        상담 후기 (방송에서 읽힌 사연만, 사연 하나에 하나)
+//   golden_claim   황금 동물 구독권 받을 치지직 닉네임 남기기 (로그인)
 //   delete_account 탈퇴 (원하면 사연도 삭제)
 // =====================================================================
 import { BOXES, fillTemplate, pickBadge } from "../_shared/boxes.ts";
 import { clientIp, HttpError, int, json, readJson, serve, str } from "../_shared/http.ts";
 import { adminDb, requestUser } from "../_shared/db.ts";
 import { hashCode, randomCode, randomToken, sha256 } from "../_shared/crypto.ts";
-import { detectFlags } from "../_shared/safety.ts";
+import { detectFlags, detectReviewFlags } from "../_shared/safety.ts";
+import { CLAIM_NAME_MAX, REACTIONS, REVIEW_MAX } from "../_shared/results.ts";
+import { collectToDex } from "../_shared/dex.ts";
 import { generateAnimalFor, previousAnimals, transformation } from "../_shared/animalJob.ts";
 import { fallbackAnimal } from "../_shared/fallbackAnimals.ts";
 
@@ -84,13 +90,50 @@ function nameForViewer(s: any): string {
 
 const ANIMAL_FIELDS = "name, emoji, why, description, quote, hashtags, prev_name, prev_emoji, change_reason";
 
-async function storyBundle(storyId: string) {
+const WAITING = ["pending", "approved", "on_air"];
+
+/**
+ * 사연자에게 보여줄 내 사연 묶음: 고민 동물, 후속 보고, 방송 결과(공개된 뒤에만), 후기, 도감(황금 동물)
+ */
+async function storyBundle(s: any) {
   const db = adminDb();
-  const [{ data: animal }, { data: followUps }] = await Promise.all([
-    db.from("worry_animals").select(ANIMAL_FIELDS).eq("story_id", storyId).maybeSingle(),
-    db.from("follow_ups").select("id, body, created_at").eq("story_id", storyId).order("created_at"),
+  const [{ data: animal }, { data: followUps }, { data: review }, { data: dex }] = await Promise.all([
+    db.from("worry_animals").select(ANIMAL_FIELDS).eq("story_id", s.id).maybeSingle(),
+    db.from("follow_ups").select("id, body, created_at").eq("story_id", s.id).order("created_at"),
+    db.from("reviews").select("reaction, comment, share, status, updated_at").eq("story_id", s.id).maybeSingle(),
+    s.user_id
+      ? db.from("dex_entries").select("golden, golden_code, claim_name, claimed_at, paid_at, collected_at").eq("story_id", s.id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
-  return { animal, follow_ups: followUps ?? [] };
+  const aired = s.viewer_status === "aired";
+  return {
+    animal,
+    follow_ups: followUps ?? [],
+    result: aired
+      ? {
+          aired_at: s.read_started_at ?? s.aired_at ?? s.result_published_at,
+          vod_url: s.vod_url ?? null,
+          vod_offset_sec: s.vod_offset_sec ?? null,
+          host_note: s.host_note ?? null,
+        }
+      : null,
+    private_message: s.private_message ?? null,
+    waiting_notice: !!s.waiting_notice_at && WAITING.includes(s.status),
+    review: aired ? review ?? null : null,
+    dex: dex ?? null,
+  };
+}
+
+/** 로그인 사용자의 내 사연(story_id) 또는 접수번호+비밀 코드로 사연을 찾습니다. */
+async function storyForRequest(req: Request, body: Record<string, unknown>) {
+  if (body.story_id && !body.code) {
+    const user = await requestUser(req);
+    if (!user) throw new HttpError(401, "먼저 로그인해 주세요.", "no_login");
+    const { data } = await adminDb().from("stories").select("*").eq("id", str(body.story_id, 60)).eq("user_id", user.id).maybeSingle();
+    if (!data) throw new HttpError(404, "이 사연을 찾을 수 없어요.", "not_found");
+    return data;
+  }
+  return verifyByCode(req, body);
 }
 
 function viewerStory(s: any) {
@@ -272,7 +315,92 @@ async function submit(req: Request, body: Record<string, unknown>) {
 
 async function lookup(req: Request, body: Record<string, unknown>) {
   const story = await verifyByCode(req, body);
-  return json({ story: viewerStory(story), ...(await storyBundle(story.id)) });
+  return json({ story: viewerStory(story), ...(await storyBundle(story)) });
+}
+
+async function myStory(req: Request, body: Record<string, unknown>) {
+  if (!body.story_id) throw new HttpError(400, "사연을 골라주세요.");
+  const story = await storyForRequest(req, { story_id: body.story_id });
+  return json({ story: viewerStory(story), ...(await storyBundle(story)) });
+}
+
+// ---------------------------------------------------------------------
+// 후속 보고 (로그인 / 비로그인 모두)
+// ---------------------------------------------------------------------
+async function followUpAdd(req: Request, body: Record<string, unknown>) {
+  const story = await storyForRequest(req, body);
+  const text = str(body.body, 3000);
+  if (!text) throw new HttpError(400, "후속 보고를 써주세요.");
+  const db = adminDb();
+  const since = new Date(Date.now() - 10 * 60_000).toISOString();
+  const { count } = await db.from("follow_ups").select("id", { count: "exact", head: true }).eq("story_id", story.id).gte("created_at", since);
+  if ((count ?? 0) >= 5) throw new HttpError(429, "짧은 시간에 너무 많이 남겼어요. 잠시 뒤에 다시 써주세요.", "rate_limited");
+  const flags = detectFlags(text);
+  const { data, error } = await db
+    .from("follow_ups")
+    .insert({ story_id: story.id, body: text, flags })
+    .select("id, body, created_at")
+    .single();
+  if (error || !data) throw new HttpError(500, "후속 보고를 저장하지 못했어요.");
+  return json({ follow_up: data, care: flags.includes("care") });
+}
+
+async function followUpDelete(req: Request, body: Record<string, unknown>) {
+  const story = await storyForRequest(req, body);
+  await adminDb().from("follow_ups").delete().eq("id", str(body.id, 60)).eq("story_id", story.id);
+  return json({ ok: true });
+}
+
+// ---------------------------------------------------------------------
+// 상담 후기 (방송에서 읽힌 사연만, 사연 하나에 하나, 고치거나 지울 수 있음)
+// ---------------------------------------------------------------------
+async function reviewSave(req: Request, body: Record<string, unknown>) {
+  const story = await storyForRequest(req, body);
+  if (story.viewer_status !== "aired") throw new HttpError(400, "후기는 사연이 방송에서 읽힌 뒤에 남길 수 있어요.", "not_aired");
+  const reaction = str(body.reaction, 20);
+  if (!REACTIONS.some((r) => r.id === reaction)) throw new HttpError(400, "반응을 하나 골라주세요.");
+  const comment = str(body.comment, 200).replace(/\s+/g, " ");
+  if ([...comment].length > REVIEW_MAX) throw new HttpError(400, `한 줄 후기는 ${REVIEW_MAX}자 이내로 써주세요.`);
+  const share = body.share === true;
+  const flags = detectReviewFlags(comment);
+  const now = new Date().toISOString();
+  // 고치면 다시 "새 후기"가 되어 방장이 다시 확인해요 (후기 벽에서도 잠시 내려가요)
+  const { data, error } = await adminDb()
+    .from("reviews")
+    .upsert({ story_id: story.id, reaction, comment, share, flags, status: "new", reviewed_at: null, updated_at: now }, { onConflict: "story_id" })
+    .select("reaction, comment, share, status, updated_at")
+    .single();
+  if (error || !data) throw new HttpError(500, "후기를 저장하지 못했어요.");
+  return json({ review: data, flagged: flags.length > 0 });
+}
+
+async function reviewDelete(req: Request, body: Record<string, unknown>) {
+  const story = await storyForRequest(req, body);
+  await adminDb().from("reviews").delete().eq("story_id", story.id);
+  return json({ ok: true });
+}
+
+// ---------------------------------------------------------------------
+// 황금 동물: 구독권 받을 치지직 닉네임 남기기 (로그인 사용자 본인 도감만)
+// ---------------------------------------------------------------------
+async function goldenClaim(req: Request, body: Record<string, unknown>) {
+  const user = await requestUser(req);
+  if (!user) throw new HttpError(401, "먼저 로그인해 주세요.", "no_login");
+  const storyId = str(body.story_id, 60);
+  const name = str(body.claim_name, 60);
+  if (!name || [...name].length > CLAIM_NAME_MAX) throw new HttpError(400, `치지직 닉네임을 ${CLAIM_NAME_MAX}자 이내로 넣어주세요.`);
+  const db = adminDb();
+  const { data: entry } = await db.from("dex_entries").select("golden, paid_at").eq("story_id", storyId).eq("user_id", user.id).maybeSingle();
+  if (!entry?.golden) throw new HttpError(404, "황금 동물을 찾을 수 없어요.");
+  if (entry.paid_at) throw new HttpError(400, "이미 구독권을 받았어요.");
+  const { data } = await db
+    .from("dex_entries")
+    .update({ claim_name: name, claimed_at: new Date().toISOString() })
+    .eq("story_id", storyId)
+    .eq("user_id", user.id)
+    .select("golden, golden_code, claim_name, claimed_at, paid_at, collected_at")
+    .single();
+  return json({ dex: data });
 }
 
 async function deleteByCode(req: Request, body: Record<string, unknown>) {
@@ -298,6 +426,8 @@ async function claim(req: Request, body: Record<string, unknown>) {
     if (animal && !animal.prev_name && older[0]) {
       await db.from("worry_animals").update(transformation(older[0], animal.name, "")).eq("story_id", story.id);
     }
+    // 이미 방송 결과가 공개된 사연이면 이 계정의 도감에 바로 모아요
+    await collectToDex([story.id]);
   }
   return json({ ok: true, story_id: story.id, receipt_no: story.receipt_no });
 }
@@ -322,6 +452,18 @@ serve(async (req) => {
       return submit(req, body);
     case "lookup":
       return lookup(req, body);
+    case "my_story":
+      return myStory(req, body);
+    case "follow_up_add":
+      return followUpAdd(req, body);
+    case "follow_up_delete":
+      return followUpDelete(req, body);
+    case "review_save":
+      return reviewSave(req, body);
+    case "review_delete":
+      return reviewDelete(req, body);
+    case "golden_claim":
+      return goldenClaim(req, body);
     case "delete_by_code":
       return deleteByCode(req, body);
     case "claim":

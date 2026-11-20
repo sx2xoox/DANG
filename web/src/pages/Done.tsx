@@ -111,7 +111,7 @@ export default function Done() {
         <section className="code-slip" aria-labelledby="code-title">
           <div className="code-slip-head">
             <h2 id="code-title">사연 조회 코드</h2>
-            <p>이 코드로 내 결과와 방송 여부를 다시 보고, 사연을 지울 수도 있어요. 잃어버리면 다시 찾을 수 없어요.</p>
+            <p>이 코드로 내 결과와 방송 결과(다시보기 링크)를 다시 보고, 후기와 후속 보고를 남기거나 사연을 지울 수 있어요. 잃어버리면 다시 찾을 수 없어요.</p>
           </div>
           <div className="code-slip-pair">
             <div>
@@ -137,7 +137,7 @@ export default function Done() {
             </p>
           ) : (
             <div className="code-slip-login">
-              <p>로그인하면 코드 없이도 내 사연함에서 결과를 모아 보고, 고민 동물 도감을 채울 수 있어요. 방금 낸 사연도 옮겨드려요.</p>
+              <p>로그인하면 코드 없이도 내 사연함에서 결과를 모아 보고, 방송에서 읽힌 사연의 고민 동물을 도감에 모을 수 있어요. 1% 확률로 황금 동물이 나오면 구독권도 받아요! 방금 낸 사연도 옮겨드려요.</p>
               <button type="button" className="post-btn post-btn-sub" onClick={goLogin}>
                 로그인하고 모아두기
               </button>

@@ -1502,3 +1502,139 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------------------------------------------------------- 후기 벽 */
+.review-wall {
+  max-width: 1100px;
+  margin: clamp(28px, 5vw, 48px) auto 0;
+  padding: 0 16px 40px;
+  color: var(--text);
+}
+
+.review-wall-title {
+  font-family: var(--font-serif, var(--font-display));
+  font-weight: 800;
+  font-size: clamp(22px, 3vw, 28px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 14px;
+}
+
+.review-wall-title span {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+:root[data-preset="cork"] .review-wall-title {
+  color: #2b1a0c;
+}
+
+:root[data-preset="cork"] .review-wall-title span {
+  color: #4a3420;
+}
+
+.review-wall-track {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.review-wall-row {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  padding: 6px 0 12px;
+  animation: wallFlow linear infinite;
+}
+
+.review-wall-track:hover .review-wall-row {
+  animation-play-state: paused;
+}
+
+@keyframes wallFlow {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.wall-card {
+  flex: none;
+  width: clamp(220px, 62vw, 280px);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--paper, #fff8e1);
+  color: var(--paper-text, #1f1a12);
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+}
+
+:root[data-preset="cork"] .wall-card {
+  border-radius: 2px;
+  background: #fff7b8;
+}
+
+:root[data-preset="cork"] .wall-card:nth-child(3n + 2) {
+  background: #ffd7e2;
+  transform: rotate(1.2deg);
+}
+
+:root[data-preset="cork"] .wall-card:nth-child(3n) {
+  background: #cfe9f7;
+  transform: rotate(-1deg);
+}
+
+:root[data-preset="gacha"] .wall-card {
+  background: #fff;
+  border: 3px solid #2b2340;
+  box-shadow: 5px 5px 0 #2b2340;
+}
+
+.wall-animal {
+  margin: 0;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.wall-emoji {
+  font-size: 24px;
+  vertical-align: -3px;
+}
+
+.wall-reaction {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--paper-dim, #5c5240);
+}
+
+.wall-comment {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-wall-row {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
+  }
+  .review-wall-row .wall-card:nth-child(n + 13) {
+    display: none;
+  }
+  .review-wall-track {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}

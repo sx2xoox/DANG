@@ -11,6 +11,9 @@ type SettingsData = {
   week_theme: string;
   preset: Preset;
   accepting: boolean;
+  auto_notice_enabled: boolean;
+  auto_notice_days: number;
+  vod_time_param: "currentTime" | "t";
   manager_enabled: boolean;
   obs_key: string | null;
   ai_enabled: boolean;
@@ -65,6 +68,9 @@ export default function Settings() {
           week_theme: s.week_theme,
           preset: s.preset,
           accepting: s.accepting,
+          auto_notice_enabled: s.auto_notice_enabled,
+          auto_notice_days: s.auto_notice_days,
+          vod_time_param: s.vod_time_param,
         },
       });
       setS(next);
@@ -106,6 +112,41 @@ export default function Settings() {
             <small>{s.accepting ? "지금 사연을 받고 있어요." : "멈춤: 첫 화면에 \"지금은 사연을 받지 않아요\"가 보여요."}</small>
           </span>
         </label>
+
+        <h2 className="adm-h3">방송 결과</h2>
+        <label className="adm-switch">
+          <input type="checkbox" checked={s.auto_notice_enabled} onChange={(e) => set("auto_notice_enabled", e.target.checked)} />
+          <span>
+            <b>자동 공개</b>
+            <small>
+              방송에서 오래 못 읽은 사연에 "아직 방송에서 못 읽었지만 사연은 잘 받았어요. 다음 방송 후보에 남아 있어요"를 보여줘요. "확인 필요" 사연은 빼고, 방장이 직접 확인해요.
+            </small>
+          </span>
+        </label>
+        <div className="field" style={{ maxWidth: 260 }}>
+          <label htmlFor="st-notice">자동 공개 기간 (일)</label>
+          <input
+            id="st-notice"
+            className="input"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={90}
+            disabled={!s.auto_notice_enabled}
+            value={s.auto_notice_days}
+            onChange={(e) => set("auto_notice_days", Number(e.target.value))}
+          />
+        </div>
+        <div className="field" style={{ maxWidth: 420 }}>
+          <label htmlFor="st-vod">다시보기 링크 시간 형식</label>
+          <select id="st-vod" className="select" value={s.vod_time_param} onChange={(e) => set("vod_time_param", e.target.value as SettingsData["vod_time_param"])}>
+            <option value="currentTime">?currentTime=초 (치지직 기본)</option>
+            <option value="t">?t=초</option>
+          </select>
+          <small className="adm-dim adm-small">
+            링크를 눌렀을 때 그 시간으로 바로 가지 않으면 다른 형식으로 바꿔보세요. 유튜브 주소는 자동으로 t=초를 써요. 사연자 화면에는 "1시간 12분부터"도 글자로 함께 보여요.
+          </small>
+        </div>
 
         <h2 className="adm-h3">디자인</h2>
         <div className="adm-presets" role="radiogroup" aria-label="디자인 프리셋">
@@ -170,7 +211,9 @@ function ManagerSection({ enabled, onChanged }: { enabled: boolean; onChanged: (
   return (
     <section className="adm-panel adm-form" aria-label="매니저 코드">
       <h2 className="adm-h3">매니저 코드</h2>
-      <p className="adm-dim">매니저는 사연 보기, 별표, 다음 사연 뽑기와 방송 화면 조작만 할 수 있어요. 승인·반려, 읽음 처리, 삭제, 설정은 방장만 해요.</p>
+      <p className="adm-dim">
+        매니저는 사연 보기, 별표, 다음 사연 뽑기와 방송 화면 조작, 방송 시작·읽기 시작만 할 수 있어요. 승인·반려, 후기 승인, 방송 결과 공개, 다시보기 링크 입력, 황금 동물 지급, 삭제, 설정은 방장만 해요.
+      </p>
       <p>
         상태: <b>{enabled ? "켜짐" : "꺼짐"}</b>
       </p>

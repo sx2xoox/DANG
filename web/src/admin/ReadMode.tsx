@@ -5,10 +5,12 @@ import { StampSticker, Spinner, temperatureColor, useToast } from "../components
 import { ageGender } from "../lib/format";
 import { CareNote } from "./parts";
 import { store } from "../lib/supabase";
+import { readStartMessage } from "./BroadcastSession";
+import { reactionEmoji, reactionLabel } from "@shared/results.ts";
 
 /** 방송에서 사연을 읽을 때 쓰는 큰 글씨 화면 */
 export default function ReadMode({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged?: () => void }) {
-  const { call, isOwner } = useAdmin();
+  const { call } = useAdmin();
   const toast = useToast();
   const [data, setData] = useState<StoryBundle | null>(null);
   const [font, setFont] = useState<number>(() => store.get("dg.admin.readFont", 30));
@@ -126,6 +128,15 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
               ))}
             </div>
           )}
+          {data!.review && (
+            <div className="adm-read-follow">
+              <h3>상담 후기</h3>
+              <p style={{ fontSize: Math.round(font * 0.8) }}>
+                {reactionEmoji(data!.review.reaction)} {reactionLabel(data!.review.reaction)}
+                {data!.review.comment ? ` · “${data!.review.comment}”` : ""}
+              </p>
+            </div>
+          )}
         </div>
       )}
       {s && (
@@ -154,15 +165,23 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
           >
             {revealed ? "동물 공개 취소" : "고민 동물 공개"}
           </button>
-          {isOwner && (
-            <button
-              className="btn btn-primary"
-              disabled={s.status === "read"}
-              onClick={() => act(() => call("set_status", { id: s.id, status: "read" }), "읽음으로 표시했어요")}
-            >
-              {s.status === "read" ? "읽음 처리됨" : "읽음 처리"}
-            </button>
-          )}
+          <button
+            className="btn btn-primary"
+            disabled={s.status === "read" || s.status === "pending" || s.status === "rejected"}
+            title="지금 시각을 기록하고 읽음으로 바꿔요. 다시보기 시간이 자동으로 계산돼요."
+            onClick={async () => {
+              try {
+                const res = await call<{ offset_sec: number; auto_started: boolean; receipt_no: number }>("read_start", { id: s.id });
+                toast(readStartMessage(res));
+                await load();
+                onChanged?.();
+              } catch (e) {
+                toast(errMsg(e));
+              }
+            }}
+          >
+            {s.status === "read" ? "읽기 시작 기록됨" : "▶ 읽기 시작"}
+          </button>
         </div>
       )}
     </div>

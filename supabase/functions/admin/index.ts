@@ -1,8 +1,10 @@
 // =====================================================================
 // 관리자(다웅) / 매니저용 서버 함수
 // 모든 요청은 x-admin-token 헤더의 관리자 세션을 서버에서 확인한 뒤 처리합니다.
-// 흐름: 검토 대기 → 승인(방송 대기열) / 반려 → 방송 중 OBS 로 열어서 읽기 → 읽음
-// 매니저는 사연 보기, 별표, 뽑기(+OBS 카드 조작)만 할 수 있습니다.
+// 흐름: 검토 대기 → 승인(방송 대기열) / 반려 → 방송 시작 → OBS 로 열어서 "읽기 시작"
+//       → 오늘 방송 정리(다시보기 주소, 한마디) → 결과 공개 → 상담 후기 → 후기 벽
+// 매니저는 사연 보기, 별표, 뽑기(+OBS 카드 조작), 방송 시작/읽기 시작만 할 수 있습니다.
+// (후기 승인, 방송 결과 공개, 다시보기 링크 입력, 황금 동물 지급은 방장만)
 // =====================================================================
 import { GOMIN } from "../_shared/boxes.ts";
 import { clientIp, corsHeaders, HttpError, int, json, readJson, serve, str } from "../_shared/http.ts";
@@ -10,6 +12,8 @@ import { adminDb } from "../_shared/db.ts";
 import { hashPassword, randomCode, randomToken, safeEqual, sha256, verifyPassword } from "../_shared/crypto.ts";
 import { aiEnabled } from "../_shared/ai.ts";
 import { generateAnimalFor, previousAnimals } from "../_shared/animalJob.ts";
+import { HOST_NOTE_MAX, PRIVATE_MESSAGE_MAX, REACTIONS, reactionLabel, validVodUrl, vodLink } from "../_shared/results.ts";
+import { collectToDex } from "../_shared/dex.ts";
 
 type Role = "owner" | "manager";
 
@@ -20,6 +24,7 @@ const GLOBAL_MAX_FAILS = 30;
 
 const MANAGER_ACTIONS = new Set([
   "session", "logout", "list", "get", "queue", "toggle_star", "pick_next", "today_picks", "broadcast", "broadcast_state",
+  "alerts", "broadcast_current", "broadcast_start", "broadcast_update", "read_start", "reviews_list", "after_list",
 ]);
 
 // ---------------------------------------------------------------------
@@ -166,7 +171,7 @@ function broadcastName(s: { display_name: string; visibility: string }): string 
 }
 
 const LIST_FIELDS =
-  "id, receipt_no, display_name, name_mode, age, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, user_id, worry_animals(name, emoji, source), follow_ups(count)";
+  "id, receipt_no, display_name, name_mode, age, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, scheduled, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, read_started_at, result_published_at, waiting_notice_at, user_id, worry_animals(name, emoji, source), follow_ups(count), reviews(reaction)";
 
 function listRow(s: any) {
   const animal = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
@@ -188,15 +193,21 @@ function listRow(s: any) {
     badge: s.badge,
     status: s.status,
     starred: s.starred,
+    scheduled: s.scheduled,
     flags: s.flags,
     animal_state: s.animal_state,
     created_at: s.created_at,
     created_day: kstDay(s.created_at),
     reviewed_at: s.reviewed_at,
     aired_at: s.aired_at,
+    read_started_at: s.read_started_at,
+    result_published_at: s.result_published_at,
+    waiting_notice: !!s.waiting_notice_at,
+    waited_days: Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86_400_000),
     logged_in: !!s.user_id,
     animal: animal ? { name: animal.name, emoji: animal.emoji, source: animal.source } : null,
     follow_up_count: s.follow_ups?.[0]?.count ?? 0,
+    review_reaction: (Array.isArray(s.reviews) ? s.reviews[0] : s.reviews)?.reaction ?? null,
   };
 }
 
@@ -253,17 +264,23 @@ async function getStory(body: Record<string, unknown>) {
   const db = adminDb();
   const { data: s } = await db.from("stories").select("*").eq("id", id).maybeSingle();
   if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
-  const [{ data: animal }, { data: followUps }, { data: picks }] = await Promise.all([
+  const [{ data: animal }, { data: followUps }, { data: picks }, { data: review }, { data: dex }, { data: bc }] = await Promise.all([
     db.from("worry_animals").select("*").eq("story_id", id).maybeSingle(),
-    db.from("follow_ups").select("id, body, created_at").eq("story_id", id).order("created_at"),
+    db.from("follow_ups").select("id, body, flags, care_checked, created_at").eq("story_id", id).order("created_at"),
     db.from("picks").select("picked_at").eq("story_id", id).order("picked_at", { ascending: false }).limit(5),
+    db.from("reviews").select("*").eq("story_id", id).maybeSingle(),
+    db.from("dex_entries").select("golden, golden_code, claim_name, claimed_at, paid_at, collected_at").eq("story_id", id).maybeSingle(),
+    s.broadcast_id ? db.from("broadcasts").select("id, started_at, vod_url, published_at").eq("id", s.broadcast_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const { code_hash: _h, code_salt: _s, ...safe } = s;
   return json({
-    story: { ...safe, broadcast_name: broadcastName(s), logged_in: !!s.user_id, created_day: kstDay(s.created_at) },
+    story: { ...safe, broadcast_name: broadcastName(s), logged_in: !!s.user_id, created_day: kstDay(s.created_at), waiting_notice: !!s.waiting_notice_at },
     animal,
     follow_ups: followUps ?? [],
     picks: picks ?? [],
+    review: review ?? null,
+    dex: dex ?? null,
+    broadcast: bc ?? null,
   });
 }
 
@@ -277,9 +294,21 @@ async function setStatus(body: Record<string, unknown>) {
   const patch: Record<string, unknown> = { status };
   if (status === "approved" || status === "rejected") patch.reviewed_at = now;
   if (status === "pending") patch.reviewed_at = null;
-  if (status === "read") patch.aired_at = now;
+  if (status === "read") Object.assign(patch, { aired_at: now, scheduled: false });
   const db = adminDb();
-  await db.from("stories").update(patch).in("id", ids);
+  if (status === "read") {
+    // "읽기 시작" 없이 읽음 처리한 사연은 지금 방송 회차에 붙여두고(시간은 비워둠) 오늘 방송 정리에서 채웁니다.
+    const bc = await currentBroadcastRow();
+    const { data: rows } = await db.from("stories").select("id, status, broadcast_id").in("id", ids);
+    for (const r of rows ?? []) {
+      if (r.status === "read") continue;
+      await db.from("stories").update({ ...patch, broadcast_id: r.broadcast_id ?? bc?.id ?? null }).eq("id", r.id);
+    }
+  } else {
+    // 읽음에서 되돌리면 방송 결과도 함께 지워요 (사연자 화면에서도 "방송 대기"로 돌아감)
+    Object.assign(patch, { result_published_at: null, read_started_at: null, vod_offset_sec: null, vod_url: null, broadcast_id: null, aired_at: null });
+    await db.from("stories").update(patch).in("id", ids);
+  }
   // 읽음 처리하면 방송 카드도 내립니다.
   if (status === "read") {
     const { data: b } = await db.from("broadcast_state").select("story_id").eq("id", 1).single();
@@ -380,11 +409,14 @@ async function queue() {
 async function pickNext(body: Record<string, unknown>) {
   const { data } = await adminDb()
     .from("stories")
-    .select("id, receipt_no, display_name, visibility, summary, stamp, category, created_at")
+    .select("id, receipt_no, display_name, visibility, summary, stamp, category, created_at, scheduled")
     .eq("status", "approved")
     .order("created_at", { ascending: true })
     .limit(500);
-  const pool = data ?? [];
+  const all = data ?? [];
+  // "방송 예정"으로 표시해 둔 사연이 있으면 그 사연들 중에서 먼저 뽑아요.
+  const scheduled = all.filter((s) => s.scheduled);
+  const pool = scheduled.length ? scheduled : all;
   if (!pool.length) throw new HttpError(404, "방송 대기열에 사연이 없어요. 검토 대기에서 사연을 승인해 주세요.");
 
   const day = kstDay(pool[0].created_at);
@@ -416,7 +448,7 @@ async function pickNext(body: Record<string, unknown>) {
       .update({ story_id: result.id, hidden: false, revealed: false, scroll: 0, roulette, updated_at: now })
       .eq("id", 1);
   }
-  return json({ result: { ...result, broadcast_name: broadcastName(result) }, roulette, day, same_day_count: sameDay.length, queue_count: pool.length });
+  return json({ result: { ...result, broadcast_name: broadcastName(result) }, roulette, day, same_day_count: sameDay.length, queue_count: all.length, from_scheduled: scheduled.length > 0 });
 }
 
 async function todayPicks() {
@@ -470,6 +502,391 @@ async function broadcastState() {
 }
 
 // ---------------------------------------------------------------------
+// 방송 회차: 방송 시작 → 읽기 시작 → 오늘 방송 정리 → 결과 공개
+// ---------------------------------------------------------------------
+
+/** 지금 방송 회차: 결과를 아직 공개하지 않았고 16시간 안에 시작한 가장 최근 방송 */
+const CURRENT_HOURS = 16;
+
+async function currentBroadcastRow(): Promise<{ id: string; started_at: string; vod_url: string | null; published_at: string | null } | null> {
+  const since = new Date(Date.now() - CURRENT_HOURS * 3600_000).toISOString();
+  const { data } = await adminDb()
+    .from("broadcasts")
+    .select("id, started_at, vod_url, published_at")
+    .gte("started_at", since)
+    .is("published_at", null)
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data ?? null;
+}
+
+async function vodParam(): Promise<string> {
+  const { data } = await adminDb().from("settings").select("vod_time_param").eq("id", 1).single();
+  return data?.vod_time_param ?? "currentTime";
+}
+
+function offsetSec(readAt: string, startedAt: string): number {
+  return Math.max(0, Math.round((new Date(readAt).getTime() - new Date(startedAt).getTime()) / 1000));
+}
+
+async function broadcastCurrent() {
+  const current = await currentBroadcastRow();
+  let readCount = 0;
+  if (current) {
+    const { count } = await adminDb().from("stories").select("id", { count: "exact", head: true }).eq("broadcast_id", current.id);
+    readCount = count ?? 0;
+  }
+  return json({ current, read_count: readCount, server_time: new Date().toISOString() });
+}
+
+function parseTime(v: unknown): string | null {
+  const t = str(v, 40);
+  if (!t) return null;
+  const d = new Date(t);
+  if (Number.isNaN(d.getTime())) throw new HttpError(400, "시각을 읽을 수 없어요.");
+  if (d.getTime() > Date.now() + 5 * 60_000) throw new HttpError(400, "방송 시작 시각은 지금보다 늦을 수 없어요.");
+  return d.toISOString();
+}
+
+/** 방송 시작: 지금 회차가 이미 있으면 그대로 쓰고, new_session 이면 새 회차를 만들어요. */
+async function broadcastStart(body: Record<string, unknown>) {
+  const db = adminDb();
+  const current = await currentBroadcastRow();
+  if (current && body.new_session !== true) return json({ broadcast: current, created: false });
+  const startedAt = parseTime(body.started_at) ?? new Date().toISOString();
+  const { data, error } = await db.from("broadcasts").insert({ started_at: startedAt }).select("id, started_at, vod_url, published_at").single();
+  if (error || !data) throw new HttpError(500, "방송 시작을 기록하지 못했어요.");
+  return json({ broadcast: data, created: true });
+}
+
+/** 방송 시작 시각 고치기 → 그 회차 사연들의 다시보기 시간도 다시 계산 */
+async function broadcastUpdate(body: Record<string, unknown>) {
+  const id = str(body.id, 60);
+  const startedAt = parseTime(body.started_at);
+  if (!startedAt) throw new HttpError(400, "방송 시작 시각을 넣어주세요.");
+  const db = adminDb();
+  const { data: bc } = await db.from("broadcasts").update({ started_at: startedAt }).eq("id", id).select("id, started_at, vod_url, published_at").maybeSingle();
+  if (!bc) throw new HttpError(404, "방송 회차를 찾을 수 없어요.");
+  const param = await vodParam();
+  const { data: rows } = await db.from("stories").select("id, read_started_at").eq("broadcast_id", id).not("read_started_at", "is", null);
+  for (const r of rows ?? []) {
+    const off = offsetSec(r.read_started_at, startedAt);
+    await db.from("stories").update({ vod_offset_sec: off, vod_url: vodLink(bc.vod_url, off, param) }).eq("id", r.id);
+  }
+  return json({ broadcast: bc, recalculated: rows?.length ?? 0 });
+}
+
+/** 읽기 시작: 시각을 기록하고 "읽음"으로. 방송 시작 시각과의 차이가 다시보기 시간이 돼요. */
+async function readStart(body: Record<string, unknown>) {
+  const id = str(body.id, 60);
+  const db = adminDb();
+  const { data: s } = await db.from("stories").select("id, receipt_no, status").eq("id", id).maybeSingle();
+  if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
+  if (s.status === "pending" || s.status === "rejected") throw new HttpError(400, "승인된 사연만 읽기 시작할 수 있어요.");
+  let bc = await currentBroadcastRow();
+  let autoStarted = false;
+  const now = new Date().toISOString();
+  if (!bc) {
+    // 방송 시작을 깜빡했으면 지금을 방송 시작으로 기록해요. (오늘 방송 정리에서 고칠 수 있어요)
+    const { data } = await db.from("broadcasts").insert({ started_at: now }).select("id, started_at, vod_url, published_at").single();
+    bc = data;
+    autoStarted = true;
+  }
+  const off = offsetSec(now, bc!.started_at);
+  await db
+    .from("stories")
+    .update({
+      status: "read",
+      scheduled: false,
+      aired_at: now,
+      read_started_at: now,
+      broadcast_id: bc!.id,
+      vod_offset_sec: off,
+      vod_url: vodLink(bc!.vod_url, off, await vodParam()),
+    })
+    .eq("id", id);
+  return json({ ok: true, receipt_no: s.receipt_no, offset_sec: off, broadcast: bc, auto_started: autoStarted });
+}
+
+/** 오늘 방송 정리: 회차 하나와 그 회차에 읽은 사연들 (읽은 순서대로) */
+async function wrapupGet(body: Record<string, unknown>) {
+  const db = adminDb();
+  const { data: recent } = await db.from("broadcasts").select("id, started_at, vod_url, published_at").order("started_at", { ascending: false }).limit(15);
+  const wanted = str(body.broadcast_id, 60);
+  const bc = (recent ?? []).find((b) => b.id === wanted) ?? (await currentBroadcastRow()) ?? recent?.[0] ?? null;
+  let items: unknown[] = [];
+  if (bc) {
+    const { data } = await db
+      .from("stories")
+      .select("id, receipt_no, display_name, visibility, summary, stamp, flags, status, user_id, aired_at, read_started_at, vod_offset_sec, vod_url, host_note, result_published_at, worry_animals(name, emoji)")
+      .eq("broadcast_id", bc.id)
+      .eq("status", "read")
+      .order("read_started_at", { ascending: true, nullsFirst: false })
+      .order("aired_at", { ascending: true });
+    items = (data ?? []).map((s: any) => {
+      const a = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
+      return {
+        id: s.id,
+        receipt_no: s.receipt_no,
+        summary: s.summary,
+        broadcast_name: broadcastName(s),
+        stamp: s.stamp,
+        flags: s.flags,
+        logged_in: !!s.user_id,
+        read_started_at: s.read_started_at,
+        vod_offset_sec: s.vod_offset_sec,
+        vod_url: s.vod_url,
+        host_note: s.host_note,
+        result_published_at: s.result_published_at,
+        animal: a ? { name: a.name, emoji: a.emoji } : null,
+      };
+    });
+  }
+  return json({ broadcast: bc, recent: recent ?? [], items, vod_time_param: await vodParam() });
+}
+
+/** 다시보기 주소 한 번 붙여넣기 → 모든 사연에 시간이 붙은 링크. 사연별 시간·한마디도 저장 */
+async function wrapupSave(body: Record<string, unknown>) {
+  const id = str(body.broadcast_id, 60);
+  const base = str(body.vod_url, 500);
+  if (base && !validVodUrl(base)) throw new HttpError(400, "다시보기 주소는 https:// 로 시작하는 주소로 넣어주세요.");
+  const db = adminDb();
+  const { data: bc } = await db.from("broadcasts").update({ vod_url: base || null }).eq("id", id).select("id").maybeSingle();
+  if (!bc) throw new HttpError(404, "방송 회차를 찾을 수 없어요.");
+  const param = await vodParam();
+  const items = Array.isArray(body.items) ? (body.items as Record<string, unknown>[]) : [];
+  for (const it of items.slice(0, 200)) {
+    const off = it.offset_sec === null || it.offset_sec === undefined || it.offset_sec === "" ? null : int(it.offset_sec);
+    if (off !== null && (off < 0 || off > 172800)) throw new HttpError(400, "다시보기 시간이 이상해요. (48시간 이내)");
+    const note = str(it.host_note, 400);
+    if ([...note].length > HOST_NOTE_MAX) throw new HttpError(400, `다웅의 한마디는 ${HOST_NOTE_MAX}자 이내로 써주세요.`);
+    await db
+      .from("stories")
+      .update({ vod_offset_sec: off, vod_url: base ? vodLink(base, off, param) : null, host_note: note || null })
+      .eq("id", str(it.id, 60))
+      .eq("broadcast_id", id);
+  }
+  return wrapupGet({ broadcast_id: id });
+}
+
+/** 결과 공개: 회차의 읽은 사연(또는 고른 사연)을 한꺼번에 공개하고, 로그인 사용자 도감에 모아요. */
+async function resultsPublish(body: Record<string, unknown>) {
+  const db = adminDb();
+  const bcId = str(body.broadcast_id, 60);
+  const ids = Array.isArray(body.ids) ? (body.ids as unknown[]).map((x) => str(x, 60)).filter(Boolean) : [];
+  let q = db.from("stories").select("id").eq("status", "read").is("result_published_at", null);
+  if (bcId) q = q.eq("broadcast_id", bcId);
+  else if (ids.length) q = q.in("id", ids);
+  else throw new HttpError(400, "공개할 방송 회차나 사연을 골라주세요.");
+  const { data: rows } = await q;
+  const targets = (rows ?? []).map((r) => r.id);
+  const now = new Date().toISOString();
+  if (targets.length) await db.from("stories").update({ result_published_at: now }).in("id", targets);
+  if (bcId) await db.from("broadcasts").update({ published_at: now }).eq("id", bcId);
+  const dex = await collectToDex(targets);
+  return json({ published: targets.length, collected: dex.collected, golden: dex.golden });
+}
+
+async function setScheduled(body: Record<string, unknown>) {
+  const id = str(body.id, 60);
+  const on = body.scheduled === true;
+  const db = adminDb();
+  const { data: s } = await db.from("stories").select("status").eq("id", id).maybeSingle();
+  if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
+  if (on && s.status !== "approved" && s.status !== "on_air") throw new HttpError(400, "방송 대기 중인 사연만 방송 예정으로 표시할 수 있어요.");
+  await db.from("stories").update({ scheduled: on }).eq("id", id);
+  return json({ ok: true, scheduled: on });
+}
+
+/** "확인 필요" 사연에 한해 방장이 결과 카드로 짧은 개인 메시지를 보낼 수 있어요. */
+async function privateMessage(body: Record<string, unknown>) {
+  const id = str(body.id, 60);
+  const text = str(body.text, 600);
+  if ([...text].length > PRIVATE_MESSAGE_MAX) throw new HttpError(400, `개인 메시지는 ${PRIVATE_MESSAGE_MAX}자 이내로 써주세요.`);
+  const db = adminDb();
+  const { data: s } = await db.from("stories").select("flags").eq("id", id).maybeSingle();
+  if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
+  if (!(s.flags ?? []).includes("care")) throw new HttpError(400, "개인 메시지는 '확인 필요' 사연에만 보낼 수 있어요.");
+  await db.from("stories").update({ private_message: text || null }).eq("id", id);
+  return json({ ok: true });
+}
+
+// ---------------------------------------------------------------------
+// 상담 후기 / 그 후 이야기 / 황금 동물 / 알림
+// ---------------------------------------------------------------------
+
+async function reviewsList(body: Record<string, unknown>) {
+  const status = str(body.status, 20) || "new";
+  if (!["new", "approved", "hidden"].includes(status)) throw new HttpError(400, "알 수 없는 상태예요.");
+  const db = adminDb();
+  const { data } = await db
+    .from("reviews")
+    .select("story_id, reaction, comment, share, status, flags, created_at, updated_at, reviewed_at, stories(receipt_no, summary, display_name, visibility, worry_animals(name, emoji))")
+    .eq("status", status)
+    .order("updated_at", { ascending: false })
+    .limit(200);
+  const counts: Record<string, number> = {};
+  for (const st of ["new", "approved", "hidden"]) {
+    const { count } = await db.from("reviews").select("story_id", { count: "exact", head: true }).eq("status", st);
+    counts[st] = count ?? 0;
+  }
+  const items = (data ?? []).map((r: any) => {
+    const s = r.stories;
+    const a = s ? (Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals) : null;
+    return {
+      story_id: r.story_id,
+      reaction: r.reaction,
+      comment: r.comment,
+      share: r.share,
+      status: r.status,
+      flags: r.flags,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      reviewed_at: r.reviewed_at,
+      receipt_no: s?.receipt_no,
+      summary: s?.summary,
+      broadcast_name: s ? broadcastName(s) : "",
+      animal: a ? { name: a.name, emoji: a.emoji } : null,
+    };
+  });
+  return json({ items, counts });
+}
+
+async function reviewSetStatus(body: Record<string, unknown>) {
+  const id = str(body.story_id, 60);
+  const status = str(body.status, 20);
+  if (!["new", "approved", "hidden"].includes(status)) throw new HttpError(400, "알 수 없는 상태예요.");
+  const { data } = await adminDb()
+    .from("reviews")
+    .update({ status, reviewed_at: status === "new" ? null : new Date().toISOString() })
+    .eq("story_id", id)
+    .select("story_id")
+    .maybeSingle();
+  if (!data) throw new HttpError(404, "후기를 찾을 수 없어요.");
+  return json({ ok: true });
+}
+
+async function reviewAdminDelete(body: Record<string, unknown>) {
+  await adminDb().from("reviews").delete().eq("story_id", str(body.story_id, 60));
+  return json({ ok: true });
+}
+
+/** 그 후 이야기: 후속 보고나 후기가 들어온 사연만 모아서 (최근 소식 순) */
+async function afterList() {
+  const db = adminDb();
+  const [{ data: fus }, { data: rvs }] = await Promise.all([
+    db.from("follow_ups").select("id, story_id, body, flags, care_checked, created_at").order("created_at", { ascending: false }).limit(500),
+    db.from("reviews").select("story_id, reaction, comment, share, status, flags, updated_at").order("updated_at", { ascending: false }).limit(500),
+  ]);
+  const last = new Map<string, string>();
+  for (const f of fus ?? []) if (!last.has(f.story_id) || last.get(f.story_id)! < f.created_at) last.set(f.story_id, f.created_at);
+  for (const r of rvs ?? []) if (!last.has(r.story_id) || last.get(r.story_id)! < r.updated_at) last.set(r.story_id, r.updated_at);
+  const ids = [...last.keys()];
+  if (!ids.length) return json({ items: [] });
+  const { data: stories } = await db
+    .from("stories")
+    .select("id, receipt_no, display_name, visibility, summary, body, stamp, category, status, created_at, aired_at, flags, worry_animals(name, emoji)")
+    .in("id", ids.slice(0, 200));
+  const items = (stories ?? [])
+    .map((s: any) => {
+      const a = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
+      return {
+        id: s.id,
+        receipt_no: s.receipt_no,
+        broadcast_name: broadcastName(s),
+        summary: s.summary,
+        body: s.body,
+        stamp: s.stamp,
+        category: s.category,
+        status: s.status,
+        flags: s.flags,
+        created_at: s.created_at,
+        aired_at: s.aired_at,
+        animal: a ? { name: a.name, emoji: a.emoji } : null,
+        follow_ups: (fus ?? []).filter((f) => f.story_id === s.id).reverse(),
+        review: (rvs ?? []).find((r) => r.story_id === s.id) ?? null,
+        last_at: last.get(s.id),
+      };
+    })
+    .sort((a, b) => (a.last_at! < b.last_at! ? 1 : -1));
+  return json({ items });
+}
+
+async function followupCheck(body: Record<string, unknown>) {
+  await adminDb().from("follow_ups").update({ care_checked: true }).eq("id", str(body.id, 60));
+  return json({ ok: true });
+}
+
+async function goldenList() {
+  const { data } = await adminDb()
+    .from("dex_entries")
+    .select("story_id, golden_code, claim_name, claimed_at, paid_at, collected_at, stories(receipt_no, summary, display_name, worry_animals(name, emoji))")
+    .eq("golden", true)
+    .order("collected_at", { ascending: false })
+    .limit(300);
+  const items = (data ?? []).map((d: any) => {
+    const s = d.stories;
+    const a = s ? (Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals) : null;
+    return {
+      story_id: d.story_id,
+      golden_code: d.golden_code,
+      claim_name: d.claim_name,
+      claimed_at: d.claimed_at,
+      paid_at: d.paid_at,
+      collected_at: d.collected_at,
+      receipt_no: s?.receipt_no,
+      summary: s?.summary,
+      display_name: s?.display_name,
+      animal: a ? { name: a.name, emoji: a.emoji } : null,
+    };
+  });
+  return json({ items });
+}
+
+async function goldenMarkPaid(body: Record<string, unknown>) {
+  const paid = body.paid !== false;
+  const { data } = await adminDb()
+    .from("dex_entries")
+    .update({ paid_at: paid ? new Date().toISOString() : null })
+    .eq("story_id", str(body.story_id, 60))
+    .eq("golden", true)
+    .select("story_id")
+    .maybeSingle();
+  if (!data) throw new HttpError(404, "황금 동물을 찾을 수 없어요.");
+  return json({ ok: true });
+}
+
+/** 메뉴 배지와 맨 위 알림: 검토 대기, 확인 필요 후속 보고, 새 후기, 받을 사람이 기다리는 황금 동물 */
+async function alerts(role: Role) {
+  const db = adminDb();
+  const [{ count: pending }, { data: care }, { count: newReviews }, { count: golden }] = await Promise.all([
+    db.from("stories").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    db
+      .from("follow_ups")
+      .select("id, story_id, body, created_at, stories(receipt_no)")
+      .contains("flags", ["care"])
+      .eq("care_checked", false)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    db.from("reviews").select("story_id", { count: "exact", head: true }).eq("status", "new"),
+    db.from("dex_entries").select("story_id", { count: "exact", head: true }).eq("golden", true).not("claimed_at", "is", null).is("paid_at", null),
+  ]);
+  return json({
+    pending_count: pending ?? 0,
+    care_followups: (care ?? []).map((f: any) => ({
+      id: f.id,
+      story_id: f.story_id,
+      receipt_no: f.stories?.receipt_no,
+      body: String(f.body).slice(0, 140),
+      created_at: f.created_at,
+    })),
+    new_reviews: newReviews ?? 0,
+    golden_waiting: role === "owner" ? golden ?? 0 : 0,
+  });
+}
+
+// ---------------------------------------------------------------------
 // 통계 / 설정
 // ---------------------------------------------------------------------
 
@@ -477,7 +894,7 @@ async function stats() {
   const db = adminDb();
   const week = kstStart("week");
   const countStatus = (st: string) => db.from("stories").select("id", { count: "exact", head: true }).eq("status", st);
-  const [{ data: weekRows }, { count: total }, pending, approved, onAir, read, rejected, { data: animals }, aiToday, aiMonth, aiFailToday] =
+  const [{ data: weekRows }, { count: total }, pending, approved, onAir, read, rejected, { data: animals }, aiToday, aiMonth, aiFailToday, { data: reviews }, { count: published }] =
     await Promise.all([
       db.from("stories").select("category, age, stamp").gte("created_at", week),
       db.from("stories").select("id", { count: "exact", head: true }),
@@ -490,6 +907,8 @@ async function stats() {
       db.from("ai_usage").select("id", { count: "exact", head: true }).gte("created_at", kstStart("day")),
       db.from("ai_usage").select("id", { count: "exact", head: true }).gte("created_at", kstStart("month")),
       db.from("ai_usage").select("id", { count: "exact", head: true }).gte("created_at", kstStart("day")).eq("ok", false),
+      db.from("reviews").select("reaction").limit(5000),
+      db.from("stories").select("id", { count: "exact", head: true }).eq("status", "read").not("result_published_at", "is", null),
     ]);
 
   const count = <T,>(rows: T[], key: (r: T) => string) => {
@@ -513,6 +932,14 @@ async function stats() {
   const animalCounts = count(animals ?? [], (a: any) => `${a.emoji} ${a.name}`);
   const topAnimals = Object.entries(animalCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const reviewed = (approved.count ?? 0) + (onAir.count ?? 0) + (read.count ?? 0) + (rejected.count ?? 0);
+  const reviewRows = reviews ?? [];
+  const reactionCounts = count(reviewRows, (r: any) => r.reaction);
+  const reactions = REACTIONS.map((r) => ({
+    id: r.id,
+    label: r.label,
+    count: reactionCounts[r.id] ?? 0,
+    percent: reviewRows.length ? Math.round(((reactionCounts[r.id] ?? 0) / reviewRows.length) * 100) : 0,
+  }));
 
   return json({
     week_count: rows.length,
@@ -527,6 +954,13 @@ async function stats() {
       rejected: rejected.count ?? 0,
     },
     approval_rate: reviewed ? Math.round((((approved.count ?? 0) + (onAir.count ?? 0) + (read.count ?? 0)) / reviewed) * 100) : 0,
+    // 방송 채택률: 들어온 사연 중 방송에서 읽은 비율
+    adoption_rate: total ? Math.round(((read.count ?? 0) / total) * 100) : 0,
+    review_count: reviewRows.length,
+    // 후기 작성률: 결과가 공개된 사연 중 후기가 들어온 비율
+    review_rate: published ? Math.round((reviewRows.length / published) * 100) : 0,
+    published_count: published ?? 0,
+    reactions,
     top_animals: topAnimals,
     ai: { today: aiToday.count ?? 0, month: aiMonth.count ?? 0, failed_today: aiFailToday.count ?? 0, enabled: aiEnabled(), model: Deno.env.get("AI_MODEL") || "claude-opus-5-5" },
   });
@@ -541,6 +975,9 @@ async function getSettings(role: Role) {
     week_theme: data.week_theme,
     preset: data.preset,
     accepting: data.accepting,
+    auto_notice_enabled: data.auto_notice_enabled,
+    auto_notice_days: data.auto_notice_days,
+    vod_time_param: data.vod_time_param,
   };
   if (role !== "owner") return json(base);
   return json({
@@ -567,7 +1004,28 @@ async function updateSettings(body: Record<string, unknown>) {
     patch.preset = s.preset;
   }
   if (typeof s.accepting === "boolean") patch.accepting = s.accepting;
-  await adminDb().from("settings").update(patch).eq("id", 1);
+  let noticeChanged = false;
+  if (typeof s.auto_notice_enabled === "boolean") {
+    patch.auto_notice_enabled = s.auto_notice_enabled;
+    noticeChanged = true;
+  }
+  if (s.auto_notice_days !== undefined) {
+    const d = int(s.auto_notice_days);
+    if (d === null || d < 1 || d > 90) throw new HttpError(400, "자동 공개 기간은 1~90일 사이로 정해주세요.");
+    patch.auto_notice_days = d;
+    noticeChanged = true;
+  }
+  if (typeof s.vod_time_param === "string") {
+    if (!["currentTime", "t"].includes(s.vod_time_param)) throw new HttpError(400, "알 수 없는 다시보기 시간 형식이에요.");
+    patch.vod_time_param = s.vod_time_param;
+  }
+  const db = adminDb();
+  await db.from("settings").update(patch).eq("id", 1);
+  if (noticeChanged) {
+    // 기간을 바꾸거나 끄면 아직 방송 전인 사연의 안내를 새 기준으로 다시 정해요.
+    await db.from("stories").update({ waiting_notice_at: null }).in("status", ["pending", "approved", "on_air"]).not("waiting_notice_at", "is", null);
+    await db.rpc("run_waiting_notices");
+  }
   return getSettings("owner");
 }
 
@@ -633,14 +1091,15 @@ const STATUS_LABEL: Record<string, string> = {
 async function exportCsv() {
   const { data } = await adminDb()
     .from("stories")
-    .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, starred, flags, aired_at, worry_animals(name, emoji)")
+    .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, starred, flags, aired_at, vod_url, host_note, worry_animals(name, emoji), reviews(reaction, comment)")
     .order("created_at", { ascending: true });
   const label = (list: { id: string; label: string }[], id: string) => list.find((o) => o.id === id)?.label ?? id;
-  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "나이", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일"];
+  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "나이", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일", "다시보기", "다웅의 한마디", "후기 반응", "한 줄 후기"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [head.map(esc).join(",")];
   for (const s of (data ?? []) as any[]) {
     const a = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
+    const rv = Array.isArray(s.reviews) ? s.reviews[0] : s.reviews;
     lines.push(
       [
         s.receipt_no,
@@ -662,6 +1121,10 @@ async function exportCsv() {
         (s.flags ?? []).join(" "),
         a ? `${a.emoji} ${a.name}` : "",
         s.aired_at ?? "",
+        s.vod_url ?? "",
+        s.host_note ?? "",
+        rv ? reactionLabel(rv.reaction) : "",
+        rv?.comment ?? "",
       ].map(esc).join(","),
     );
   }
@@ -731,6 +1194,40 @@ serve(async (req) => {
       return attempts();
     case "export_csv":
       return exportCsv();
+    case "alerts":
+      return alerts(session.role);
+    case "broadcast_current":
+      return broadcastCurrent();
+    case "broadcast_start":
+      return broadcastStart(body);
+    case "broadcast_update":
+      return broadcastUpdate(body);
+    case "read_start":
+      return readStart(body);
+    case "wrapup_get":
+      return wrapupGet(body);
+    case "wrapup_save":
+      return wrapupSave(body);
+    case "results_publish":
+      return resultsPublish(body);
+    case "set_scheduled":
+      return setScheduled(body);
+    case "private_message":
+      return privateMessage(body);
+    case "reviews_list":
+      return reviewsList(body);
+    case "review_set_status":
+      return reviewSetStatus(body);
+    case "review_delete":
+      return reviewAdminDelete(body);
+    case "after_list":
+      return afterList();
+    case "followup_check":
+      return followupCheck(body);
+    case "golden_list":
+      return goldenList();
+    case "golden_mark_paid":
+      return goldenMarkPaid(body);
     default:
       throw new HttpError(400, "알 수 없는 요청이에요.");
   }

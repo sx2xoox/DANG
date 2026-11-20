@@ -1174,3 +1174,87 @@
 .rl-big .rl-cap-split .bottom {
   border-radius: 0 0 60px 60px;
 }
+
+/* ---------------------------------------------------------------- 카드 도장 · 황금 동물 */
+.tc-window {
+  position: relative;
+}
+
+.tc-marks {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.tc-mark {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.85);
+  transform: rotate(-6deg);
+}
+
+.tc-mark-aired {
+  color: #c4121f;
+}
+
+.tc-mark-review {
+  color: #1d4ed8;
+  transform: rotate(4deg);
+}
+
+.tc-compact .tc-mark {
+  font-size: 9px;
+  padding: 1px 5px;
+}
+
+.tc-golden .tc-front {
+  background: linear-gradient(155deg, #fff7c2 0%, #ffd84a 38%, #fff3a8 52%, #e8b10f 100%);
+  border-color: #b8860b;
+  box-shadow: inset 0 0 0 3px #fff6cc, 0 0 0 3px #b8860b, 0 18px 46px rgba(184, 134, 11, 0.55);
+}
+
+.tc-golden .tc-top {
+  color: #7a5200;
+}
+
+.tc-golden .tc-window {
+  background: radial-gradient(circle at 50% 40%, #fffbe6, transparent 60%),
+    repeating-conic-gradient(from 0deg, #ffe066 0 12deg, #fff4bf 12deg 24deg);
+  border-color: #7a5200;
+}
+
+.tc-golden.is-revealed .tc-front::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.65) 45%, transparent 60%);
+  background-size: 250% 100%;
+  animation: goldShine 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes goldShine {
+  0% {
+    background-position: 120% 0;
+  }
+  60%,
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-golden.is-revealed .tc-front::after {
+    animation: none;
+  }
+}
