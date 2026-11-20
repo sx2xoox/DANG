@@ -31,7 +31,7 @@ export function GoldenBox({ storyId, dex, onChange }: { storyId: string; dex: De
 
   return (
     <section className="golden-box" aria-labelledby="gold-title">
-      <p className="golden-kicker">1% 확률의 행운</p>
+      <p className="golden-kicker">특별한 행운</p>
       <h2 id="gold-title">황금 고민 동물 발견!</h2>
       <p className="golden-desc">
         <b>인증하면 다웅이 치지직 구독권을 드려요.</b> 아래 인증 코드와 구독권 받을 치지직 닉네임을 남겨주세요. 다웅이 확인한 뒤 지급해요.

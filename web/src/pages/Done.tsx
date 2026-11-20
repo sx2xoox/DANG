@@ -137,7 +137,7 @@ export default function Done() {
             </p>
           ) : (
             <div className="code-slip-login">
-              <p>로그인하면 코드 없이도 내 사연함에서 결과를 모아 보고, 방송에서 읽힌 사연의 고민 동물을 도감에 모을 수 있어요. 1% 확률로 황금 동물이 나오면 구독권도 받아요! 방금 낸 사연도 옮겨드려요.</p>
+              <p>로그인하면 코드 없이도 내 사연함에서 결과를 모아 보고, 방송에서 읽힌 사연의 고민 동물을 도감에 모을 수 있어요. 방금 낸 사연도 옮겨드려요.</p>
               <button type="button" className="post-btn post-btn-sub" onClick={goLogin}>
                 로그인하고 모아두기
               </button>

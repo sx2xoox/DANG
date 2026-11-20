@@ -71,7 +71,7 @@ export default function StoryLookup() {
               <p>
                 <strong>내 사연함에 모아두기</strong>
                 <br />
-                로그인하면 코드 없이도 결과를 모아 보고, 방송에서 읽힌 사연의 고민 동물을 도감에 모을 수 있어요. 1% 확률로 황금 동물이 나오면 구독권도 받아요!
+                로그인하면 코드 없이도 결과를 모아 보고, 방송에서 읽힌 사연의 고민 동물을 도감에 모을 수 있어요.
               </p>
               <button type="button" className="post-btn post-btn-sub" onClick={moveToAccount}>
                 {session ? "내 사연함으로 옮기기" : "로그인하고 옮기기"}
