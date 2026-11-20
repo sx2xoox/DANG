@@ -1,12 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, NavLink, Route, Routes } from "react-router-dom";
 import "../styles/admin.css";
 import { AdminProvider, errMsg, useAdmin } from "./api";
 import { useSite } from "../lib/site";
+import Review from "./Review";
+import Broadcast from "./Broadcast";
 import Stories from "./Stories";
-import Waiting from "./Waiting";
-import Picker from "./Picker";
-import ObsControl from "./ObsControl";
 import Stats from "./Stats";
 import Settings from "./Settings";
 
@@ -47,9 +46,9 @@ function AdminLogin() {
 
   return (
     <div className="adm adm-login-wrap">
-      <form className="adm-login adm-panel" onSubmit={submit}>
+      <form className="adm-login" onSubmit={submit}>
         <p className="adm-eyebrow">{info.site_name}</p>
-        <h1 className="display">관리자 입장</h1>
+        <h1 className="adm-title">관리자 입장</h1>
         <div className="field">
           <label htmlFor="adm-pw">관리자 비밀번호 또는 매니저 코드</label>
           <input
@@ -78,24 +77,39 @@ function AdminLogin() {
         <button className="btn btn-primary btn-block" disabled={busy || !password}>
           {busy ? "확인 중…" : "들어가기"}
         </button>
-        <p className="faint">로그인하면 12시간 동안 유지돼요. 5번 연속 틀리면 10분 동안 잠겨요.</p>
+        <p className="faint">로그인은 12시간 유지돼요. 5번 연속 틀리면 10분 동안 잠겨요.</p>
       </form>
     </div>
   );
 }
 
 const NAV = [
-  { to: "/admin", label: "사연함", end: true },
-  { to: "/admin/waiting", label: "답장 대기" },
-  { to: "/admin/pick", label: "사연 뽑기" },
-  { to: "/admin/obs", label: "OBS 카드" },
+  { to: "/admin", label: "검토 대기", end: true, badge: true },
+  { to: "/admin/broadcast", label: "방송" },
+  { to: "/admin/stories", label: "사연함" },
   { to: "/admin/stats", label: "통계", owner: true },
   { to: "/admin/settings", label: "설정", owner: true },
 ];
 
 function AdminLayout() {
-  const { role, isOwner, logout } = useAdmin();
+  const { role, isOwner, logout, call, pendingCount, setPendingCount } = useAdmin();
   const { info } = useSite();
+
+  // 검토 대기 수: 들어올 때와 1분마다
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      call<{ pending_count: number }>("queue")
+        .then((r) => alive && setPendingCount(r.pending_count))
+        .catch(() => {});
+    load();
+    const t = window.setInterval(load, 60_000);
+    return () => {
+      alive = false;
+      window.clearInterval(t);
+    };
+  }, [call, setPendingCount]);
+
   return (
     <div className="adm">
       <a href="#adm-main" className="sr-only">
@@ -103,21 +117,26 @@ function AdminLayout() {
       </a>
       <aside className="adm-side">
         <div className="adm-brand">
-          <span className="display">{info.site_name}</span>
-          <span className={`adm-role ${role}`}>{role === "owner" ? "방장" : "매니저"}</span>
+          <span className="adm-brand-name">{info.site_name}</span>
+          <span className="adm-role">{role === "owner" ? "방장" : "매니저"}</span>
         </div>
         <nav className="adm-nav" aria-label="관리자 메뉴">
           {NAV.filter((n) => isOwner || !n.owner).map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => (isActive ? "is-active" : "")}>
-              {n.label}
+              <span>{n.label}</span>
+              {n.badge && pendingCount > 0 && (
+                <span className="adm-nav-count" aria-label={`${pendingCount}개`}>
+                  {pendingCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
         <div className="adm-side-foot">
-          <Link to="/" className="btn btn-ghost btn-sm" target="_blank" rel="noreferrer">
+          <Link to="/" target="_blank" rel="noreferrer">
             사이트 보기
           </Link>
-          <button className="btn btn-sm" onClick={logout}>
+          <button className="adm-linkbtn" onClick={logout}>
             로그아웃
           </button>
         </div>
@@ -129,11 +148,10 @@ function AdminLayout() {
           </p>
         )}
         <Routes>
-          <Route index element={<Stories />} />
-          <Route path="s/:id" element={<Stories />} />
-          <Route path="waiting" element={<Waiting />} />
-          <Route path="pick" element={<Picker />} />
-          <Route path="obs" element={<ObsControl />} />
+          <Route index element={<Review />} />
+          <Route path="broadcast" element={<Broadcast />} />
+          <Route path="stories" element={<Stories />} />
+          <Route path="stories/:id" element={<Stories />} />
           <Route path="stats" element={isOwner ? <Stats /> : <OwnerOnly />} />
           <Route path="settings" element={isOwner ? <Settings /> : <OwnerOnly />} />
           <Route path="*" element={<OwnerOnly text="없는 메뉴예요." />} />

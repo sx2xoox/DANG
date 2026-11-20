@@ -444,9 +444,11 @@
 
 .rl-title {
   color: #ffd400;
+  font-family: var(--font-serif);
+  font-weight: 800;
   font-size: 28px;
   line-height: 1.1;
-  text-shadow: 0 3px 0 #e11d2e;
+  letter-spacing: 0.04em;
 }
 
 .rl-bulbs {
@@ -596,8 +598,7 @@
 }
 
 .rl-big .rl-title {
-  font-size: 68px;
-  text-shadow: 0 6px 0 #e11d2e;
+  font-size: 60px;
 }
 
 .rl-big .rl-bulbs span {
@@ -620,9 +621,15 @@
 }
 
 .rl-big .rl-sum {
-  font-size: 46px;
-  font-family: var(--font-display);
-  font-weight: 400;
+  font-size: 44px;
+  font-family: var(--font-serif);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.rl-big.rl-gacha .rl-sum,
+.rl-big.rl-cork .rl-sum {
+  font-family: inherit;
 }
 
 .rl-big .rl-name {

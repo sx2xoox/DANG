@@ -3,6 +3,7 @@ import { GOMIN, optionEmoji, optionLabel, temperatureLabel } from "@shared/boxes
 import { errMsg, useAdmin, type StoryBundle } from "./api";
 import { StampSticker, Spinner, temperatureColor, useToast } from "../components/ui";
 import { ageGender } from "../lib/format";
+import { CareNote } from "./parts";
 import { store } from "../lib/supabase";
 
 /** 방송에서 사연을 읽을 때 쓰는 큰 글씨 화면 */
@@ -24,7 +25,10 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
 
   useEffect(() => {
     load();
-  }, [load]);
+    call<{ story_id: string | null; revealed: boolean }>("broadcast_state")
+      .then((b) => setRevealed(b.story_id === id && b.revealed))
+      .catch(() => {});
+  }, [load, call, id]);
 
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
@@ -62,7 +66,7 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
   return (
     <div className="adm-read" role="dialog" aria-modal="true" aria-label="읽기 모드">
       <div className="adm-read-bar">
-        <span className="display">읽기 모드</span>
+        <span className="adm-title-sm">읽기 모드</span>
         <span className="spacer" />
         <div className="row" role="group" aria-label="글자 크기">
           <button className="btn btn-sm" onClick={() => changeFont(-2)} aria-label="글자 작게">
@@ -95,6 +99,7 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
               </strong>
             </div>
           </div>
+          {s.flags.includes("care") && <CareNote />}
           <div className="adm-read-head">
             <StampSticker stamp={s.stamp} size="lg" />
             <div>
@@ -102,7 +107,7 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
                 #{s.receipt_no} · {s.broadcast_name}
                 {ageGender(s.age, s.gender) ? ` · ${ageGender(s.age, s.gender)}` : ""} · {optionLabel(GOMIN.categories, s.category)}
               </p>
-              <h2 className="display adm-read-summary">{s.summary}</h2>
+              <h2 className="adm-read-summary">{s.summary}</h2>
               <p className="adm-read-temp" style={{ ["--t" as string]: temperatureColor(s.temperature) }}>
                 고민 온도 <b>{s.temperature}°</b> · {temperatureLabel(s.temperature)}
               </p>
@@ -127,14 +132,14 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
         <div className="adm-read-actions">
           <button
             className="btn"
-            disabled={s.visibility === "private"}
-            onClick={() => act(() => call("broadcast", { op: "show", id: s.id }), "OBS 카드에 띄웠어요")}
+            disabled={s.status === "pending" || s.status === "rejected"}
+            onClick={() => act(() => call("broadcast", { op: "show", id: s.id }), "방송 화면에 띄웠어요")}
           >
-            OBS에 띄우기
+            방송 화면에 띄우기
           </button>
           <button
             className="btn btn-blue"
-            disabled={s.visibility === "private"}
+            disabled={s.status === "pending" || s.status === "rejected"}
             onClick={() =>
               act(async () => {
                 if (!revealed) {

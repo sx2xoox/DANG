@@ -22,6 +22,9 @@ type Ctx = {
   session: AdminSession | null;
   role: Role | null;
   isOwner: boolean;
+  /** 검토 대기 사연 수 (메뉴 배지) */
+  pendingCount: number;
+  setPendingCount: (n: number) => void;
   call: <T = any>(action: string, body?: Record<string, unknown>) => Promise<T>;
   login: (password: string, remember: boolean) => Promise<void>;
   logout: () => Promise<void>;
@@ -31,6 +34,7 @@ const AdminCtx = createContext<Ctx>(null as unknown as Ctx);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AdminSession | null>(loadSession);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const call = useCallback(
     async <T,>(action: string, body: Record<string, unknown> = {}): Promise<T> => {
@@ -77,7 +81,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AdminCtx.Provider value={{ session, role: session?.role ?? null, isOwner: session?.role === "owner", call, login, logout }}>
+    <AdminCtx.Provider
+      value={{ session, role: session?.role ?? null, isOwner: session?.role === "owner", pendingCount, setPendingCount, call, login, logout }}
+    >
       {children}
     </AdminCtx.Provider>
   );
@@ -103,6 +109,8 @@ export function useWide(min = 1100) {
 }
 
 // ---------------------------------------------------------------- 타입
+export type Status = "pending" | "approved" | "on_air" | "read" | "rejected";
+
 export type ListItem = {
   id: string;
   receipt_no: number;
@@ -119,15 +127,16 @@ export type ListItem = {
   voice: string;
   visibility: string;
   badge: string;
-  status: string;
+  status: Status;
+  starred: boolean;
   flags: string[];
   animal_state: string;
   created_at: string;
+  created_day: string;
+  reviewed_at: string | null;
+  aired_at: string | null;
   logged_in: boolean;
   animal: { name: string; emoji: string; source: string } | null;
-  reply_sent_at: string | null;
-  reply_kind: string | null;
-  has_draft: boolean;
   follow_up_count: number;
 };
 
@@ -136,7 +145,6 @@ export type FullStory = ListItem & {
   write_mode: string;
   template_id: string | null;
   template_answers: string[] | null;
-  aired_at: string | null;
   viewer_status: string;
 };
 
@@ -153,36 +161,55 @@ export type AnimalRow = {
   change_reason: string | null;
 };
 
-export type ReplyRow = {
-  body: string;
-  draft: string | null;
-  kind: string;
-  aired_on: string | null;
-  vod_url: string | null;
-  verdict_yes: number | null;
-  verdict_no: number | null;
-  sent_at: string | null;
-  opened_at: string | null;
-};
-
 export type StoryBundle = {
   story: FullStory;
   animal: AnimalRow | null;
-  reply: ReplyRow | null;
   follow_ups: { id: string; body: string; created_at: string }[];
   picks: { picked_at: string }[];
 };
 
+export type BroadcastState = {
+  story_id: string | null;
+  hidden: boolean;
+  revealed: boolean;
+  scroll: number;
+  roulette: unknown;
+  updated_at: string;
+  stories: { receipt_no: number; summary: string; display_name: string; visibility: string; status: Status } | null;
+};
+
+export const STATUS_LABEL: Record<Status, string> = {
+  pending: "검토 대기",
+  approved: "방송 대기",
+  on_air: "방송 중",
+  read: "방송에서 읽음",
+  rejected: "반려",
+};
+
 export const VISIBILITY_LABEL: Record<string, string> = {
-  named: "방송에서 이름 공개",
-  anonymous: "방송에서 익명",
-  private: "방장만 보기",
+  named: "이름 공개",
+  anonymous: "익명으로 읽기",
 };
 
 export const ANIMAL_STATE_LABEL: Record<string, { label: string; tone: string }> = {
-  pending: { label: "AI가 만드는 중", tone: "blue" },
+  pending: { label: "만드는 중", tone: "blue" },
   ready: { label: "AI가 지음", tone: "ok" },
-  fallback: { label: "기본 동물 사용 중", tone: "warn" },
-  failed: { label: "AI 실패, 기본 동물 사용 중", tone: "warn" },
+  fallback: { label: "기본 동물", tone: "warn" },
+  failed: { label: "AI 실패 · 기본 동물", tone: "warn" },
   manual: { label: "직접 수정함", tone: "ok" },
 };
+
+/** 한국 날짜 문자열(2026-11-20) → "11월 20일 (금)" */
+export function dayLabel(day: string): string {
+  const [y, m, d] = day.split("-").map(Number);
+  const dow = "일월화수목금토"[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${m}월 ${d}일 (${dow})`;
+}
+
+/** 입력칸에 글자를 치는 중이면 단축키를 쓰지 않습니다. */
+export function typingTarget(e: KeyboardEvent): boolean {
+  const t = e.target as HTMLElement | null;
+  if (!t) return false;
+  const tag = t.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable;
+}

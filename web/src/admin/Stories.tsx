@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { GOMIN, optionLabel } from "@shared/boxes.ts";
-import { errMsg, useAdmin, useWide, type ListItem } from "./api";
-import { StampSticker, temperatureColor } from "../components/ui";
-import { ADMIN_STATUS, FLAG_LABEL, ageGender, shortDate } from "../lib/format";
+import { STATUS_LABEL, errMsg, useAdmin, useWide, type ListItem } from "./api";
+import { FlagChips, StatusChip, Temp } from "./parts";
+import { StampSticker } from "../components/ui";
+import { FLAG_LABEL, ageGender, shortDate } from "../lib/format";
 import StoryDetail from "./StoryDetail";
 
 type Filters = {
@@ -13,7 +14,7 @@ type Filters = {
   voice: string;
   status: string;
   visibility: string;
-  replied: string;
+  starred: string;
   flag: string;
   age_min: string;
   age_max: string;
@@ -27,7 +28,7 @@ const EMPTY: Filters = {
   voice: "",
   status: "",
   visibility: "",
-  replied: "",
+  starred: "",
   flag: "",
   age_min: "",
   age_max: "",
@@ -93,7 +94,7 @@ export default function Stories() {
           <label htmlFor="adm-q" className="sr-only">
             키워드 검색
           </label>
-          <input id="adm-q" className="input" type="search" placeholder="요약, 본문, 이름 검색" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input id="adm-q" className="input" type="search" placeholder="요약·본문·이름 검색" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="row adm-list-tools">
           <label className="sr-only" htmlFor="adm-sort">
@@ -129,18 +130,10 @@ export default function Stories() {
               label="상태"
               value={filters.status}
               onChange={set("status")}
-              options={Object.entries(ADMIN_STATUS).map(([id, label]) => ({ id, label }))}
+              options={Object.entries(STATUS_LABEL).map(([id, label]) => ({ id, label }))}
             />
             <Select label="공개 방식" value={filters.visibility} onChange={set("visibility")} options={GOMIN.visibilities} />
-            <Select
-              label="답장"
-              value={filters.replied}
-              onChange={set("replied")}
-              options={[
-                { id: "no", label: "아직 안 함" },
-                { id: "yes", label: "답장 보냄" },
-              ]}
-            />
+            <Select label="별표" value={filters.starred} onChange={set("starred")} options={[{ id: "yes", label: "별표만" }]} />
             <Select
               label="표시"
               value={filters.flag}
@@ -160,7 +153,7 @@ export default function Stories() {
             </div>
           </div>
         )}
-        <p className="faint" aria-live="polite">
+        <p className="adm-dim adm-small" aria-live="polite">
           {loading ? "불러오는 중…" : `${total}개`}
         </p>
       </div>
@@ -172,40 +165,28 @@ export default function Stories() {
       <ul className="adm-rows">
         {items.map((s) => (
           <li key={s.id}>
-            <Link to={`/admin/s/${s.id}`} className={`adm-row ${s.id === id ? "is-active" : ""} ${s.flags.includes("care") ? "is-care" : ""}`}>
-              <div className="adm-row-top">
-                <span className="adm-no">#{s.receipt_no}</span>
-                <span className={`chip adm-status st-${s.status}`}>{ADMIN_STATUS[s.status] ?? s.status}</span>
-                {s.flags.map((f) => (
-                  <span key={f} className={`chip ${f === "care" ? "chip-red" : "adm-flag"}`}>
-                    {FLAG_LABEL[f] ?? f}
-                  </span>
-                ))}
-                <span className="spacer" />
-                <span className="faint">{shortDate(s.created_at)}</span>
-              </div>
-              <div className="adm-row-main">
-                <StampSticker stamp={s.stamp} size="sm" />
-                <div className="adm-row-text">
-                  <strong>{s.summary}</strong>
-                  <span className="faint">
-                    {s.broadcast_name}
-                    {ageGender(s.age, s.gender) ? ` · ${ageGender(s.age, s.gender)}` : ""} · {optionLabel(GOMIN.categories, s.category)}
-                  </span>
-                </div>
-                <span className="adm-temp" style={{ ["--t" as string]: temperatureColor(s.temperature) }} title="고민 온도">
-                  {s.temperature}°
+            <Link to={`/admin/stories/${s.id}`} className={`adm-row ${s.id === id ? "is-active" : ""} ${s.flags.includes("care") ? "is-care" : ""}`}>
+              <span className="adm-no">#{s.receipt_no}</span>
+              <StampSticker stamp={s.stamp} size="sm" />
+              <span className="adm-row-text">
+                <b>{s.summary}</b>
+                <span className="adm-dim">
+                  {s.broadcast_name}
+                  {ageGender(s.age, s.gender) ? ` · ${ageGender(s.age, s.gender)}` : ""} · {optionLabel(GOMIN.categories, s.category)} · {shortDate(s.created_at)}
                 </span>
-              </div>
-              <div className="adm-row-bottom faint">
-                {s.animal && (
-                  <span title={s.animal.name}>
-                    <span aria-hidden="true">{s.animal.emoji}</span> {s.animal.name}
-                  </span>
-                )}
-                <span>{s.reply_sent_at ? (s.reply_kind === "auto" ? "자동 답장 보냄" : "답장 보냄") : s.has_draft ? "답장 쓰는 중" : "답장 전"}</span>
-                {s.follow_up_count > 0 && <span>후속 보고 {s.follow_up_count}</span>}
-              </div>
+                <span className="adm-row-tags">
+                  <StatusChip status={s.status} />
+                  {s.starred && <span className="adm-star" aria-label="별표">★</span>}
+                  <FlagChips flags={s.flags} />
+                  {s.animal && (
+                    <span className="adm-dim">
+                      <span aria-hidden="true">{s.animal.emoji}</span> {s.animal.name}
+                    </span>
+                  )}
+                  {s.follow_up_count > 0 && <span className="adm-dim">후속 보고 {s.follow_up_count}</span>}
+                </span>
+              </span>
+              <Temp t={s.temperature} />
             </Link>
           </li>
         ))}
@@ -234,22 +215,42 @@ export default function Stories() {
       onChanged={() => setReload((r) => r + 1)}
       onDeleted={() => {
         setReload((r) => r + 1);
-        nav("/admin");
+        nav("/admin/stories");
       }}
-      onBack={wide ? undefined : () => nav("/admin")}
+      onBack={wide ? undefined : () => nav("/admin/stories")}
     />
   ) : (
-    <div className="adm-panel adm-placeholder">
-      <p className="display">왼쪽에서 사연을 골라주세요</p>
-      <p className="faint">사연을 누르면 여기에서 자세히 보고 답장을 쓸 수 있어요.</p>
+    <div className="adm-empty">
+      <p className="adm-title-sm">왼쪽에서 사연을 골라주세요</p>
+      <p className="adm-dim">승인·반려, 별표, 고민 동물 수정, 방송 화면에 띄우기를 여기서 할 수 있어요.</p>
     </div>
   );
 
-  if (!wide) return id ? detail : list;
+  const head = (
+    <header className="adm-head">
+      <div>
+        <h1 className="adm-title">사연함</h1>
+        <p className="adm-dim">들어온 모든 사연이에요. 반려한 사연도 여기서 다시 볼 수 있어요.</p>
+      </div>
+    </header>
+  );
+
+  if (!wide)
+    return id ? (
+      detail
+    ) : (
+      <div className="adm-page">
+        {head}
+        {list}
+      </div>
+    );
   return (
-    <div className="adm-split">
-      {list}
-      <div className="adm-detail-col">{detail}</div>
+    <div className="adm-page">
+      {head}
+      <div className="adm-split">
+        {list}
+        <div className="adm-detail-col">{detail}</div>
+      </div>
     </div>
   );
 }

@@ -11,8 +11,6 @@ type SettingsData = {
   week_theme: string;
   preset: Preset;
   accepting: boolean;
-  auto_reply_enabled: boolean;
-  auto_reply_days: number;
   manager_enabled: boolean;
   obs_key: string | null;
   ai_enabled: boolean;
@@ -20,8 +18,8 @@ type SettingsData = {
 };
 
 const PRESETS: { id: Preset; name: string; desc: string }[] = [
-  { id: "classic", name: "기본 (다웅 남색)", desc: "짙은 남색 밤하늘에 노란 별. 우체통에 편지가 쏙." },
-  { id: "cork", name: "코르크 보드", desc: "포스트잇이 압정으로 꽂히는 게시판 느낌." },
+  { id: "classic", name: "다웅 우체국", desc: "남색 책상 위 항공우편 봉투. 명조 제목과 우표, 소인." },
+  { id: "cork", name: "코르크 보드", desc: "사연 모집 전단지와 포스트잇, 실로 이은 카드." },
   { id: "gacha", name: "캡슐 뽑기", desc: "또렷한 외곽선과 캡슐 뽑기 기계." },
 ];
 
@@ -67,8 +65,6 @@ export default function Settings() {
           week_theme: s.week_theme,
           preset: s.preset,
           accepting: s.accepting,
-          auto_reply_enabled: s.auto_reply_enabled,
-          auto_reply_days: s.auto_reply_days,
         },
       });
       setS(next);
@@ -83,9 +79,9 @@ export default function Settings() {
   };
 
   return (
-    <div className="stack">
-      <header className="adm-page-head">
-        <h1 className="display">설정</h1>
+    <div className="adm-page">
+      <header className="adm-head">
+        <h1 className="adm-title">설정</h1>
       </header>
 
       <form className="adm-panel adm-form" onSubmit={save} aria-label="사이트 설정">
@@ -134,40 +130,18 @@ export default function Settings() {
                 </span>
               </span>
               <span className="adm-preset-name">{p.name}</span>
-              <span className="faint">{p.desc}</span>
+              <span className="adm-dim adm-small">{p.desc}</span>
             </label>
           ))}
         </div>
-        <p className="faint">고르면 사이트 전체 색이 바로 미리 바뀌어요. 저장해야 시청자 화면과 OBS 카드에도 적용돼요.</p>
-
-        <h2 className="adm-h3">자동 답장</h2>
-        <label className="adm-switch">
-          <input type="checkbox" checked={s.auto_reply_enabled} onChange={(e) => set("auto_reply_enabled", e.target.checked)} />
-          <span>
-            <b>오래 기다린 사연에 자동 답장</b>
-            <small>고민 동물 + 짧은 응원 한마디만 보내요. "확인 필요" 사연에는 절대 자동으로 보내지 않아요.</small>
-          </span>
-        </label>
-        <div className="field" style={{ maxWidth: 240 }}>
-          <label htmlFor="st-days">며칠 지나면 보낼까요?</label>
-          <input
-            id="st-days"
-            className="input"
-            type="number"
-            min={1}
-            max={60}
-            value={s.auto_reply_days}
-            disabled={!s.auto_reply_enabled}
-            onChange={(e) => set("auto_reply_days", Number(e.target.value))}
-          />
-        </div>
+        <p className="adm-dim adm-small">고르면 사이트 전체 색이 바로 미리 바뀌어요. 저장해야 시청자 화면과 OBS 카드에도 적용돼요.</p>
 
         <div className="row">
           <button className="btn btn-primary" disabled={saving}>
             {saving ? "저장 중…" : "설정 저장"}
           </button>
         </div>
-        <p className="faint">AI: {s.ai_enabled ? `사용 중 (${s.ai_model})` : "AI 키가 없어 기본 동물만 쓰고 있어요"}</p>
+        <p className="adm-dim adm-small">AI: {s.ai_enabled ? `사용 중 (${s.ai_model})` : "AI 키가 없어 기본 동물만 쓰고 있어요"}</p>
       </form>
 
       <ManagerSection enabled={s.manager_enabled} onChanged={load} />
@@ -196,7 +170,7 @@ function ManagerSection({ enabled, onChanged }: { enabled: boolean; onChanged: (
   return (
     <section className="adm-panel adm-form" aria-label="매니저 코드">
       <h2 className="adm-h3">매니저 코드</h2>
-      <p className="muted">매니저는 사연 보기, 별표, 뽑기(OBS 카드 띄우기 포함)만 할 수 있어요. 삭제, 답장 보내기, 설정은 못 해요.</p>
+      <p className="adm-dim">매니저는 사연 보기, 별표, 다음 사연 뽑기와 방송 화면 조작만 할 수 있어요. 승인·반려, 읽음 처리, 삭제, 설정은 방장만 해요.</p>
       <p>
         상태: <b>{enabled ? "켜짐" : "꺼짐"}</b>
       </p>
@@ -205,7 +179,7 @@ function ManagerSection({ enabled, onChanged }: { enabled: boolean; onChanged: (
           <p>
             새 매니저 코드: <code className="adm-code">{code}</code>
           </p>
-          <p className="faint">이 코드는 지금 한 번만 보여요. 매니저에게 전달해 주세요.</p>
+          <p className="adm-dim adm-small">이 코드는 지금 한 번만 보여요. 매니저에게 전달해 주세요.</p>
           <button className="btn btn-sm" onClick={async () => toast((await copyText(code)) ? "복사했어요" : "복사하지 못했어요")}>
             복사
           </button>
@@ -316,17 +290,17 @@ function AttemptsSection() {
       <details onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
         <summary className="adm-h3">관리자 로그인 기록 (최근 50개)</summary>
         {!items ? (
-          <p className="faint">불러오는 중…</p>
+          <p className="adm-dim adm-small">불러오는 중…</p>
         ) : (
           <ul className="adm-attempts">
             {items.map((a, i) => (
               <li key={i}>
                 <span className={`chip ${a.success ? "chip-blue" : "chip-red"}`}>{a.success ? "성공" : "실패"}</span>
-                <span className="faint">{formatDate(a.created_at, true)}</span>
+                <span className="adm-dim adm-small">{formatDate(a.created_at, true)}</span>
                 <span className="adm-attempt-detail">{a.detail}</span>
               </li>
             ))}
-            {!items.length && <li className="faint">기록이 없어요.</li>}
+            {!items.length && <li className="adm-dim adm-small">기록이 없어요.</li>}
           </ul>
         )}
       </details>
@@ -360,7 +334,7 @@ function ExportSection() {
   return (
     <section className="adm-panel" aria-label="내보내기">
       <h2 className="adm-h3">내보내기</h2>
-      <p className="muted">전체 사연을 엑셀에서 열 수 있는 CSV 파일로 내려받아요. 개인정보가 담겨 있으니 보관에 주의해 주세요.</p>
+      <p className="adm-dim">전체 사연을 엑셀에서 열 수 있는 CSV 파일로 내려받아요. 개인정보가 담겨 있으니 보관에 주의해 주세요.</p>
       <button className="btn" onClick={download} disabled={busy}>
         {busy ? "만드는 중…" : "CSV 내려받기"}
       </button>

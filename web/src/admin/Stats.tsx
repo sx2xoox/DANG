@@ -9,9 +9,8 @@ type StatsData = {
   week_by_age: Record<string, number>;
   week_by_stamp: Record<string, number>;
   total: number;
-  replied: number;
-  auto_replied: number;
-  reply_rate: number;
+  by_status: { pending: number; approved: number; read: number; rejected: number };
+  approval_rate: number;
   top_animals: [string, number][];
   ai: { today: number; month: number; failed_today: number; enabled: boolean; model: string };
 };
@@ -35,22 +34,28 @@ export default function Stats() {
     );
   if (!d) return <Spinner />;
 
-  const cat = GOMIN.categories.map((c) => ({ label: `${c.emoji} ${c.label}`, value: d.week_by_category[c.id] ?? 0 }));
-  const stamps = GOMIN.stamps.map((s) => ({ label: `${s.emoji} ${s.label}`, value: d.week_by_stamp[s.id] ?? 0, color: s.color }));
+  const cat = GOMIN.categories.map((c) => ({ label: c.label, value: d.week_by_category[c.id] ?? 0 }));
+  const stamps = GOMIN.stamps.map((s) => ({ label: s.label, value: d.week_by_stamp[s.id] ?? 0, color: s.color }));
   const ages = AGE_ORDER.filter((a) => d.week_by_age[a]).map((a) => ({ label: a, value: d.week_by_age[a] }));
 
   return (
-    <div className="stack">
-      <header className="adm-page-head">
-        <h1 className="display">통계</h1>
-        <p className="muted">이번 주는 월요일부터 세요 (한국 시간).</p>
+    <div className="adm-page">
+      <header className="adm-head">
+        <div>
+          <h1 className="adm-title">통계</h1>
+          <p className="adm-dim">이번 주는 월요일부터 세요 (한국 시간).</p>
+        </div>
       </header>
       <div className="adm-kpis">
-        <Kpi label="이번 주 사연" value={`${d.week_count}개`} />
-        <Kpi label="전체 사연" value={`${d.total}개`} />
-        <Kpi label="답장 완료율" value={`${d.reply_rate}%`} sub={`${d.replied}개 답장 (자동 ${d.auto_replied})`} />
-        <Kpi label="AI 호출 오늘" value={`${d.ai.today}번`} sub={d.ai.failed_today ? `실패 ${d.ai.failed_today}번` : "실패 없음"} />
-        <Kpi label="AI 호출 이번 달" value={`${d.ai.month}번`} sub={d.ai.enabled ? d.ai.model : "AI 키 없음 (기본 동물만)"} />
+        <Kpi label="이번 주 사연" value={d.week_count} unit="개" />
+        <Kpi label="전체 사연" value={d.total} unit="개" />
+        <Kpi label="검토 대기" value={d.by_status.pending} unit="개" />
+        <Kpi label="방송 대기" value={d.by_status.approved} unit="개" />
+        <Kpi label="방송에서 읽음" value={d.by_status.read} unit="개" />
+        <Kpi label="반려" value={d.by_status.rejected} unit="개" />
+        <Kpi label="승인률" value={d.approval_rate} unit="%" sub="검토한 사연 중 승인한 비율" />
+        <Kpi label="AI 호출 오늘" value={d.ai.today} unit="번" sub={d.ai.failed_today ? `실패 ${d.ai.failed_today}번` : "실패 없음"} />
+        <Kpi label="AI 호출 이번 달" value={d.ai.month} unit="번" sub={d.ai.enabled ? d.ai.model : "AI 키 없음 (기본 동물만)"} />
       </div>
       <div className="adm-stat-grid">
         <Bars title="이번 주 종류별" rows={cat} />
@@ -66,12 +71,15 @@ export default function Stats() {
   );
 }
 
-function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function Kpi({ label, value, unit, sub }: { label: string; value: number; unit: string; sub?: string }) {
   return (
     <div className="adm-kpi">
-      <span className="faint">{label}</span>
-      <strong className="display">{value}</strong>
-      {sub && <span className="faint">{sub}</span>}
+      <span className="adm-label">{label}</span>
+      <strong>
+        <span className="adm-mono">{value}</span>
+        <small>{unit}</small>
+      </strong>
+      {sub && <span className="adm-dim adm-small">{sub}</span>}
     </div>
   );
 }
@@ -90,12 +98,12 @@ function Bars({ title, rows, empty }: { title: string; rows: { label: string; va
               <span className="adm-bar" aria-hidden="true">
                 <span style={{ width: `${(r.value / max) * 100}%`, background: r.color }} />
               </span>
-              <b>{r.value}</b>
+              <b className="adm-mono">{r.value}</b>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="faint">{empty}</p>
+        <p className="adm-dim">{empty}</p>
       )}
     </section>
   );

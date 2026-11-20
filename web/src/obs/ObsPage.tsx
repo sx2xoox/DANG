@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { GOMIN, optionEmoji, optionLabel } from "@shared/boxes.ts";
+import { GOMIN, optionLabel } from "@shared/boxes.ts";
 import { FUNCTIONS_URL } from "../lib/supabase";
 import { applyPreset, type Preset } from "../lib/site";
 import { ageGender } from "../lib/format";
@@ -9,9 +9,10 @@ import { Roulette, type RouletteCandidate } from "../components/Roulette";
 import "../styles/obs.css";
 
 // =====================================================================
-// OBS 방송 카드 (1920×1080 투명 배경)
-// OBS → 소스 추가 → 브라우저 → URL 에 관리자 페이지의 주소를 붙여넣고 너비 1920, 높이 1080.
-// 본문은 절대 표시하지 않습니다.
+// OBS 방송 화면 (1920×1080 투명 배경)
+// 다웅이 승인한 사연을 방송에서 "열어서" 시청자와 같이 읽는 화면입니다.
+// OBS → 소스 추가 → 브라우저 → URL 에 관리자 페이지의 주소, 너비 1920, 높이 1080.
+// 오른쪽 위(약 480×340)는 캠 자리로 비워 둡니다.
 // =====================================================================
 
 type ObsAnimal = { name: string; emoji: string; why?: string; quote?: string; hashtags?: string[] };
@@ -23,6 +24,7 @@ type ObsCard = {
   age: number | null;
   gender: string | null;
   summary: string;
+  body: string;
   stamp: string;
   voice: string;
   category: string;
@@ -34,6 +36,7 @@ type ObsRoulette = {
   started_at: string;
   duration_ms: number;
   result_index: number;
+  day?: string;
   candidates: RouletteCandidate[];
 };
 
@@ -42,6 +45,7 @@ type ObsState = {
   site_name: string;
   hidden: boolean;
   revealed: boolean;
+  scroll: number;
   roulette: ObsRoulette | null;
   updated_at: string;
   server_time: string;
@@ -53,9 +57,9 @@ const STAGE_W = 1920;
 const STAGE_H = 1080;
 /** 룰렛이 끝난 뒤 이 시간 안에 처음 열렸다면 아직 보여줍니다 */
 const ROULETTE_GRACE_MS = 8000;
-/** 룰렛이 멈춘 뒤 결과를 잠깐 보여주고 카드로 넘어가는 시간 */
+/** 룰렛이 멈춘 뒤 결과를 잠깐 보여주고 편지로 넘어가는 시간 */
 const ROULETTE_HOLD_MS = 1600;
-const LEAVE_MS = 450;
+const LEAVE_MS = 650;
 
 const PLAYED_KEY = "dg.obs.playedRoulettes";
 
@@ -113,6 +117,13 @@ function useTransparentPage() {
   }, []);
 }
 
+/** 2026-11-20 → 11월 20일 */
+function dayLabel(day?: string): string {
+  if (!day) return "";
+  const [, m, d] = day.split("-").map(Number);
+  return m && d ? `${m}월 ${d}일` : day;
+}
+
 export default function ObsPage() {
   const [params] = useSearchParams();
   const key = params.get("key") ?? "";
@@ -162,7 +173,7 @@ export default function ObsPage() {
     if (state?.preset) applyPreset(state.preset);
   }, [state?.preset]);
 
-  // ------------------------------------------------------------ 룰렛
+  // ------------------------------------------------------------ 룰렛 (같은 날 사연이 여럿일 때만)
   const playedRef = useRef<Set<string>>(loadPlayed());
   const [activeRoulette, setActiveRoulette] = useState<(ObsRoulette & { localStart: number }) | null>(null);
 
@@ -200,7 +211,7 @@ export default function ObsPage() {
     }
   }, [state, activeRoulette]);
 
-  // ------------------------------------------------------------ 카드 등장/퇴장
+  // ------------------------------------------------------------ 편지 등장/퇴장
   const wantCard = state && !state.hidden && !activeRoulette ? state.card : null;
   const [shown, setShown] = useState<{ card: ObsCard; leaving: boolean } | null>(null);
   const lastAnimal = useRef<Record<string, ObsAnimal>>({});
@@ -243,6 +254,10 @@ export default function ObsPage() {
 
         {activeRoulette && (
           <div className="obs-roulette" key={activeRoulette.id}>
+            <p className="obs-roulette-banner">
+              {activeRoulette.day && <span className="obs-roulette-day">{dayLabel(activeRoulette.day)} 도착</span>}
+              같은 날 도착한 사연 {activeRoulette.candidates.length}통 중에서 뽑는 중
+            </p>
             <Roulette
               candidates={activeRoulette.candidates}
               resultIndex={activeRoulette.result_index}
@@ -256,11 +271,12 @@ export default function ObsPage() {
         )}
 
         {shown && (
-          <ObsStoryCard
+          <ObsLetter
             key={shown.card.id}
             card={shown.card}
             animal={shown.card.animal ?? lastAnimal.current[shown.card.id] ?? null}
             revealed={!!state?.revealed && !!shown.card.animal}
+            scroll={state?.scroll ?? 0}
             leaving={shown.leaving}
             preset={preset}
             siteName={state?.site_name ?? ""}
@@ -272,13 +288,46 @@ export default function ObsPage() {
 }
 
 // ---------------------------------------------------------------------
-// 사연 카드
+// 열린 사연 (편지)
 // ---------------------------------------------------------------------
 
-function ObsStoryCard({
+/** 본문 영역 높이를 재서 쪽 수와 현재 쪽 이동 거리를 계산합니다. */
+function usePaging(scroll: number, deps: unknown[]) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [m, setM] = useState({ vh: 0, ch: 0, line: 63 });
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const v = viewportRef.current;
+      const c = contentRef.current;
+      if (!v || !c) return;
+      const line = parseFloat(getComputedStyle(c).lineHeight) || 63;
+      setM({ vh: v.clientHeight, ch: c.scrollHeight, line });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (viewportRef.current) ro.observe(viewportRef.current);
+    if (contentRef.current) ro.observe(contentRef.current);
+    document.fonts?.ready.then(measure);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  // 한 번에 보이는 높이의 약 85%씩, 줄 단위로 맞춰 넘깁니다.
+  const step = Math.max(m.line, Math.floor((m.vh * 0.85) / m.line) * m.line);
+  const overflow = Math.max(0, m.ch - m.vh);
+  const pages = m.vh ? 1 + Math.ceil(overflow / step) : 1;
+  const page = Math.min(Math.max(0, scroll), pages - 1);
+  const offset = Math.min(page * step, overflow);
+  return { viewportRef, contentRef, pages, page, offset, more: offset < overflow - 2 };
+}
+
+function ObsLetter({
   card,
   animal,
   revealed,
+  scroll,
   leaving,
   preset,
   siteName,
@@ -286,84 +335,109 @@ function ObsStoryCard({
   card: ObsCard;
   animal: ObsAnimal | null;
   revealed: boolean;
+  scroll: number;
   leaving: boolean;
   preset: Preset;
   siteName: string;
 }) {
-  const voiceEmoji = optionEmoji(GOMIN.voices, card.voice);
   const voiceLabel = optionLabel(GOMIN.voices, card.voice);
-  const catEmoji = optionEmoji(GOMIN.categories, card.category);
   const catLabel = optionLabel(GOMIN.categories, card.category);
   const who = ageGender(card.age, card.gender);
+  const { viewportRef, contentRef, pages, page, offset, more } = usePaging(scroll, [card.id, card.body, preset]);
+  const no = String(card.receipt_no).padStart(4, "0");
 
   return (
-    <section className={`obs-card ${leaving ? "is-leaving" : "is-entering"}`} aria-label="지금 읽는 사연">
-      {preset === "cork" && <span className="obs-tape" aria-hidden="true" />}
-      {preset === "gacha" && (
-        <span className="obs-capsule" aria-hidden="true">
-          <span className="top" />
-          <span className="bottom" />
-        </span>
-      )}
-      <div className="obs-tab display">{preset === "classic" ? "오늘의 고민 사연" : siteName || "오늘의 고민 사연"}</div>
+    <div className={`obs-open ${leaving ? "is-leaving" : "is-entering"}`}>
+      <section className="obs-letter" aria-label="지금 읽는 사연">
+        {preset === "cork" && (
+          <>
+            <span className="obs-tape obs-tape-l" aria-hidden="true" />
+            <span className="obs-tape obs-tape-r" aria-hidden="true" />
+          </>
+        )}
+        {preset === "gacha" && (
+          <span className="obs-capsule" aria-hidden="true">
+            <span className="top" />
+            <span className="bottom" />
+          </span>
+        )}
 
-      <div className="obs-card-body">
-        <div className="obs-info">
-          <div className="obs-meta">
-            <span className="obs-chip">
-              <span aria-hidden="true">{catEmoji}</span> {catLabel}
-            </span>
-            <span className="obs-no">사연 #{card.receipt_no}</span>
-          </div>
-          <h1 className="obs-summary display">{card.summary}</h1>
-          <div className="obs-who">
-            <strong>{card.name}</strong>
-            {who && <span>{who}</span>}
-          </div>
-          <div className="obs-voice">
-            <span className="obs-voice-label">읽어줄 목소리</span>
-            <span className="obs-voice-value">
-              <span aria-hidden="true">{voiceEmoji}</span> {voiceLabel}
-            </span>
-          </div>
-        </div>
-
-        <div className="obs-stamp">
-          <StampSticker stamp={card.stamp} size="lg" />
-        </div>
-
-        <div className={`obs-animal ${revealed ? "is-revealed" : ""}`}>
-          <div className="obs-animal-inner">
-            <div className="obs-animal-face obs-animal-back">
-              <span className="obs-q display" aria-hidden="true">
-                ?
-              </span>
-              <span className="obs-animal-title display">고민 동물</span>
-              <span className="obs-animal-sub">곧 공개됩니다</span>
+        <div className="obs-paper">
+          <header className="obs-head">
+            <div className="obs-kicker">
+              <span className="obs-no">No. {no}</span>
+              <span className="obs-cat">{catLabel}</span>
             </div>
-            <div className="obs-animal-face obs-animal-front">
-              {animal && (
-                <>
-                  <span className="obs-animal-emoji" aria-hidden="true">
-                    {animal.emoji}
-                  </span>
-                  <span className="obs-animal-name display">{animal.name}</span>
-                  {animal.why && <span className="obs-animal-why">{animal.why}</span>}
-                  {animal.quote && <span className="obs-animal-quote">“{animal.quote}”</span>}
-                  {animal.hashtags?.length ? (
-                    <span className="obs-animal-tags">
-                      {animal.hashtags.map((t) => (
-                        <span key={t}>{t}</span>
-                      ))}
-                    </span>
-                  ) : null}
-                </>
+            <h1 className={`obs-summary ${[...card.summary].length > 14 ? "is-long" : ""}`}>{card.summary}</h1>
+            <div className="obs-who">
+              <span className="obs-from">보낸 사람</span>
+              <strong>{card.name}</strong>
+              {who && <span className="obs-age">{who}</span>}
+            </div>
+            <div className="obs-marks" aria-hidden="true">
+              <StampSticker stamp={card.stamp} size="lg" />
+              {preset === "classic" && (
+                <span className="obs-postmark">
+                  <span>다웅 우체국</span>
+                  <b>No.{no}</b>
+                </span>
               )}
             </div>
+          </header>
+
+          <div className="obs-voice">
+            <span className="obs-voice-k">읽어줄 목소리</span>
+            <span className="obs-voice-v">{voiceLabel}</span>
           </div>
-          {revealed && <span className="obs-burst" aria-hidden="true" />}
+
+          <div className={`obs-body-viewport ${more ? "has-more" : ""}`} ref={viewportRef}>
+            <div className="obs-body" ref={contentRef} style={{ transform: `translateY(${-offset}px)` }}>
+              {card.body}
+            </div>
+          </div>
+
+          <footer className="obs-foot">
+            <span className="obs-site">{siteName || "다웅 고민 사연함"}</span>
+            {pages > 1 && (
+              <span className="obs-page" aria-label={`${pages}쪽 중 ${page + 1}쪽`}>
+                {page + 1} / {pages}
+              </span>
+            )}
+          </footer>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <aside className={`obs-animal ${revealed ? "is-revealed" : ""}`} aria-label="고민 동물">
+        <div className="obs-animal-inner">
+          <div className="obs-animal-face obs-animal-back">
+            <span className="obs-q" aria-hidden="true">
+              ?
+            </span>
+            <span className="obs-animal-title">고민 동물</span>
+            <span className="obs-animal-sub">곧 공개돼요</span>
+          </div>
+          <div className="obs-animal-face obs-animal-front">
+            {animal && (
+              <>
+                <span className="obs-animal-k">이 사연의 고민 동물</span>
+                <span className="obs-animal-emoji" aria-hidden="true">
+                  {animal.emoji}
+                </span>
+                <span className="obs-animal-name">{animal.name}</span>
+                {animal.why && <span className="obs-animal-why">{animal.why}</span>}
+                {animal.quote && <span className="obs-animal-quote">“{animal.quote}”</span>}
+                {animal.hashtags?.length ? (
+                  <span className="obs-animal-tags">
+                    {animal.hashtags.map((t) => (
+                      <span key={t}>{t}</span>
+                    ))}
+                  </span>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }
