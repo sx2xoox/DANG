@@ -152,6 +152,8 @@ export type ListItem = {
   broadcast_name: string;
   name_mode: string;
   age: number | null;
+  age_group: string | null;
+  age_public: boolean;
   gender: string | null;
   category: string;
   summary: string;

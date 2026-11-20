@@ -20,6 +20,8 @@ export type Receipt = {
   created_at: string;
   care: boolean;
   logged_in: boolean;
+  /** 만 14세 미만일 수 있는 사연: 로그인 계정과 연결하지 않아요 */
+  under14?: boolean;
   animal: Animal;
   // 결과 화면용 (제출할 때 고른 값)
   category: string;
@@ -131,7 +133,11 @@ export default function Done() {
               접수증 이미지로 저장
             </button>
           </div>
-          {session ? (
+          {receipt.under14 ? (
+            <p className="code-slip-note">
+              만 14세 미만일 수 있는 사연은 로그인 계정과 연결하지 않아요. <b>접수번호와 비밀 코드를 꼭 저장해 두세요.</b> 이 코드로 결과와 방송 여부를 볼 수 있어요.
+            </p>
+          ) : session && receipt.logged_in ? (
             <p className="code-slip-note">
               로그인되어 있어서 <Link to="/me">내 사연함</Link>에도 담겼어요.
             </p>

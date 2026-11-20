@@ -52,6 +52,38 @@ export function findContacts(text: string): ContactWarning[] {
   return out;
 }
 
+export type IdentifierWarning = { kind: "school" | "name" | "address" | "class"; sample: string };
+
+const CLASSROOM = /\d\s?학년\s?\d{1,2}\s?반|\d-\d{1,2}\s?반/g;
+
+/**
+ * 학생 사연에서 나를(또는 친구를) 알아볼 수 있는 내용: 학교 이름, "김OO 선생님/씨" 같은 실명 호칭, 주소, "2학년 3반".
+ * 방송에서는 사연 원문이 그대로 읽히니, 제출 전에 경고하고 관리자 화면에도 표시해요.
+ */
+export function findIdentifiers(text: string): IdentifierWarning[] {
+  const out: IdentifierWarning[] = [];
+  const add = (kind: IdentifierWarning["kind"], re: RegExp) => {
+    re.lastIndex = 0;
+    for (const m of text.matchAll(re)) out.push({ kind, sample: m[0].trim() });
+    re.lastIndex = 0;
+  };
+  add("school", SCHOOL);
+  add("name", PERSON);
+  add("address", ADDRESS);
+  add("class", CLASSROOM);
+  // "선생님", "우리 형" 처럼 성씨로 시작하는 보통 말은 빼고, 같은 말은 한 번만
+  const seen = new Set<string>();
+  return out.filter((w) => {
+    if (w.kind === "name" && NOT_NAMES.has(w.sample)) return false;
+    const key = `${w.kind}:${w.sample}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+const NOT_NAMES = new Set(["선생", "선배", "후배", "사장", "원장", "실장", "부장", "과장", "차장", "대리", "주임", "팀장", "우리", "고객", "친구", "동생", "언니", "누나", "오빠", "형"]);
+
 export function needsCare(text: string): boolean {
   return hits(text, CARE_WORDS).length > 0;
 }
@@ -68,6 +100,7 @@ export function detectFlags(text: string): string[] {
   if (hits(text, TARGETING).length > 0 || AT_HANDLE.test(text)) flags.push("targeting");
   AT_HANDLE.lastIndex = 0;
   if (findContacts(text).length > 0) flags.push("pii");
+  if (findIdentifiers(text).length > 0) flags.push("school");
   return flags;
 }
 

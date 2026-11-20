@@ -44,7 +44,7 @@ export default function LoungeHome({ info, loggedIn }: { info: HomeInfo; loggedI
             나이도, 고민 크기도 상관없어요. 이름 없이 보내도 괜찮아요.
             <br className="lg-br" /> 다웅이 방송에서 읽고 같이 이야기해요.
           </p>
-          <p className="lg-hand">— 오늘도 고생 많았어요. 다웅</p>
+          <p className="lg-hand">— 오늘도 고생 많았어요</p>
 
           <div className="lg-cta">
             {info.accepting ? (

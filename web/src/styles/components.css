@@ -1290,3 +1290,18 @@
 .tc-golden .tc-addr {
   color: #3b2a00;
 }
+
+.help-text-k {
+  margin: 12px 0 4px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.help-lines .help-text-lines {
+  display: block;
+  list-style: disc;
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.7;
+}

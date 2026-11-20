@@ -22,7 +22,7 @@ type StatsData = {
   ai: { today: number; month: number; failed_today: number; enabled: boolean; model: string };
 };
 
-const AGE_ORDER = ["13세 이하", "14~19세", "20~24세", "25~29세", "30대", "40세 이상", "모름"];
+const AGE_ORDER = [...GOMIN.ageGroups.map((g) => g.label), "모름"];
 
 export default function Stats() {
   const { call } = useAdmin();
@@ -76,7 +76,7 @@ export default function Stats() {
         />
         <Bars title="이번 주 종류별" rows={cat} />
         <Bars title="이번 주 감정 우표" rows={stamps} />
-        <Bars title="이번 주 나이대" rows={ages} empty="이번 주 사연이 아직 없어요." />
+        <Bars title="이번 주 학년대" rows={ages} empty="이번 주 사연이 아직 없어요." />
         <Bars
           title="많이 나온 고민 동물"
           rows={d.top_animals.map(([label, value]) => ({ label, value }))}

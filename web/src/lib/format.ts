@@ -1,4 +1,4 @@
-import { GOMIN, optionLabel } from "@shared/boxes.ts";
+import { ageGroupFromAge, ageGroupLabel, GOMIN, optionLabel } from "@shared/boxes.ts";
 
 export function formatDate(iso: string | null | undefined, withTime = false): string {
   if (!iso) return "";
@@ -17,10 +17,32 @@ export function daysSince(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 }
 
+export type PersonInfo = {
+  age?: number | null;
+  age_group?: string | null;
+  age_public?: boolean | null;
+  gender?: string | null;
+};
+
+/**
+ * 사연자 소개 (학년대 · 나이 · 성별)
+ *  - broadcast: 방송·OBS·읽기 화면용. 정확한 나이는 사연자가 공개를 고른 경우에만
+ *  - admin: 관리자 목록·상세용. 비공개 나이는 "(방송 비공개)" 표시
+ */
+export function personLabel(p: PersonInfo, mode: "broadcast" | "admin" = "broadcast"): string {
+  const group = ageGroupLabel(p.age_group ?? (mode === "admin" ? ageGroupFromAge(p.age) : null));
+  let age = "";
+  if (p.age) {
+    if (p.age_public) age = `${p.age}살`;
+    else if (mode === "admin") age = `${p.age}살(방송 비공개)`;
+  }
+  const g = p.gender && p.gender !== "none" ? optionLabel(GOMIN.genders, p.gender) : "";
+  return [group, age, g].filter(Boolean).join(" · ");
+}
+
+/** @deprecated 예전 화면 호환용: 나이를 공개한 것으로 보고 표시 */
 export function ageGender(age: number | null | undefined, gender: string | null | undefined): string {
-  const g = gender && gender !== "none" ? optionLabel(GOMIN.genders, gender) : "";
-  const a = age ? `${age}살` : "";
-  return [a, g].filter(Boolean).join(" · ");
+  return personLabel({ age, age_public: true, gender }, "broadcast");
 }
 
 export const VIEWER_STATUS: Record<string, { label: string; tone: string; desc: string }> = {
@@ -48,4 +70,5 @@ export const FLAG_LABEL: Record<string, string> = {
   profanity: "욕설",
   targeting: "저격 의심",
   pii: "개인정보 의심",
+  school: "학교·실명 의심",
 };

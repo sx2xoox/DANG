@@ -21,7 +21,7 @@ serve(async (req) => {
   if (b?.story_id && !b.hidden) {
     const { data: s } = await db
       .from("stories")
-      .select("id, receipt_no, display_name, visibility, age, gender, summary, body, stamp, voice, category, status")
+      .select("id, receipt_no, display_name, visibility, age, age_group, age_public, gender, summary, body, stamp, voice, category, status")
       .eq("id", b.story_id)
       .maybeSingle();
     if (s && s.status !== "pending" && s.status !== "rejected") {
@@ -38,7 +38,9 @@ serve(async (req) => {
         id: s.id,
         receipt_no: s.receipt_no,
         name: s.visibility === "named" ? s.display_name : "익명의 사연자",
-        age: s.age,
+        // 방송 화면에는 학년대만. 정확한 나이는 사연자가 공개를 고른 경우에만
+        age: s.age_public ? s.age : null,
+        age_group: s.age_group,
         gender: s.gender,
         summary: s.summary,
         body: s.body,

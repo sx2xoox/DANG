@@ -66,7 +66,7 @@ export default function StoryLookup() {
     <>
       <MyStoryView data={data} auth={{ receipt_no: creds.receipt_no, code: creds.code }} onChange={setData} canClaimGolden={false}>
         <section className="lookup-manage" aria-label="이 사연 관리">
-          {!data.story.claimed && (
+          {!data.story.claimed && !data.story.under14 && (
             <div className="lookup-row">
               <p>
                 <strong>내 사연함에 모아두기</strong>

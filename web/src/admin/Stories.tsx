@@ -5,7 +5,7 @@ import { reactionLabel } from "@shared/results.ts";
 import { STATUS_LABEL, errMsg, useAdmin, useWide, type ListItem } from "./api";
 import { FlagChips, StatusChip, Temp } from "./parts";
 import { StampSticker } from "../components/ui";
-import { FLAG_LABEL, ageGender, shortDate } from "../lib/format";
+import { FLAG_LABEL, personLabel, shortDate } from "../lib/format";
 import StoryDetail from "./StoryDetail";
 
 type Filters = {
@@ -176,7 +176,7 @@ export default function Stories() {
                 <b>{s.summary}</b>
                 <span className="adm-dim">
                   {s.broadcast_name}
-                  {ageGender(s.age, s.gender) ? ` · ${ageGender(s.age, s.gender)}` : ""} · {optionLabel(GOMIN.categories, s.category)} · {shortDate(s.created_at)}
+                  {personLabel(s, "admin") ? ` · ${personLabel(s, "admin")}` : ""} · {optionLabel(GOMIN.categories, s.category)} · {shortDate(s.created_at)}
                 </span>
                 <span className="adm-row-tags">
                   <StatusChip status={s.status} />

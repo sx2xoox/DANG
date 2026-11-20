@@ -2,7 +2,7 @@ import { GOMIN, optionEmoji, optionLabel, temperatureLabel } from "@shared/boxes
 import { HELP_LINES } from "@shared/boxes.ts";
 import { STATUS_LABEL, VISIBILITY_LABEL, type AnimalRow, type ListItem, type Status } from "./api";
 import { temperatureColor } from "../components/ui";
-import { FLAG_LABEL, ageGender } from "../lib/format";
+import { FLAG_LABEL, personLabel } from "../lib/format";
 
 export function StatusChip({ status }: { status: Status }) {
   return <span className={`adm-st st-${status}`}>{STATUS_LABEL[status] ?? status}</span>;
@@ -29,8 +29,8 @@ export function Temp({ t }: { t: number }) {
   );
 }
 
-export function Who({ s }: { s: Pick<ListItem, "broadcast_name" | "display_name" | "visibility" | "age" | "gender" | "name_mode" | "logged_in"> }) {
-  const ag = ageGender(s.age, s.gender);
+export function Who({ s }: { s: Pick<ListItem, "broadcast_name" | "display_name" | "visibility" | "age" | "age_group" | "age_public" | "gender" | "name_mode" | "logged_in"> }) {
+  const ag = personLabel(s, "admin");
   return (
     <span className="adm-who">
       <b>{s.display_name}</b>

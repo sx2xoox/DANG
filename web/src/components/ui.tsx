@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { GOMIN, HELP_LINES, type Option } from "@shared/boxes.ts";
+import { GOMIN, HELP_LINES, HELP_TEXT_LINES, type Option } from "@shared/boxes.ts";
 
 // ---------------------------------------------------------------- 토스트
 const ToastCtx = createContext<(msg: string) => void>(() => {});
@@ -138,7 +138,7 @@ export function HelpLines({ compact = false }: { compact?: boolean }) {
   return (
     <section className={`help-lines ${compact ? "compact" : ""}`} aria-label="도움받을 수 있는 곳">
       <h2 className="display">혼자 견디지 마세요</h2>
-      {!compact && <p>지금 많이 힘들다면, 아래 번호로 바로 이야기할 수 있어요. 24시간, 무료예요.</p>}
+      {!compact && <p>지금 많이 힘들다면, 아래 번호로 바로 이야기할 수 있어요. 무료이고, 이름을 말하지 않아도 돼요.</p>}
       <ul>
         {HELP_LINES.map((h) => (
           <li key={h.tel}>
@@ -148,6 +148,16 @@ export function HelpLines({ compact = false }: { compact?: boolean }) {
           </li>
         ))}
       </ul>
+      {!compact && (
+        <>
+          <p className="help-text-k">전화가 어렵다면 문자·카톡으로도 돼요</p>
+          <ul className="help-text-lines">
+            {HELP_TEXT_LINES.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   );
 }

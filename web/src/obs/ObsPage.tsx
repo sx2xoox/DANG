@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { GOMIN, optionLabel } from "@shared/boxes.ts";
 import { FUNCTIONS_URL } from "../lib/supabase";
 import { applyPreset, type Preset } from "../lib/site";
-import { ageGender } from "../lib/format";
+import { personLabel } from "../lib/format";
 import { StampSticker } from "../components/ui";
 import { Roulette, type RouletteCandidate } from "../components/Roulette";
 import "../styles/obs.css";
@@ -22,6 +22,7 @@ type ObsCard = {
   receipt_no: number;
   name: string;
   age: number | null;
+  age_group: string | null;
   gender: string | null;
   summary: string;
   body: string;
@@ -232,7 +233,7 @@ export default function ObsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantCard?.id, wantCard, shown?.card.id, shown?.leaving]);
 
-  const preset: Preset = state?.preset ?? "lounge";
+  const preset: Preset = state?.preset ?? "cork";
 
   return (
     <div className={`obs-root obs-${preset}`}>
@@ -345,7 +346,7 @@ function ObsLetter({
 }) {
   const voiceLabel = optionLabel(GOMIN.voices, card.voice);
   const catLabel = optionLabel(GOMIN.categories, card.category);
-  const who = ageGender(card.age, card.gender);
+  const who = personLabel({ age: card.age, age_public: card.age !== null, age_group: card.age_group, gender: card.gender });
   const { viewportRef, contentRef, pages, page, offset, clipH, more } = usePaging(scroll, [card.id, card.body, preset]);
   const no = String(card.receipt_no).padStart(4, "0");
 

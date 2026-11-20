@@ -6,7 +6,7 @@
 // 매니저는 사연 보기, 별표, 뽑기(+OBS 카드 조작), 방송 시작/읽기 시작만 할 수 있습니다.
 // (후기 승인, 방송 결과 공개, 다시보기 링크 입력, 황금 동물 지급은 방장만)
 // =====================================================================
-import { GOMIN } from "../_shared/boxes.ts";
+import { ageGroupFromAge, ageGroupLabel, GOMIN } from "../_shared/boxes.ts";
 import { clientIp, corsHeaders, HttpError, int, json, readJson, serve, str } from "../_shared/http.ts";
 import { adminDb } from "../_shared/db.ts";
 import { hashPassword, randomCode, randomToken, safeEqual, sha256, verifyPassword } from "../_shared/crypto.ts";
@@ -171,7 +171,7 @@ function broadcastName(s: { display_name: string; visibility: string }): string 
 }
 
 const LIST_FIELDS =
-  "id, receipt_no, display_name, name_mode, age, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, scheduled, consent_shorts, ref, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, read_started_at, result_published_at, waiting_notice_at, user_id, worry_animals(name, emoji, source), follow_ups(count), reviews(reaction)";
+  "id, receipt_no, display_name, name_mode, age, age_group, age_public, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, scheduled, consent_shorts, ref, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, read_started_at, result_published_at, waiting_notice_at, user_id, worry_animals(name, emoji, source), follow_ups(count), reviews(reaction)";
 
 function listRow(s: any) {
   const animal = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
@@ -182,6 +182,8 @@ function listRow(s: any) {
     broadcast_name: broadcastName(s),
     name_mode: s.name_mode,
     age: s.age,
+    age_group: s.age_group,
+    age_public: s.age_public,
     gender: s.gender,
     category: s.category,
     summary: s.summary,
@@ -335,7 +337,7 @@ async function toggleStar(body: Record<string, unknown>) {
 async function toggleFlag(body: Record<string, unknown>) {
   const id = str(body.id, 60);
   const flag = str(body.flag, 20);
-  if (!["care", "profanity", "targeting", "pii"].includes(flag)) throw new HttpError(400, "알 수 없는 표시예요.");
+  if (!["care", "profanity", "targeting", "pii", "school"].includes(flag)) throw new HttpError(400, "알 수 없는 표시예요.");
   const db = adminDb();
   const { data: s } = await db.from("stories").select("flags").eq("id", id).maybeSingle();
   if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
@@ -932,7 +934,7 @@ async function stats() {
   const countStatus = (st: string) => db.from("stories").select("id", { count: "exact", head: true }).eq("status", st);
   const [{ data: weekRows }, { count: total }, pending, approved, onAir, read, rejected, { data: animals }, aiToday, aiMonth, aiFailToday, { data: reviews }, { count: published }] =
     await Promise.all([
-      db.from("stories").select("category, age, stamp").gte("created_at", week),
+      db.from("stories").select("category, age, age_group, stamp").gte("created_at", week),
       db.from("stories").select("id", { count: "exact", head: true }),
       countStatus("pending"),
       countStatus("approved"),
@@ -956,15 +958,8 @@ async function stats() {
     return m;
   };
   const rows = weekRows ?? [];
-  const ageBand = (a: number | null) => {
-    if (a === null || a === undefined) return "모름";
-    if (a < 14) return "13세 이하";
-    if (a < 20) return "14~19세";
-    if (a < 25) return "20~24세";
-    if (a < 30) return "25~29세";
-    if (a < 40) return "30대";
-    return "40세 이상";
-  };
+  // 학년대별 (예전 사연은 나이로 짐작)
+  const ageBand = (r: { age: number | null; age_group: string | null }) => ageGroupLabel(r.age_group ?? ageGroupFromAge(r.age)) || "모름";
   const animalCounts = count(animals ?? [], (a: any) => `${a.emoji} ${a.name}`);
   const topAnimals = Object.entries(animalCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const reviewed = (approved.count ?? 0) + (onAir.count ?? 0) + (read.count ?? 0) + (rejected.count ?? 0);
@@ -980,7 +975,7 @@ async function stats() {
   return json({
     week_count: rows.length,
     week_by_category: count(rows, (r: any) => r.category),
-    week_by_age: count(rows, (r: any) => ageBand(r.age)),
+    week_by_age: count(rows, (r: any) => ageBand(r)),
     week_by_stamp: count(rows, (r: any) => r.stamp),
     total: total ?? 0,
     by_status: {
@@ -1168,10 +1163,10 @@ const STATUS_LABEL: Record<string, string> = {
 async function exportCsv() {
   const { data } = await adminDb()
     .from("stories")
-    .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, starred, flags, aired_at, vod_url, host_note, consent_shorts, ref, worry_animals(name, emoji), reviews(reaction, comment)")
+    .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, starred, flags, aired_at, vod_url, host_note, consent_shorts, ref, age_group, age_public, worry_animals(name, emoji), reviews(reaction, comment)")
     .order("created_at", { ascending: true });
   const label = (list: { id: string; label: string }[], id: string) => list.find((o) => o.id === id)?.label ?? id;
-  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "나이", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일", "다시보기", "다웅의 한마디", "후기 반응", "한 줄 후기", "쇼츠 사용 동의", "유입 영상"];
+  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "학년대", "나이", "나이 방송공개", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일", "다시보기", "다웅의 한마디", "후기 반응", "한 줄 후기", "쇼츠 사용 동의", "유입 영상"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [head.map(esc).join(",")];
   for (const s of (data ?? []) as any[]) {
@@ -1184,7 +1179,9 @@ async function exportCsv() {
         s.display_name,
         s.name_mode === "chzzk" ? "치지직 닉네임" : "익명",
         label(GOMIN.visibilities, s.visibility),
-        s.age,
+        ageGroupLabel(s.age_group ?? ageGroupFromAge(s.age)),
+        s.age ?? "",
+        s.age_public ? "공개" : "",
         label(GOMIN.genders, s.gender),
         label(GOMIN.categories, s.category),
         s.summary,

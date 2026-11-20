@@ -170,7 +170,9 @@ export type AnimalInput = {
   care?: boolean;
 };
 
-export function fallbackKey(i: AnimalInput): string {
+export function fallbackKey(input: AnimalInput): string {
+  // 시험·성적 고민은 진로 고민과 같은 동물 계열로
+  const i = { ...input, category: input.category === "exam" ? "career" : input.category };
   if (i.care) return "sea_otter";
   if (i.wish === "fact" && i.stamp !== "sad") return "racehorse";
   if (i.temperature <= 15) return "capybara";

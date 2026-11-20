@@ -24,37 +24,58 @@ export type BoxConfig = {
   voices: Option[];
   visibilities: Option[];
   genders: Option[];
+  /** 학년대: 정확한 나이 대신 방송·관리 화면에 쓰는 분류 */
+  ageGroups: Option[];
 };
 
 export const GOMIN: BoxConfig = {
   id: "gomin",
   name: "고민 사연함",
+  // 10대 학생이 주로 보내는 고민 순서. id 는 예전 사연과 맞추려고 그대로 둡니다.
   categories: [
-    { id: "love", label: "연애", emoji: "💌" },
-    { id: "friend", label: "친구", emoji: "🤝" },
+    { id: "school_work", label: "학교생활", emoji: "🏫", desc: "반·선생님·조별과제" },
+    { id: "exam", label: "시험·성적", emoji: "📝" },
+    { id: "friend", label: "친구·단톡방", emoji: "🤝" },
+    { id: "love", label: "썸·연애", emoji: "💌" },
     { id: "family", label: "가족", emoji: "🏠" },
-    { id: "school_work", label: "학교·직장", emoji: "🏫" },
-    { id: "career", label: "진로·공부", emoji: "🧭" },
-    { id: "money", label: "돈", emoji: "💸" },
-    { id: "self", label: "나 자신", emoji: "🪞", desc: "외모·건강·성격" },
+    { id: "career", label: "진로", emoji: "🧭" },
+    { id: "self", label: "외모·나 자신", emoji: "🪞", desc: "외모·건강·성격" },
+    { id: "money", label: "용돈·돈", emoji: "💸" },
     { id: "etc", label: "기타", emoji: "📦" },
   ],
   templates: {
-    love: [
+    school_work: [
       {
-        id: "love-reply",
-        text: "제가 [[누구]]한테 [[한 말이나 행동]] 했는데, 돌아온 답이 [[받은 답]] 였어요. 무슨 뜻일까요?",
-        examples: ["썸 타는 사람", "주말에 영화 보자고", "\"아 그날 좀 바빠ㅠ\""],
+        id: "school-person",
+        text: "학교에서 [[어떤 사람]]이(가) [[한 일]] 해서 너무 스트레스예요.",
+        examples: ["같은 반 애", "제 말투를 자꾸 따라 하면서 놀려"],
       },
       {
-        id: "love-confess",
-        text: "[[누구]]를 좋아한 지 [[기간]] 됐는데, [[걸리는 점]] 때문에 고백을 못 하겠어요.",
-        examples: ["같은 반 친구", "6개월", "친구 사이가 깨질까 봐"],
+        id: "work-stuck",
+        text: "[[맡은 일이나 과제]]을(를) 맡았는데 [[어려운 점]] 때문에 막막해요.",
+        examples: ["조별 과제 발표", "조원들이 연락을 안 해서"],
       },
       {
-        id: "love-fight",
-        text: "연인과 [[다투는 이유]] 때문에 자주 다퉈요. 제 마음은 [[내 마음]]인데 어떻게 해야 할까요?",
-        examples: ["연락 빈도", "서운하지만 헤어지고 싶진 않아요"],
+        id: "school-teacher",
+        text: "[[어떤 선생님]]이 [[한 일]] 해서 [[내 기분]].",
+        examples: ["담임 선생님", "저만 자꾸 지적하셔서", "학교 가기가 싫어요"],
+      },
+    ],
+    exam: [
+      {
+        id: "exam-fail",
+        text: "[[시험]]을(를) 망쳤는데, [[걱정되는 것]]이(가) 제일 걱정돼요.",
+        examples: ["중간고사 수학", "부모님 반응"],
+      },
+      {
+        id: "exam-study",
+        text: "공부를 [[얼마나]] 하는데도 [[성적 상황]]. [[바라는 것]].",
+        examples: ["매일 3시간씩", "성적이 그대로예요", "공부법을 바꾸고 싶어요"],
+      },
+      {
+        id: "exam-compare",
+        text: "[[누구]]랑 자꾸 비교돼서 [[내 기분]].",
+        examples: ["공부 잘하는 사촌", "자존감이 떨어져요"],
       },
     ],
     friend: [
@@ -64,21 +85,43 @@ export const GOMIN: BoxConfig = {
         examples: ["말도 없이 약속을 취소", "단톡방에서 서운하다고 말"],
       },
       {
-        id: "friend-distance",
-        text: "[[어떤 친구]]랑 요즘 [[달라진 점]] 서운해요. 제가 먼저 [[하고 싶은 것]] 해도 될까요?",
-        examples: ["10년 지기 친구", "연락이 뜸해져서", "연락"],
+        id: "friend-group",
+        text: "단톡방에서 [[무슨 일]] 이후로 [[달라진 점]]. 제가 [[하고 싶은 것]] 해도 될까요?",
+        examples: ["제 메시지만 읽씹", "다들 저한테 말을 안 걸어요", "먼저 물어보는 거"],
       },
       {
         id: "friend-new",
         text: "[[새로운 곳]]에서 친구를 사귀고 싶은데, [[어려운 점]] 어려워요.",
-        examples: ["새 학교", "먼저 말 거는 게"],
+        examples: ["새 반", "먼저 말 거는 게"],
+      },
+    ],
+    love: [
+      {
+        id: "love-reply",
+        text: "제가 [[누구]]한테 [[한 말이나 행동]] 했는데, 돌아온 답이 [[받은 답]] 였어요. 무슨 뜻일까요?",
+        examples: ["썸 타는 애", "주말에 같이 공부하자고", "\"아 그날 학원ㅠ\""],
+      },
+      {
+        id: "love-confess",
+        text: "[[누구]]를 좋아한 지 [[기간]] 됐는데, [[걸리는 점]] 때문에 고백을 못 하겠어요.",
+        examples: ["같은 반 친구", "3개월", "친구 사이가 깨질까 봐"],
+      },
+      {
+        id: "love-fight",
+        text: "사귀는 사람이랑 [[다투는 이유]] 때문에 자주 싸워요. 제 마음은 [[내 마음]]인데 어떻게 해야 할까요?",
+        examples: ["답장 속도", "서운하지만 헤어지고 싶진 않아요"],
       },
     ],
     family: [
       {
         id: "family-want",
         text: "부모님이 [[부모님이 바라는 것]] 하라고 하시는데, 저는 [[내가 하고 싶은 것]] 하고 싶어요.",
-        examples: ["공무원 시험 준비", "디자인 공부"],
+        examples: ["학원 하나 더 다니", "그림 그리는 거"],
+      },
+      {
+        id: "family-phone",
+        text: "[[부모님이 반대하는 것]] 때문에 부모님이랑 자주 싸워요. [[내 입장]].",
+        examples: ["휴대폰 쓰는 시간", "할 일은 다 하고 쓰는 건데 억울해요"],
       },
       {
         id: "family-distance",
@@ -86,55 +129,21 @@ export const GOMIN: BoxConfig = {
         examples: ["동생", "말다툼", "편하게 지내고"],
       },
     ],
-    school_work: [
-      {
-        id: "work-person",
-        text: "[[학교나 회사]]에서 [[어떤 사람]]이 [[한 일]] 해서 너무 스트레스예요.",
-        examples: ["회사", "팀장님", "제 일을 자꾸 다른 사람 앞에서 지적"],
-      },
-      {
-        id: "work-stuck",
-        text: "[[맡은 일이나 과제]]을(를) 맡았는데 [[어려운 점]] 때문에 막막해요.",
-        examples: ["조별 과제 발표", "조원들이 연락을 안 해서"],
-      },
-      {
-        id: "work-quit",
-        text: "[[그만두고 싶은 것]]을(를) 그만둘지 고민이에요. 가장 걸리는 건 [[걱정]]이에요.",
-        examples: ["지금 다니는 알바", "다음 자리를 못 구할까 봐"],
-      },
-    ],
     career: [
       {
         id: "career-choice",
         text: "[[선택지 A]]와(과) [[선택지 B]] 중에 고민이에요. 마음은 [[마음이 가는 쪽]] 쪽이에요.",
-        examples: ["취업", "대학원", "대학원"],
+        examples: ["일반고", "특성화고", "특성화고"],
       },
       {
         id: "career-anxious",
         text: "[[목표]]을(를) 준비 중인데, [[걱정]] 때문에 자꾸 불안해요.",
-        examples: ["편입 시험", "시간이 부족할 것 같아서"],
+        examples: ["미대 입시", "시간이 부족할 것 같아서"],
       },
       {
         id: "career-dream",
         text: "하고 싶은 게 [[하고 싶은 것]]인데, 주변에서는 [[주변 반응]]라고 해요.",
         examples: ["웹툰 작가", "현실적으로 생각하"],
-      },
-    ],
-    money: [
-      {
-        id: "money-buy",
-        text: "[[사고 싶은 것]]을(를) 사고 싶은데 [[가격]] 원이라 망설여져요.",
-        examples: ["새 키보드", "25만"],
-      },
-      {
-        id: "money-leak",
-        text: "한 달에 [[금액]] 원 정도 쓰는데, 자꾸 [[새는 곳]]에 돈이 새요.",
-        examples: ["50만", "배달 음식"],
-      },
-      {
-        id: "money-lend",
-        text: "[[누구]]한테 [[금액]] 원을 빌려줬는데, [[지금 상황]].",
-        examples: ["친구", "30만", "갚을 생각이 없어 보여요"],
       },
     ],
     self: [
@@ -154,16 +163,33 @@ export const GOMIN: BoxConfig = {
         examples: ["새벽까지 휴대폰 보기", "누우면 심심해서"],
       },
     ],
+    money: [
+      {
+        id: "money-buy",
+        text: "[[사고 싶은 것]]을(를) 사고 싶은데 [[가격]] 원이라 망설여져요.",
+        examples: ["새 이어폰", "15만"],
+      },
+      {
+        id: "money-leak",
+        text: "한 달 용돈이 [[금액]] 원인데, 자꾸 [[새는 곳]]에 돈이 새요.",
+        examples: ["5만", "편의점 간식"],
+      },
+      {
+        id: "money-lend",
+        text: "[[누구]]한테 [[금액]] 원을 빌려줬는데, [[지금 상황]].",
+        examples: ["친구", "2만", "갚을 생각이 없어 보여요"],
+      },
+    ],
     etc: [
       {
         id: "etc-ask",
         text: "[[지금 상황]]인데, [[궁금한 것]]이 궁금해요.",
-        examples: ["이사를 앞두고 있는 상황", "혼자 살면 뭐가 제일 힘든지"],
+        examples: ["전학을 앞두고 있는 상황", "새 학교에서 빨리 적응하는 법"],
       },
       {
         id: "etc-dawoong",
         text: "다웅이라면 [[상황]]일 때 어떻게 할 거예요?",
-        examples: ["친구 결혼식 축사를 부탁받았"],
+        examples: ["친구 생일 선물을 고르"],
       },
     ],
   },
@@ -198,6 +224,13 @@ export const GOMIN: BoxConfig = {
     { id: "male", label: "남" },
     { id: "female", label: "여" },
     { id: "none", label: "선택 안 함" },
+  ],
+  ageGroups: [
+    { id: "elementary", label: "초등학생" },
+    { id: "middle", label: "중학생" },
+    { id: "high", label: "고등학생" },
+    { id: "young", label: "대학생·20대" },
+    { id: "adult", label: "그 이상" },
   ],
 };
 
@@ -301,9 +334,42 @@ export function temperatureLabel(t: number): string {
 
 export const HELP_LINES = [
   { name: "청소년상담", tel: "1388" },
+  { name: "학교폭력 상담·신고", tel: "117" },
   { name: "자살예방상담", tel: "109" },
   { name: "정신건강위기상담", tel: "1577-0199" },
 ];
 
+/** 전화가 어려울 때 (학생들은 문자·카톡을 더 편해해요) */
+export const HELP_TEXT_LINES = [
+  "문자로: #1388 로 문자 보내기 (청소년상담)",
+  "카카오톡: '청소년상담1388' 채널",
+  "문자로: #0117 로 문자 보내기 (학교폭력 117)",
+];
+
 export const HELP_SENTENCE =
-  "혼자 견디지 않아도 돼요. 청소년상담 1388, 자살예방상담 109, 정신건강위기상담 1577-0199에서 언제든 이야기를 들어줘요.";
+  "혼자 견디지 않아도 돼요. 청소년상담 1388(문자 #1388, 카카오톡 '청소년상담1388'), 학교폭력 117, 자살예방상담 109, 정신건강위기상담 1577-0199에서 언제든 이야기를 들어줘요.";
+
+/** 학년대 (정확한 나이를 안 밝힌 사람은 이것만 보여요) */
+export function ageGroupLabel(id: string | null | undefined): string {
+  return GOMIN.ageGroups.find((g) => g.id === id)?.label ?? "";
+}
+
+/** 나이로 학년대 짐작 (예전 사연이나 나이만 넣은 경우) */
+export function ageGroupFromAge(age: number | null | undefined): string | null {
+  if (age === null || age === undefined) return null;
+  if (age <= 13) return "elementary";
+  if (age <= 16) return "middle";
+  if (age <= 19) return "high";
+  if (age <= 29) return "young";
+  return "adult";
+}
+
+/**
+ * 만 14세 미만일 수 있는지.
+ * 정확한 나이를 넣었으면 그 나이로, 아니면 초등학생·중학생은 "그럴 수 있음"으로 봅니다.
+ * (개인정보보호법상 만 14세 미만은 보호자 동의 없이 개인정보를 모으지 않도록 로그인과 연결하지 않아요)
+ */
+export function maybeUnder14(ageGroup: string | null | undefined, age: number | null | undefined): boolean {
+  if (age !== null && age !== undefined) return age < 14;
+  return ageGroup === "elementary" || ageGroup === "middle";
+}

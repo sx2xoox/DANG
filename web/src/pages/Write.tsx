@@ -8,8 +8,9 @@ import {
   randomNickname,
   temperatureLabel,
   templateBlanks,
+  maybeUnder14,
 } from "@shared/boxes.ts";
-import { findContacts, needsCare } from "@shared/safety.ts";
+import { findContacts, findIdentifiers, needsCare } from "@shared/safety.ts";
 import { ApiError, callFn, store, supabase } from "../lib/supabase";
 import { currentRef } from "../lib/growth";
 import { useSite } from "../lib/site";
@@ -40,6 +41,8 @@ type Draft = {
   consent_broadcast: boolean;
   consent_privacy: boolean;
   consent_shorts: boolean;
+  age_group: string;
+  age_public: boolean;
 };
 
 const EMPTY: Draft = {
@@ -64,6 +67,8 @@ const EMPTY: Draft = {
   consent_broadcast: false,
   consent_privacy: false,
   consent_shorts: false,
+  age_group: "",
+  age_public: false,
 };
 
 function hasContent(d: Draft) {
@@ -140,12 +145,22 @@ export default function Write() {
     [body, d.summary, d.chzzk_name],
   );
 
+  // 학교 이름, 실명 호칭, 주소, "2학년 3반" 처럼 나(친구)를 알아볼 수 있는 내용
+  const identifiers = useMemo(() => findIdentifiers([body, d.summary].join("\n")), [body, d.summary]);
+
   const displayName = d.name_mode === "chzzk" ? d.chzzk_name.trim() : d.anon_name;
-  const ageNum = Number(d.age);
+  const ageNum = d.age ? Number(d.age) : null;
+  const under14 = maybeUnder14(d.age_group, ageNum);
 
   const valid: Record<number, string | null> = {
     1: !d.name_mode ? "이름 방식을 골라주세요." : !displayName ? "치지직 닉네임을 적어주세요." : null,
-    2: !d.age || !Number.isInteger(ageNum) || ageNum < 5 || ageNum > 99 ? "나이를 숫자로 적어주세요." : !d.gender ? "성별을 골라주세요." : null,
+    2: !d.age_group
+      ? "학년대를 골라주세요."
+      : ageNum !== null && (!Number.isInteger(ageNum) || ageNum < 8 || ageNum > 99)
+        ? "나이는 숫자로 적어주세요. (적지 않아도 돼요)"
+        : !d.gender
+          ? "성별을 골라주세요."
+          : null,
     3: d.category ? null : "고민 종류를 골라주세요.",
     4: !d.write_mode
       ? "쓰는 방식을 골라주세요."
@@ -199,7 +214,7 @@ export default function Write() {
         return;
       }
     }
-    if (contacts.length && !force) {
+    if ((contacts.length || identifiers.length) && !force) {
       setConfirmContacts(true);
       return;
     }
@@ -213,6 +228,8 @@ export default function Write() {
         name_mode: d.name_mode,
         display_name: displayName,
         age: ageNum,
+        age_group: d.age_group,
+        age_public: ageNum !== null && d.age_public === true,
         gender: d.gender,
         category: d.category,
         write_mode: d.write_mode,
@@ -294,12 +311,12 @@ export default function Write() {
       )}
 
       {confirmContacts && (
-        <Dialog title="연락처처럼 보이는 내용이 있어요" onClose={() => setConfirmContacts(false)}>
+        <Dialog title="나를 알아볼 수 있는 내용이 있어요" onClose={() => setConfirmContacts(false)}>
           <p style={{ margin: 0 }}>
-            사연에 전화번호나 이메일, 아이디처럼 보이는 내용이 있어요. 방송에서 읽힐 수 있으니 지우는 걸 추천해요.
+            사연은 방송에서 그대로 읽혀요. 연락처, 학교 이름, 실명처럼 보이는 내용은 "OO고", "친구 A", "담임 선생님"처럼 바꾸는 걸 추천해요.
           </p>
           <ul className="contact-list">
-            {contacts.map((c, i) => (
+            {[...contacts, ...identifiers].map((c, i) => (
               <li key={i}>
                 <code>{c.sample}</code>
               </li>
@@ -374,11 +391,19 @@ export default function Write() {
         )}
 
         {d.step === 2 && (
-          <Step title="나에 대해 알려주세요" headingRef={headingRef} hint="사연을 읽을 때 참고만 해요.">
+          <Step title="나에 대해 알려주세요" headingRef={headingRef} hint="방송에서는 학년대만 말해요. 정확한 나이는 원할 때만 적어주세요.">
             <div className="field">
-              <label htmlFor="age">나이</label>
+              <span className="label" id="group-label">
+                학년대
+              </span>
+              <ChoiceGroup name="age_group" label="학년대" value={d.age_group} onChange={(v) => set("age_group", v)} options={GOMIN.ageGroups} />
+            </div>
+            <div className="field">
+              <label htmlFor="age">
+                정확한 나이 <span className="faint">(선택)</span>
+              </label>
               <div className="age-row">
-                <button type="button" className="btn" aria-label="한 살 줄이기" onClick={() => set("age", String(Math.max(5, (Number(d.age) || 20) - 1)))}>
+                <button type="button" className="btn" aria-label="한 살 줄이기" onClick={() => set("age", String(Math.max(8, (Number(d.age) || 17) - 1)))}>
                   −
                 </button>
                 <input
@@ -386,19 +411,33 @@ export default function Write() {
                   className="input age-input"
                   type="number"
                   inputMode="numeric"
-                  min={5}
+                  min={8}
                   max={99}
                   value={d.age}
                   onChange={(e) => set("age", e.target.value.replace(/\D/g, "").slice(0, 2))}
-                  placeholder="예) 21"
-                  autoFocus
+                  placeholder="예) 16"
                 />
                 <span className="age-unit">살</span>
-                <button type="button" className="btn" aria-label="한 살 늘리기" onClick={() => set("age", String(Math.min(99, (Number(d.age) || 19) + 1)))}>
+                <button type="button" className="btn" aria-label="한 살 늘리기" onClick={() => set("age", String(Math.min(99, (Number(d.age) || 15) + 1)))}>
                   +
                 </button>
               </div>
+              {d.age && (
+                <label className="check" style={{ marginTop: 8 }}>
+                  <input type="checkbox" checked={!!d.age_public} onChange={(e) => set("age_public", e.target.checked)} />
+                  <span>
+                    방송에서 정확한 나이를 말해도 돼요
+                    <small className="check-sub">체크하지 않으면 방송에서는 "{optionLabel(GOMIN.ageGroups, d.age_group) || "학년대"}"까지만 말해요.</small>
+                  </span>
+                </label>
+              )}
             </div>
+            {d.age_group && under14 && (
+              <p className="notice" role="note" style={{ margin: 0 }}>
+                만 14세 미만이면 <b>로그인 없이 익명으로만</b> 접수돼요. 보내고 나서 받는 <b>접수번호와 비밀 코드</b>로 결과와 방송 여부를 볼 수 있으니 꼭 저장해 두세요.
+                {d.age_group === "middle" && !d.age && " (만 14세가 넘었다면 정확한 나이를 적어주세요.)"}
+              </p>
+            )}
             <div className="field">
               <span className="label" id="gender-label">
                 성별
@@ -425,7 +464,7 @@ export default function Write() {
             <div className="notice notice-danger privacy-notice">
               <strong>실명, 연락처, 주소, 학교·회사 이름은 쓰지 마세요.</strong>
               <br />
-              방송에서 읽힐 수 있어요. “친구 A”, “우리 팀장님”처럼 써주세요.
+              방송에서 읽힐 수 있어요. “친구 A”, “담임 선생님”, “OO고”처럼 써주세요.
             </div>
 
             <div className="seg" role="radiogroup" aria-label="쓰는 방식">
@@ -539,6 +578,12 @@ export default function Write() {
                 {contacts.map((c) => c.sample).join(", ")}
               </div>
             )}
+            {identifiers.length > 0 && (
+              <div className="notice notice-yellow" role="alert">
+                <strong>학교 이름이나 실명처럼 보이는 내용이 있어요.</strong> 방송에서 그대로 읽히니 "OO고", "친구 A", "담임 선생님"처럼 바꿔주세요:{" "}
+                {identifiers.map((c) => c.sample).join(", ")}
+              </div>
+            )}
             {d.write_mode && <p className="faint kbd-hint hide-touch">Ctrl + Enter 로 다음 단계로 넘어갈 수 있어요.</p>}
           </Step>
         )}
@@ -636,7 +681,8 @@ export default function Write() {
                 {displayName} <span className="faint">({d.name_mode === "chzzk" ? "치지직 닉네임" : "랜덤 이름"})</span>
               </ReviewRow>
               <ReviewRow label="나에 대해" onEdit={() => go(2)}>
-                {d.age}살 · {optionLabel(GOMIN.genders, d.gender)}
+                {optionLabel(GOMIN.ageGroups, d.age_group)}
+                {d.age ? ` · ${d.age}살 (${d.age_public ? "방송 공개" : "방송 비공개"})` : ""} · {optionLabel(GOMIN.genders, d.gender)}
               </ReviewRow>
               <ReviewRow label="고민 종류" onEdit={() => go(3)}>
                 {optionEmoji(GOMIN.categories, d.category)} {optionLabel(GOMIN.categories, d.category)}

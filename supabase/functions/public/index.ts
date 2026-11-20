@@ -11,7 +11,7 @@
 //   shorts_consent 릴스·쇼츠 사용 동의 바꾸기 (로그인 또는 접수번호+비밀 코드)
 //   delete_account 탈퇴 (원하면 사연도 삭제)
 // =====================================================================
-import { BOXES, fillTemplate, pickBadge } from "../_shared/boxes.ts";
+import { BOXES, fillTemplate, maybeUnder14, pickBadge } from "../_shared/boxes.ts";
 import { clientIp, HttpError, int, json, readJson, serve, str } from "../_shared/http.ts";
 import { adminDb, requestUser } from "../_shared/db.ts";
 import { hashCode, randomCode, randomToken, sha256 } from "../_shared/crypto.ts";
@@ -159,6 +159,9 @@ function viewerStory(s: any) {
     created_at: s.created_at,
     claimed: !!s.user_id,
     consent_shorts: !!s.consent_shorts,
+    age_group: s.age_group,
+    age_public: !!s.age_public,
+    under14: maybeUnder14(s.age_group, s.age),
   };
 }
 
@@ -181,7 +184,11 @@ async function submit(req: Request, body: Record<string, unknown>) {
   // ---- 입력값 검사 ----
   const nameMode = str(body.name_mode, 10);
   const displayName = str(body.display_name, 30);
-  const age = int(body.age);
+  // 학년대는 꼭, 정확한 나이는 원하는 사람만 (방송에서 말해도 되는지도 따로)
+  const ageGroup = str(body.age_group, 20);
+  const ageRaw = body.age === null || body.age === undefined || body.age === "" ? null : int(body.age);
+  const age = ageRaw;
+  const agePublic = age !== null && body.age_public === true;
   const gender = str(body.gender, 10);
   const category = str(body.category, 30);
   const writeMode = str(body.write_mode, 10);
@@ -198,7 +205,8 @@ async function submit(req: Request, body: Record<string, unknown>) {
   };
   if (!["chzzk", "anon"].includes(nameMode)) bad("이름 방식을 골라주세요.");
   if (!displayName) bad("이름을 정해주세요.");
-  if (age === null || age < 5 || age > 99) bad("나이를 숫자로 알려주세요.");
+  if (!box.ageGroups.some((g) => g.id === ageGroup)) bad("학년대를 골라주세요.");
+  if (age !== null && (age < 8 || age > 99)) bad("나이는 숫자로 알려주세요. (적지 않아도 돼요)");
   if (!box.genders.some((g) => g.id === gender)) bad("성별을 골라주세요.");
   if (!box.categories.some((c) => c.id === category)) bad("고민 종류를 골라주세요.");
   if (!["template", "free"].includes(writeMode)) bad("쓰는 방식을 골라주세요.");
@@ -232,7 +240,9 @@ async function submit(req: Request, body: Record<string, unknown>) {
   }
   if (storyBody.length < 10) bad("고민을 조금만 더 자세히 써주세요. (10자 이상)");
 
-  const user = await requestUser(req);
+  // 만 14세 미만일 수 있는 사연은 로그인 계정과 연결하지 않아요 (보호자 동의 없이 개인정보를 모으지 않도록).
+  const under14 = maybeUnder14(ageGroup, age);
+  const user = under14 ? null : await requestUser(req);
   const flags = detectFlags(`${summary}\n${storyBody}`);
   const care = flags.includes("care");
 
@@ -250,6 +260,8 @@ async function submit(req: Request, body: Record<string, unknown>) {
       name_mode: nameMode,
       display_name: displayName,
       age,
+      age_group: ageGroup,
+      age_public: agePublic,
       gender,
       category,
       write_mode: writeMode,
@@ -307,6 +319,7 @@ async function submit(req: Request, body: Record<string, unknown>) {
     created_at: story.created_at,
     care,
     logged_in: !!user,
+    under14,
     animal: {
       name: animal.name,
       emoji: animal.emoji,
@@ -421,6 +434,9 @@ async function claim(req: Request, body: Record<string, unknown>) {
   const user = await requestUser(req);
   if (!user) throw new HttpError(401, "먼저 로그인해 주세요.");
   const story = await verifyByCode(req, body);
+  if (!story.user_id && maybeUnder14(story.age_group, story.age)) {
+    throw new HttpError(403, "만 14세 미만일 수 있는 사연은 로그인 계정에 옮기지 않아요. 접수번호와 비밀 코드로 볼 수 있어요.", "under14");
+  }
   if (story.user_id && story.user_id !== user.id) {
     throw new HttpError(409, "이 사연은 이미 다른 계정의 사연함에 들어 있어요.");
   }

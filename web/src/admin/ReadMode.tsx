@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GOMIN, optionEmoji, optionLabel, temperatureLabel } from "@shared/boxes.ts";
 import { errMsg, useAdmin, type StoryBundle } from "./api";
 import { StampSticker, Spinner, temperatureColor, useToast } from "../components/ui";
-import { ageGender } from "../lib/format";
+import { personLabel } from "../lib/format";
 import { CareNote } from "./parts";
 import { store } from "../lib/supabase";
 import { readStartMessage } from "./BroadcastSession";
@@ -107,7 +107,7 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
             <div>
               <p className="adm-read-who">
                 #{s.receipt_no} · {s.broadcast_name}
-                {ageGender(s.age, s.gender) ? ` · ${ageGender(s.age, s.gender)}` : ""} · {optionLabel(GOMIN.categories, s.category)}
+                {personLabel(s) ? ` · ${personLabel(s)}` : ""} · {optionLabel(GOMIN.categories, s.category)}
               </p>
               <h2 className="adm-read-summary">{s.summary}</h2>
               <p className="adm-read-temp" style={{ ["--t" as string]: temperatureColor(s.temperature) }}>

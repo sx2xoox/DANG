@@ -31,7 +31,7 @@ export type DexInfo = {
 };
 
 export type StoryBundle = {
-  story: ResultStory & { viewer_status: string; claimed: boolean; body: string; voice: string; visibility: string; consent_shorts: boolean };
+  story: ResultStory & { viewer_status: string; claimed: boolean; body: string; voice: string; visibility: string; consent_shorts: boolean; under14?: boolean; age_group?: string | null; age_public?: boolean };
   animal: Animal | null;
   follow_ups: FollowUp[];
   result: AirResult | null;

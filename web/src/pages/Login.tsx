@@ -56,6 +56,8 @@ export default function Login() {
         )}
         <p className="faint" style={{ margin: 0 }}>
           사이트에는 이메일을 따로 저장하지 않아요. 로그인 없이도 사연은 보낼 수 있어요.
+          <br />
+          로그인은 만 14세 이상만 할 수 있어요. 만 14세 미만이라면 로그인 없이 보내고, 접수번호와 비밀 코드로 확인해 주세요.
         </p>
       </div>
     </div>

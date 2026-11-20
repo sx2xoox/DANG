@@ -5,7 +5,7 @@ import { dayLabel, errMsg, useAdmin, useWide, type BroadcastState, type ListItem
 import { AnimalMini, CareNote, FlagChips, StatusChip } from "./parts";
 import { Roulette, type RouletteCandidate } from "../components/Roulette";
 import { Dialog, StampSticker, Spinner, useToast } from "../components/ui";
-import { ageGender } from "../lib/format";
+import { personLabel } from "../lib/format";
 import { useSite } from "../lib/site";
 import { copyText } from "../lib/image";
 import { store } from "../lib/supabase";
@@ -263,7 +263,7 @@ export default function Broadcast() {
             <div>
               <p className="adm-dim">
                 <span className="adm-no">#{s.receipt_no}</span> · {s.broadcast_name}
-                {ageGender(s.age, s.gender) ? ` · ${ageGender(s.age, s.gender)}` : ""} · {optionLabel(GOMIN.categories, s.category)} · 온도{" "}
+                {personLabel(s) ? ` · ${personLabel(s)}` : ""} · {optionLabel(GOMIN.categories, s.category)} · 온도{" "}
                 <span className="adm-mono">{s.temperature}°</span>
               </p>
               <h2 className="adm-summary">{s.summary}</h2>
