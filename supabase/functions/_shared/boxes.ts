@@ -61,7 +61,7 @@ export const GOMIN: BoxConfig = {
       {
         id: "friend-fault",
         text: "친구가 [[친구가 한 일]] 했는데, 제가 [[내가 한 일]] 한 게 잘못인가요?",
-        examples: ["약속에 1시간 늦게 왔는데", "먼저 집에 가버린 것"],
+        examples: ["말도 없이 약속을 취소", "단톡방에서 서운하다고 말"],
       },
       {
         id: "friend-distance",
