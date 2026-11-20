@@ -124,7 +124,7 @@ const Phone: React.FC = () => {
         <div style={{ width: "100%", height: "100%", borderRadius: 66, background: C.poster, overflow: "hidden", position: "relative" }}>
           {/* 상단 진행 표시 */}
           <div style={{ padding: "70px 56px 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: F.mono, fontWeight: 600, fontSize: 30, color: C.dim }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: F.body, fontSize: 42, color: C.dim }}>
               <span>고민 쪽지</span>
               <span>{[2, 5, 7][step]} / 10</span>
             </div>
@@ -143,7 +143,7 @@ const Phone: React.FC = () => {
   );
 };
 
-const stepTitle: React.CSSProperties = { fontFamily: F.soft, fontSize: 68, whiteSpace: "nowrap", color: C.ink, letterSpacing: "-0.03em", margin: "10px 56px 48px", lineHeight: 1.2 };
+const stepTitle: React.CSSProperties = { fontFamily: F.body, fontSize: 82, whiteSpace: "nowrap", color: C.ink, letterSpacing: "-0.03em", margin: "10px 56px 48px", lineHeight: 1.2 };
 
 const StepAge: React.FC = () => {
   const frame = useCurrentFrame();
@@ -168,9 +168,8 @@ const StepAge: React.FC = () => {
                 border: `4px solid ${C.ink}`,
                 background: on ? C.ink : "#fff",
                 color: on ? C.poster : C.ink,
-                fontFamily: F.bold,
-                fontWeight: 800,
-                fontSize: 52,
+                fontFamily: F.body,
+                fontSize: 66,
                 transform: on ? `scale(${1 + 0.05 * Math.exp(-(frame - 135) / 3)})` : undefined,
               }}
             >
@@ -216,8 +215,8 @@ const StepTemp: React.FC = () => {
     <div>
       <div style={stepTitle}>이 고민, 몇 도쯤?</div>
       <div style={{ margin: "40px 56px 0", textAlign: "center" }}>
-        <div style={{ fontFamily: F.bold, fontWeight: 900, fontSize: 220, color: col, lineHeight: 1, letterSpacing: "-0.05em" }}>{t}°</div>
-        <div style={{ fontFamily: F.hand, fontSize: 76, color: C.ink, marginTop: 20 }}>{label}</div>
+        <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 220, color: col, lineHeight: 1, letterSpacing: "-0.05em" }}>{t}°</div>
+        <div style={{ fontFamily: F.hand, fontSize: 84, color: C.ink, marginTop: 20 }}>{label}</div>
         <div style={{ position: "relative", height: 28, marginTop: 90, background: "linear-gradient(90deg, #2563eb, #ffc400 50%, #e5533d)" }}>
           <div
             style={{
@@ -265,8 +264,8 @@ const StepStamp: React.FC = () => {
                 justifyContent: "center",
                 gap: 6,
                 color: "#fff",
-                fontFamily: F.bold,
-                fontWeight: 900,
+                fontFamily: F.display,
+                fontWeight: 400,
                 fontSize: 34,
                 transform: on ? `scale(${interpolate(hit, [0, 1], [1.7, 1])}) rotate(${interpolate(hit, [0, 1], [-14, -4])}deg)` : `rotate(${(i % 2 ? 2 : -2)}deg)`,
                 boxShadow: on ? `0 0 0 10px ${C.ink}` : "0 6px 10px rgba(0,0,0,0.15)",
@@ -446,7 +445,7 @@ const Live: React.FC = () => {
             >
               <Tape style={{ left: "50%", marginLeft: -95, top: -24, transform: "rotate(-3deg)" }} />
               <div style={{ fontFamily: F.mono, fontWeight: 600, fontSize: 22, color: C.dim }}>No.0127</div>
-              <div style={{ fontFamily: F.soft, fontSize: 46, color: C.ink, margin: "10px 0 22px", letterSpacing: "-0.03em" }}>늦은 친구 두고 간 나, 잘못?</div>
+              <div style={{ fontFamily: F.body, fontSize: 56, color: C.ink, margin: "10px 0 22px", letterSpacing: "-0.03em" }}>늦은 친구 두고 간 나, 잘못?</div>
               {[0.95, 0.88, 0.92, 0.6].map((w, i) => (
                 <div key={i} style={{ height: 14, width: `${w * 100}%`, background: "rgba(43,33,24,0.16)", marginBottom: 22 }} />
               ))}
@@ -466,16 +465,15 @@ const Live: React.FC = () => {
                   background: C.poster,
                   padding: "18px 30px",
                   boxShadow: "0 10px 16px -8px rgba(60, 36, 14, 0.45)",
-                  fontFamily: F.bold,
-                  fontWeight: 700,
-                  fontSize: 42,
+                  fontFamily: F.body,
+                  fontSize: 56,
                   color: C.ink,
                   transform: `translateY(${(1 - p) * 40}px) scale(${0.85 + 0.15 * p})`,
                   opacity: p,
                   transformOrigin: "0% 100%",
                 }}
               >
-                <span style={{ color: C.red, fontWeight: 800, marginRight: 18 }}>{c.n}</span>
+                <span style={{ color: C.red, marginRight: 18 }}>{c.n}</span>
                 {c.t}
               </div>
             );
@@ -515,7 +513,7 @@ const End: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           }}
         >
           <Pin size={46} style={{ left: "50%", marginLeft: -23, top: -14 }} />
-          <div style={{ fontFamily: F.bold, fontWeight: 900, fontSize: 132, lineHeight: 1.08, letterSpacing: "-0.05em", color: C.ink }}>
+          <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 132, lineHeight: 1.08, letterSpacing: "-0.05em", color: C.ink }}>
             고민 쪽지
             <br />
             <span
@@ -572,8 +570,8 @@ const End: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             display: "flex",
             alignItems: "center",
             gap: 18,
-            fontFamily: F.soft,
-            fontSize: 56,
+            fontFamily: F.body,
+            fontSize: 70,
             color: C.ink,
             transform: `translateY(${(1 - brand) * 30}px)`,
             opacity: interpolate(brand, [0, 0.4], [0, 1], clamp),

@@ -22,20 +22,19 @@ export const C = {
   marker: "#ffe066",
 };
 
+// 사이트와 같은 글꼴: 제목 Bagel Fat One, 본문 Yeon Sung, 손글씨 Nanum Pen Script, 코드 IBM Plex Mono
 export const F = {
   hand: "'Nanum Pen Script'",
-  soft: "'Gowun Dodum'",
-  bold: "'Pretendard', sans-serif",
-  mono: "'IBM Plex Mono', monospace",
+  body: "'Yeon Sung'",
+  display: "'Bagel Fat One'",
+  mono: "'IBM Plex Mono', 'Yeon Sung', monospace",
 };
 
 // ------------------------------------------------------------------ 글꼴 (영상에 들어가므로 파일로 직접 불러옴)
 const FONT_FILES: [string, string, string][] = [
   ["Nanum Pen Script", "fonts/NanumPenScript-Regular.ttf", "400"],
-  ["Gowun Dodum", "fonts/GowunDodum-Regular.ttf", "400"],
-  ["Pretendard", "fonts/Pretendard-Bold.otf", "700"],
-  ["Pretendard", "fonts/Pretendard-ExtraBold.otf", "800"],
-  ["Pretendard", "fonts/Pretendard-Black.otf", "900"],
+  ["Yeon Sung", "fonts/YeonSung-Regular.ttf", "400"],
+  ["Bagel Fat One", "fonts/BagelFatOne-Regular.ttf", "400"],
   ["IBM Plex Mono", "fonts/IBMPlexMono-SemiBold.ttf", "600"],
 ];
 
@@ -213,8 +212,8 @@ export const Caption: React.FC<{ at: number; segs: Seg[]; y: number; size?: numb
           background: C.poster,
           padding: "22px 40px 26px",
           boxShadow: "0 16px 26px -10px rgba(60, 36, 14, 0.55)",
-          fontFamily: F.bold,
-          fontWeight: 900,
+          fontFamily: F.display,
+          fontWeight: 400,
           fontSize: size,
           letterSpacing: "-0.035em",
           color: C.ink,
@@ -296,14 +295,14 @@ export const Polaroid: React.FC<{
             {animal.emoji}
           </span>
         ) : (
-          <span style={{ fontFamily: F.bold, fontWeight: 900, fontSize: photo * 0.62, color: C.ink, opacity: 0.85, lineHeight: 1 }}>?</span>
+          <span style={{ fontFamily: F.display, fontWeight: 400, fontSize: photo * 0.62, color: C.ink, opacity: 0.85, lineHeight: 1 }}>?</span>
         )}
         <div style={{ position: "absolute", inset: 0, background: "#fffefb", opacity: (1 - develop) * 0.85 }} />
       </div>
       <div style={{ padding: "26px 8px 34px", textAlign: "center", minHeight: 170, boxSizing: "border-box" }}>
         {animal ? (
           <>
-            <div style={{ fontFamily: F.soft, fontSize: width * 0.1, color: C.ink, letterSpacing: "-0.02em", opacity: develop }}>{animal.name}</div>
+            <div style={{ fontFamily: F.body, fontSize: width * 0.12, color: C.ink, letterSpacing: "-0.02em", opacity: develop }}>{animal.name}</div>
             <div style={{ fontFamily: F.hand, fontSize: width * 0.078, color: C.red, marginTop: 6, opacity: develop }}>{animal.quote}</div>
           </>
         ) : (
@@ -328,8 +327,8 @@ export const PolaroidBack: React.FC<{ width?: number }> = ({ width = 620 }) => (
     }}
   >
     <div style={{ textAlign: "center", color: C.dim }}>
-      <div style={{ fontFamily: F.bold, fontWeight: 900, fontSize: 230, lineHeight: 1, color: "rgba(43,33,24,0.18)" }}>?</div>
-      <div style={{ fontFamily: F.soft, fontSize: 44, marginTop: 20 }}>고민 동물 현상 중</div>
+      <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 230, lineHeight: 1, color: "rgba(43,33,24,0.18)" }}>?</div>
+      <div style={{ fontFamily: F.body, fontSize: 54, marginTop: 20 }}>고민 동물 현상 중</div>
     </div>
   </div>
 );
