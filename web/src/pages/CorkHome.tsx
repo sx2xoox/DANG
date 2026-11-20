@@ -43,7 +43,7 @@ export default function CorkHome({ info, loggedIn }: { info: HomeInfo; loggedIn:
             <br />
             <mark>뭐든 붙이고 가요</mark>
           </h1>
-          <p className="cb-lead">학교에서 말 못 한 거, 여기선 이름 없이 괜찮아요. 방송에서 읽고 같이 고민해 줄게요.</p>
+          <p className="cb-lead">학교나 직장에서 말 못 한 거, 여기선 이름 없이 괜찮아요. 방송에서 읽고 같이 고민해 줄게요.</p>
           <p className="cb-sign">— 오늘도 고생했어</p>
           {info.week_theme && (
             <p className="cb-theme">

@@ -14,6 +14,7 @@ import { aiEnabled } from "../_shared/ai.ts";
 import { generateAnimalFor, previousAnimals } from "../_shared/animalJob.ts";
 import { HOST_NOTE_MAX, PRIVATE_MESSAGE_MAX, REACTIONS, reactionLabel, validVodUrl, vodLink } from "../_shared/results.ts";
 import { collectToDex } from "../_shared/dex.ts";
+import { MASCOT_ANIMALS, mascotFor } from "../_shared/mascots.ts";
 
 type Role = "owner" | "manager";
 
@@ -374,9 +375,11 @@ async function updateAnimal(body: Record<string, unknown>) {
   const emoji = str(a.emoji, 16);
   const tags = Array.isArray(a.hashtags) ? (a.hashtags as unknown[]).map((t) => str(t, 20)).filter(Boolean).slice(0, 3) : [];
   if (!name || !emoji) throw new HttpError(400, "동물 이름(12자 이내)과 이모지를 넣어주세요.");
+  const mascot = mascotFor(name);
+  if (!mascot) throw new HttpError(400, `이름 끝을 캐릭터가 있는 동물로 해주세요: ${MASCOT_ANIMALS.join(", ")}`);
   const patch = {
     name,
-    emoji,
+    emoji: mascot.emoji,
     why: str(a.why, 120),
     description: str(a.description, 800),
     quote: str(a.quote, 80),

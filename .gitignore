@@ -12,3 +12,4 @@ scripts/dev.env
 supabase/.temp/
 supabase/.branches/
 deno.lock
+__pycache__/

@@ -19,7 +19,6 @@ import NotFound from "./pages/NotFound";
 // 관리자 / OBS 화면은 시청자에게 필요 없으므로 따로 불러옵니다.
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 const ObsPage = lazy(() => import("./obs/ObsPage"));
-const MascotLab = lazy(() => import("./pages/MascotLab"));
 
 /** 릴스·쇼츠용 주소 (사이트주소/v/12): 어느 영상에서 왔는지 기억하고 첫 화면으로 */
 function VideoEntry() {
@@ -42,7 +41,6 @@ export default function App() {
           <Routes>
             <Route path="/admin/*" element={<AdminApp />} />
             <Route path="/obs" element={<ObsPage />} />
-            <Route path="/lab/mascot" element={<MascotLab />} />
             <Route path="/v/:ref" element={<VideoEntry />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />

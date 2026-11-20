@@ -8,7 +8,7 @@ import { GOMIN, HELP_SENTENCE, optionLabel, temperatureLabel } from "./boxes.ts"
 import { type AnimalCard, fallbackAnimal } from "./fallbackAnimals.ts";
 import { outputProblems, redact } from "./safety.ts";
 import { logAi } from "./db.ts";
-import { MASCOT_ANIMALS } from "./mascots.ts";
+import { MASCOT_ANIMALS, mascotFor } from "./mascots.ts";
 
 const MODEL = () => Deno.env.get("AI_MODEL") || "claude-opus-5-5";
 
@@ -82,13 +82,15 @@ export const ANIMAL_RULES = `반드시 지켜야 할 규칙
 
 const ANIMAL_SYSTEM = `당신은 치지직 스트리머 "다웅"의 고민 상담 코너에서, 시청자가 보낸 사연을 읽고 그 사람만의 "고민 동물"을 지어주는 작가예요.
 결과는 사연을 보낸 직후 MBTI 검사 결과처럼 바로 보여져요. 읽는 순간 "어 이거 완전 나잖아" 싶게, 짧고 재치 있게 써주세요.
-정해진 유형표는 없어요. 사연 내용과 고민 종류, 고민 온도, 듣고 싶은 말, 감정 우표를 읽고 지금 이 사람의 마음에 꼭 맞는 동물을 자유롭게 지어주세요.
-캐릭터 그림이 있는 동물: ${MASCOT_ANIMALS.join(", ")}. 사연에 잘 맞는다면 이 중에서 고르면 그림 카드로 나와서 좋아요. 꼭 맞는 동물이 따로 있으면 그 동물로 자유롭게 지어도 돼요. 이름 끝은 동물 이름으로 끝내 주세요.
+사연 내용과 고민 종류, 고민 온도, 듣고 싶은 말, 감정 우표를 읽고 지금 이 사람의 마음에 꼭 맞는 동물을 골라 이름을 지어주세요.
+동물은 반드시 아래 목록 중 하나여야 해요 (사이트에 캐릭터 그림이 있는 동물이에요). 목록에 없는 동물은 쓰지 마세요.
+동물 목록: ${MASCOT_ANIMALS.join(", ")}
+수식어는 사연에 맞게 자유롭게 지어요. 이름 끝은 목록에 있는 동물 이름 그대로 끝내 주세요.
 다정하고 재치 있게, 하지만 가볍게 넘기지 않게 써주세요. 한국어 존댓말(~요체)로 씁니다.
 결과 글에는 스트리머 이름("다웅")을 넣지 마세요. 사연자에게 직접 말하듯 써요.
 
 결과 형식
-- name: "[수식어] [동물]" 형태. 띄어쓰기 포함 12자 이내. 예) 답장 기다리는 미어캣, 새벽 3시 부엉이, 갈팡질팡 문어
+- name: "[수식어] [동물]" 형태. 띄어쓰기 포함 12자 이내. 예) 답장 기다리는 고양이, 새벽 3시 고슴도치, 갈팡질팡 병아리
 - emoji: 그 동물 이모지 딱 하나 (그 동물 이모지가 없으면 가장 가까운 동물 이모지 하나)
 - why: 왜 이 동물인지 한 줄. 예) "읽씹 화면만 고개 빼고 지켜보는 중이라서"
 - description: 코멘트 2~3문장. 지금 이 사람의 마음 상태를 콕 짚고, 이 유형의 장점과 지금 힘이 될 한마디를 담아요. 설교하지 말고 다정하게.
@@ -146,6 +148,7 @@ export function validateAnimal(a: any, req: AnimalRequest): string[] {
   if (!/\s/.test(name)) p.push("이름이 \"[수식어] [동물]\" 형태가 아님");
   if (!/^[가-힣0-9\s]+$/.test(name)) p.push("이름에 한글/숫자 외 문자가 있음");
   if (!EMOJI_RE.test(String(a.emoji ?? "").trim())) p.push("이모지가 하나가 아님");
+  if (name && !mascotFor(name)) p.push(`이름 끝 동물이 목록에 없음 (목록: ${MASCOT_ANIMALS.join(", ")})`);
   if (!String(a.why ?? "").trim() || String(a.why).length > 80) p.push("why 가 비었거나 너무 김");
   const desc = String(a.description ?? "").trim();
   const sentences = desc.split(/(?<=[.!?…~])\s+/).filter((s) => s.trim().length > 1);
@@ -168,7 +171,8 @@ function normalizeAnimal(a: any, req: AnimalRequest): AnimalResult {
   if (req.care && !description.includes("1388")) description = `${description} ${HELP_SENTENCE}`;
   return {
     name: String(a.name).trim(),
-    emoji: String(a.emoji).trim(),
+    // 동물 이모지는 캐릭터 그림과 맞춰요
+    emoji: mascotFor(String(a.name))?.emoji ?? String(a.emoji).trim(),
     why: String(a.why).trim(),
     description,
     quote: String(a.quote).trim(),
