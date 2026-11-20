@@ -8,6 +8,7 @@
 //   follow_up_add / follow_up_delete   후속 보고 (로그인 또는 접수번호+비밀 코드)
 //   review_save / review_delete        상담 후기 (방송에서 읽힌 사연만, 사연 하나에 하나)
 //   golden_claim   황금 동물 구독권 받을 치지직 닉네임 남기기 (로그인)
+//   shorts_consent 릴스·쇼츠 사용 동의 바꾸기 (로그인 또는 접수번호+비밀 코드)
 //   delete_account 탈퇴 (원하면 사연도 삭제)
 // =====================================================================
 import { BOXES, fillTemplate, pickBadge } from "../_shared/boxes.ts";
@@ -157,6 +158,7 @@ function viewerStory(s: any) {
     aired_at: s.aired_at,
     created_at: s.created_at,
     claimed: !!s.user_id,
+    consent_shorts: !!s.consent_shorts,
   };
 }
 
@@ -207,6 +209,10 @@ async function submit(req: Request, body: Record<string, unknown>) {
   if (!box.voices.some((v) => v.id === voice)) bad("읽어줄 목소리를 골라주세요.");
   if (!box.visibilities.some((v) => v.id === visibility)) bad("공개 방식을 골라주세요.");
   if (!consents?.broadcast || !consents?.privacy) bad("필수 동의에 체크해 주세요.");
+  const consentShorts = consents?.shorts === true;
+  // 어느 릴스·쇼츠를 보고 들어왔는지 (사이트주소/v/12)
+  const refRaw = str(body.ref, 40).toLowerCase();
+  const ref = /^[a-z0-9_-]{1,30}$/.test(refRaw) ? refRaw : null;
 
   let storyBody = "";
   let templateId: string | null = null;
@@ -258,6 +264,8 @@ async function submit(req: Request, body: Record<string, unknown>) {
       visibility,
       badge,
       flags,
+      consent_shorts: consentShorts,
+      ref,
       animal_state: "pending",
     })
     .select("*")
@@ -432,6 +440,13 @@ async function claim(req: Request, body: Record<string, unknown>) {
   return json({ ok: true, story_id: story.id, receipt_no: story.receipt_no });
 }
 
+async function shortsConsent(req: Request, body: Record<string, unknown>) {
+  const story = await storyForRequest(req, body);
+  const on = body.on === true;
+  await adminDb().from("stories").update({ consent_shorts: on }).eq("id", story.id);
+  return json({ ok: true, consent_shorts: on });
+}
+
 async function deleteAccount(req: Request, body: Record<string, unknown>) {
   const user = await requestUser(req);
   if (!user) throw new HttpError(401, "먼저 로그인해 주세요.");
@@ -464,6 +479,8 @@ serve(async (req) => {
       return reviewDelete(req, body);
     case "golden_claim":
       return goldenClaim(req, body);
+    case "shorts_consent":
+      return shortsConsent(req, body);
     case "delete_by_code":
       return deleteByCode(req, body);
     case "claim":

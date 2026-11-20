@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { ApiError, callFn } from "../lib/supabase";
+import { useToast } from "./ui";
 import { GOMIN, optionLabel } from "@shared/boxes.ts";
 import { useSite } from "../lib/site";
 import type { StoryAuth, StoryBundle } from "../lib/mystory";
@@ -65,8 +67,39 @@ export function MyStoryView({
           <p className="story-body">{s.body}</p>
         </details>
 
+        <ShortsConsent auth={auth} on={!!s.consent_shorts} onChange={(v) => set({ story: { ...s, consent_shorts: v } })} />
+
         {children}
       </div>
     </div>
+  );
+}
+
+/** 릴스·쇼츠 사용 동의: 사연자가 언제든 켜고 끌 수 있어요 */
+function ShortsConsent({ auth, on, onChange }: { auth: StoryAuth; on: boolean; onChange: (v: boolean) => void }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  // 누르는 즉시 바뀌고, 저장에 실패하면 원래대로 돌아가요.
+  const toggle = async (next: boolean) => {
+    onChange(next);
+    setBusy(true);
+    try {
+      await callFn("public", { action: "shorts_consent", ...auth, on: next });
+      toast(next ? "릴스·쇼츠 사용에 동의했어요" : "릴스·쇼츠 사용 동의를 거뒀어요");
+    } catch (e) {
+      onChange(!next);
+      toast(e instanceof ApiError ? e.message : "바꾸지 못했어요");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <label className="check shorts-consent">
+      <input type="checkbox" checked={on} disabled={busy} onChange={(e) => toggle(e.target.checked)} />
+      <span>
+        다웅의 릴스·쇼츠 영상에 이 사연을 써도 돼요
+        <small className="check-sub">이름은 빼고, 사연 내용과 고민 동물만 나와요. 이미 올라간 영상은 다웅에게 따로 말해 주세요.</small>
+      </span>
+    </label>
   );
 }

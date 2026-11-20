@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { GOMIN } from "@shared/boxes.ts";
 import { errMsg, useAdmin } from "./api";
-import { Spinner } from "../components/ui";
+import { Spinner, useToast } from "../components/ui";
+import { copyText } from "../lib/image";
+import { normalizeRef, videoLink } from "../lib/growth";
 
 type StatsData = {
   week_count: number;
@@ -64,6 +66,8 @@ export default function Stats() {
         <Kpi label="AI 호출 오늘" value={d.ai.today} unit="번" sub={d.ai.failed_today ? `실패 ${d.ai.failed_today}번` : "실패 없음"} />
         <Kpi label="AI 호출 이번 달" value={d.ai.month} unit="번" sub={d.ai.enabled ? d.ai.model : "AI 키 없음 (기본 동물만)"} />
       </div>
+      <RefStats />
+
       <div className="adm-stat-grid">
         <Bars
           title="후기 반응"
@@ -116,6 +120,96 @@ function Bars({ title, rows, empty }: { title: string; rows: { label: string; va
         </ul>
       ) : (
         <p className="adm-dim">{empty}</p>
+      )}
+    </section>
+  );
+}
+
+type RefRow = { ref: string; visits: number; people: number; stories: number; aired: number; rate: number };
+
+/** 릴스·쇼츠 영상별 유입: 영상마다 다른 주소(사이트주소/v/12)를 쓰면 어떤 영상이 사람을 데려왔는지 보여요 */
+function RefStats() {
+  const { call } = useAdmin();
+  const toast = useToast();
+  const [days, setDays] = useState(30);
+  const [rows, setRows] = useState<RefRow[] | null>(null);
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    setRows(null);
+    call<{ items: RefRow[] }>("ref_stats", { days })
+      .then((r) => setRows(r.items))
+      .catch(() => setRows([]));
+  }, [call, days]);
+
+  const ref = normalizeRef(name);
+  const link = ref ? videoLink(ref) : "";
+
+  return (
+    <section className="adm-panel adm-refs" aria-label="릴스·쇼츠 영상별 유입">
+      <div className="row">
+        <h2 className="adm-h3">릴스·쇼츠 영상별 유입</h2>
+        <span className="spacer" />
+        <label className="sr-only" htmlFor="ref-days">
+          기간
+        </label>
+        <select id="ref-days" className="select adm-select-sm" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+          <option value={7}>최근 7일</option>
+          <option value={30}>최근 30일</option>
+          <option value={90}>최근 90일</option>
+        </select>
+      </div>
+
+      <div className="adm-ref-maker">
+        <div className="field">
+          <label htmlFor="ref-name">영상 이름으로 링크 만들기 (영어 소문자·숫자·-·_, 30자)</label>
+          <input id="ref-name" className="input adm-mono" placeholder="예) 12 또는 love-01" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        {name && !ref && <p className="adm-error">영어 소문자, 숫자, -, _ 만 쓸 수 있어요.</p>}
+        {link && (
+          <p className="adm-ref-link">
+            <code>{link}</code>
+            <button className="btn btn-sm btn-primary" onClick={async () => toast((await copyText(link)) ? "링크를 복사했어요" : "복사하지 못했어요")}>
+              복사
+            </button>
+          </p>
+        )}
+        <p className="adm-dim adm-small">
+          영상마다 다른 이름을 쓰세요. 이 주소로 들어온 사람이 7일 안에 사연을 보내면 그 영상에서 온 사연으로 세어요. 영상 설명·고정 댓글·프로필 링크·자동 DM에 넣으면 돼요.
+        </p>
+      </div>
+
+      {!rows ? (
+        <p className="adm-dim adm-small">불러오는 중…</p>
+      ) : rows.length === 0 ? (
+        <p className="adm-dim">아직 영상 링크로 들어온 방문이 없어요.</p>
+      ) : (
+        <div className="adm-table-wrap">
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th scope="col">영상</th>
+                <th scope="col">방문한 사람</th>
+                <th scope="col">사연</th>
+                <th scope="col">사연 비율</th>
+                <th scope="col">방송에서 읽음</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.ref}>
+                  <th scope="row" className="adm-mono">
+                    {r.ref}
+                  </th>
+                  <td className="adm-mono">{r.people}</td>
+                  <td className="adm-mono">{r.stories}</td>
+                  <td className="adm-mono">{r.rate}%</td>
+                  <td className="adm-mono">{r.aired}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

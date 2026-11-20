@@ -11,6 +11,7 @@ import {
 } from "@shared/boxes.ts";
 import { findContacts, needsCare } from "@shared/safety.ts";
 import { ApiError, callFn, store, supabase } from "../lib/supabase";
+import { currentRef } from "../lib/growth";
 import { useSite } from "../lib/site";
 import { ChoiceGroup, Dialog, StampSticker, Thermometer, temperatureColor } from "../components/ui";
 
@@ -38,6 +39,7 @@ type Draft = {
   visibility: string;
   consent_broadcast: boolean;
   consent_privacy: boolean;
+  consent_shorts: boolean;
 };
 
 const EMPTY: Draft = {
@@ -61,6 +63,7 @@ const EMPTY: Draft = {
   visibility: "",
   consent_broadcast: false,
   consent_privacy: false,
+  consent_shorts: false,
 };
 
 function hasContent(d: Draft) {
@@ -222,7 +225,8 @@ export default function Write() {
         stamp: d.stamp,
         voice: d.voice,
         visibility: d.visibility,
-        consents: { broadcast: d.consent_broadcast, privacy: d.consent_privacy },
+        consents: { broadcast: d.consent_broadcast, privacy: d.consent_privacy, shorts: d.consent_shorts === true },
+        ref: currentRef(),
       });
       store.remove(DRAFT_KEY);
       const receipt = { ...res, category: d.category, wish: d.wish, temperature: d.temperature };
@@ -611,6 +615,16 @@ export default function Write() {
                 <input type="checkbox" checked={d.consent_privacy} onChange={(e) => set("consent_privacy", e.target.checked)} />
                 <span>실명, 연락처, 주소, 학교·회사 이름은 쓰지 않았어요</span>
               </label>
+              <span className="label" style={{ marginTop: 8 }}>
+                선택 동의
+              </span>
+              <label className="check">
+                <input type="checkbox" checked={!!d.consent_shorts} onChange={(e) => set("consent_shorts", e.target.checked)} />
+                <span>
+                  다웅의 릴스·쇼츠 영상에 이 사연을 써도 돼요
+                  <small className="check-sub">이름은 빼고, 사연 내용과 고민 동물만 나와요. 나중에 내 사연 화면에서 언제든 바꿀 수 있어요.</small>
+                </span>
+              </label>
             </div>
           </Step>
         )}
@@ -647,6 +661,7 @@ export default function Write() {
               </ReviewRow>
               <ReviewRow label="공개 방식" onEdit={() => go(9)}>
                 {optionLabel(GOMIN.visibilities, d.visibility)}
+                {d.consent_shorts && <span className="faint"> · 릴스·쇼츠 사용 동의</span>}
               </ReviewRow>
             </dl>
             {needsCare(body) && (

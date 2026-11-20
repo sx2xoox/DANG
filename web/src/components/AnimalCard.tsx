@@ -1,5 +1,6 @@
 import { forwardRef, useState } from "react";
 import { GOMIN } from "@shared/boxes.ts";
+import { siteHost } from "../lib/growth";
 
 export type Animal = {
   name: string;
@@ -107,7 +108,8 @@ export const AnimalCard = forwardRef<HTMLDivElement, Props>(function AnimalCard(
                   </div>
                 ) : null}
                 <div className="tc-foot">
-                  <span>{siteName ?? "다웅 고민 사연함"}</span>
+                  {/* 공유 이미지에 사이트 주소가 찍혀요 (주소가 없으면 사이트 이름) */}
+                  <span className={siteHost() ? "tc-addr" : undefined}>{siteHost() || siteName || "다웅 고민 사연함"}</span>
                   {date && <span>{date}</span>}
                 </div>
               </>

@@ -164,6 +164,8 @@ export type ListItem = {
   status: Status;
   starred: boolean;
   scheduled: boolean;
+  consent_shorts: boolean;
+  ref: string | null;
   flags: string[];
   animal_state: string;
   created_at: string;

@@ -109,6 +109,8 @@ export default function StoryDetail({ id, onChanged, onDeleted, onBack }: Props)
         )}
         <span className="adm-no big">#{s.receipt_no}</span>
         <StatusChip status={s.status} />
+        {s.consent_shorts && <span className="adm-tag ok">릴스·쇼츠 사용 동의</span>}
+        {s.ref && <span className="adm-tag">영상 {s.ref} 보고 옴</span>}
         <span className="adm-dim adm-small">
           {formatDate(s.created_at, true)} · {daysSince(s.created_at)}일 전
         </span>

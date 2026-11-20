@@ -747,3 +747,11 @@ select {
   min-height: 40vh;
   text-align: center;
 }
+
+.check-sub {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-dim);
+}

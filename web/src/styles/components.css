@@ -1280,3 +1280,13 @@
 .tc-compact .tc-quote {
   margin-top: auto;
 }
+
+.tc-addr {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: #0b1220;
+  letter-spacing: 0.02em;
+}
+
+.tc-golden .tc-addr {
+  color: #3b2a00;
+}

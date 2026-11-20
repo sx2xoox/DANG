@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import { captureRef, captureRefFromLocation } from "./lib/growth";
 import { SiteProvider } from "./lib/site";
 import { Spinner, ToastProvider } from "./components/ui";
 import { Layout } from "./components/Layout";
@@ -19,7 +20,20 @@ import NotFound from "./pages/NotFound";
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 const ObsPage = lazy(() => import("./obs/ObsPage"));
 
+/** 릴스·쇼츠용 주소 (사이트주소/v/12): 어느 영상에서 왔는지 기억하고 첫 화면으로 */
+function VideoEntry() {
+  const { ref } = useParams();
+  useEffect(() => {
+    captureRef(ref);
+  }, [ref]);
+  return <Navigate to="/" replace />;
+}
+
 export default function App() {
+  useEffect(() => {
+    captureRefFromLocation();
+  }, []);
+
   return (
     <SiteProvider>
       <ToastProvider>
@@ -27,6 +41,7 @@ export default function App() {
           <Routes>
             <Route path="/admin/*" element={<AdminApp />} />
             <Route path="/obs" element={<ObsPage />} />
+            <Route path="/v/:ref" element={<VideoEntry />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/write" element={<Write />} />

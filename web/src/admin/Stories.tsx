@@ -16,6 +16,7 @@ type Filters = {
   status: string;
   visibility: string;
   starred: string;
+  shorts: string;
   flag: string;
   age_min: string;
   age_max: string;
@@ -30,6 +31,7 @@ const EMPTY: Filters = {
   status: "",
   visibility: "",
   starred: "",
+  shorts: "",
   flag: "",
   age_min: "",
   age_max: "",
@@ -135,6 +137,7 @@ export default function Stories() {
             />
             <Select label="공개 방식" value={filters.visibility} onChange={set("visibility")} options={GOMIN.visibilities} />
             <Select label="별표" value={filters.starred} onChange={set("starred")} options={[{ id: "yes", label: "별표만" }]} />
+            <Select label="릴스·쇼츠" value={filters.shorts} onChange={set("shorts")} options={[{ id: "yes", label: "사용 동의한 사연만" }]} />
             <Select
               label="표시"
               value={filters.flag}
@@ -185,6 +188,7 @@ export default function Stories() {
                     </span>
                   )}
                   {s.scheduled && <span className="adm-tag blue">방송 예정</span>}
+                  {s.consent_shorts && <span className="adm-tag ok">쇼츠 OK</span>}
                   {s.status === "read" && !s.result_published_at && <span className="adm-tag warn">결과 미공개</span>}
                   {s.follow_up_count > 0 && <span className="adm-dim">후속 보고 {s.follow_up_count}</span>}
                   {s.review_reaction && <span className="adm-dim">후기 {reactionLabel(s.review_reaction)}</span>}

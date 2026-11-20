@@ -171,7 +171,7 @@ function broadcastName(s: { display_name: string; visibility: string }): string 
 }
 
 const LIST_FIELDS =
-  "id, receipt_no, display_name, name_mode, age, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, scheduled, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, read_started_at, result_published_at, waiting_notice_at, user_id, worry_animals(name, emoji, source), follow_ups(count), reviews(reaction)";
+  "id, receipt_no, display_name, name_mode, age, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, scheduled, consent_shorts, ref, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, read_started_at, result_published_at, waiting_notice_at, user_id, worry_animals(name, emoji, source), follow_ups(count), reviews(reaction)";
 
 function listRow(s: any) {
   const animal = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
@@ -194,6 +194,8 @@ function listRow(s: any) {
     status: s.status,
     starred: s.starred,
     scheduled: s.scheduled,
+    consent_shorts: s.consent_shorts,
+    ref: s.ref,
     flags: s.flags,
     animal_state: s.animal_state,
     created_at: s.created_at,
@@ -243,6 +245,8 @@ async function list(body: Record<string, unknown>) {
   if (ageMin !== null) q = q.gte("age", ageMin);
   if (ageMax !== null) q = q.lte("age", ageMax);
   if (f.starred === true || f.starred === "yes") q = q.eq("starred", true);
+  if (f.shorts === true || f.shorts === "yes") q = q.eq("consent_shorts", true);
+  if (typeof f.ref === "string" && f.ref) q = q.eq("ref", f.ref.toLowerCase());
   if (typeof f.flag === "string" && f.flag) q = q.contains("flags", [f.flag]);
   const search = cleanSearch(str(f.q, 50));
   if (search) q = q.or(`summary.ilike.%${search}%,body.ilike.%${search}%,display_name.ilike.%${search}%`);
@@ -998,6 +1002,47 @@ async function stats() {
   });
 }
 
+/**
+ * 영상별 유입: 사이트주소/v/12 로 들어온 방문(기기·하루 기준)과 그 영상을 보고 낸 사연 수
+ * days 안의 기록만 (기본 30일)
+ */
+async function refStats(body: Record<string, unknown>) {
+  const days = Math.min(180, Math.max(1, int(body.days) ?? 30));
+  const since = new Date(Date.now() - days * 86_400_000);
+  const sinceDay = new Date(since.getTime() + KST).toISOString().slice(0, 10);
+  const db = adminDb();
+  const [{ data: visits }, { data: stories }] = await Promise.all([
+    db.from("visits").select("ref, device_hash").gte("day", sinceDay).limit(100000),
+    db.from("stories").select("ref, status").not("ref", "is", null).gte("created_at", since.toISOString()).limit(100000),
+  ]);
+  const m = new Map<string, { ref: string; visits: number; devices: Set<string>; stories: number; aired: number }>();
+  const row = (ref: string) => {
+    if (!m.has(ref)) m.set(ref, { ref, visits: 0, devices: new Set(), stories: 0, aired: 0 });
+    return m.get(ref)!;
+  };
+  for (const v of visits ?? []) {
+    const r = row(v.ref);
+    r.visits++;
+    r.devices.add(v.device_hash);
+  }
+  for (const s of stories ?? []) {
+    const r = row(s.ref);
+    r.stories++;
+    if (s.status === "read") r.aired++;
+  }
+  const items = [...m.values()]
+    .map((r) => ({
+      ref: r.ref,
+      visits: r.visits,
+      people: r.devices.size,
+      stories: r.stories,
+      aired: r.aired,
+      rate: r.devices.size ? Math.round((r.stories / r.devices.size) * 100) : 0,
+    }))
+    .sort((a, b) => b.people - a.people || b.stories - a.stories);
+  return json({ days, items });
+}
+
 async function getSettings(role: Role) {
   const { data } = await adminDb().from("settings").select("*").eq("id", 1).single();
   if (!data) throw new HttpError(500, "설정을 불러오지 못했어요.");
@@ -1123,10 +1168,10 @@ const STATUS_LABEL: Record<string, string> = {
 async function exportCsv() {
   const { data } = await adminDb()
     .from("stories")
-    .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, starred, flags, aired_at, vod_url, host_note, worry_animals(name, emoji), reviews(reaction, comment)")
+    .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, starred, flags, aired_at, vod_url, host_note, consent_shorts, ref, worry_animals(name, emoji), reviews(reaction, comment)")
     .order("created_at", { ascending: true });
   const label = (list: { id: string; label: string }[], id: string) => list.find((o) => o.id === id)?.label ?? id;
-  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "나이", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일", "다시보기", "다웅의 한마디", "후기 반응", "한 줄 후기"];
+  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "나이", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일", "다시보기", "다웅의 한마디", "후기 반응", "한 줄 후기", "쇼츠 사용 동의", "유입 영상"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [head.map(esc).join(",")];
   for (const s of (data ?? []) as any[]) {
@@ -1157,6 +1202,8 @@ async function exportCsv() {
         s.host_note ?? "",
         rv ? reactionLabel(rv.reaction) : "",
         rv?.comment ?? "",
+        s.consent_shorts ? "동의" : "",
+        s.ref ?? "",
       ].map(esc).join(","),
     );
   }
@@ -1228,6 +1275,8 @@ serve(async (req) => {
       return exportCsv();
     case "alerts":
       return alerts(session.role);
+    case "ref_stats":
+      return refStats(body);
     case "broadcast_current":
       return broadcastCurrent();
     case "broadcast_start":

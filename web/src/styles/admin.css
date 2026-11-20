@@ -2421,3 +2421,62 @@
     max-width: 100%;
   }
 }
+
+/* 릴스·쇼츠 영상별 유입 */
+.adm-refs {
+  margin-bottom: 16px;
+}
+
+.adm-ref-maker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-radius: 3px;
+}
+
+.adm-ref-maker .field {
+  max-width: 420px;
+}
+
+.adm-ref-link {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.adm-ref-link code {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  padding: 4px 8px;
+  background: var(--paper-w);
+  border: 1.5px dashed var(--ink);
+  word-break: break-all;
+}
+
+.adm-table-wrap {
+  overflow-x: auto;
+}
+
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.adm-table th,
+.adm-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.adm-table thead th {
+  font-size: 12px;
+  color: var(--text-dim);
+  border-bottom: 1.5px solid var(--ink);
+}
