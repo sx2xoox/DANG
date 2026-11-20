@@ -22,11 +22,14 @@ export const C = {
   marker: "#ffe066",
 };
 
-// 사이트와 같은 글꼴: 제목 Bagel Fat One, 본문 Yeon Sung, 손글씨 Nanum Pen Script, 코드 IBM Plex Mono
+// 굵은 글씨는 리틱체(REATIC): 자막은 폭이 좁은 NarrowBold, 큰 제목은 Bold
+// 본문 Yeon Sung, 손글씨 Nanum Pen Script, 코드 IBM Plex Mono
+// 리틱체 파일이 없으면 Bagel Fat One 으로 대신 나옵니다 (public/fonts/README.md 참고)
 export const F = {
   hand: "'Nanum Pen Script'",
   body: "'Yeon Sung'",
-  display: "'Bagel Fat One'",
+  display: "'REATIC Narrow', 'Bagel Fat One'",
+  title: "'REATIC', 'Bagel Fat One'",
   mono: "'IBM Plex Mono', 'Yeon Sung', monospace",
 };
 
@@ -36,6 +39,8 @@ const FONT_FILES: [string, string, string][] = [
   ["Yeon Sung", "fonts/YeonSung-Regular.ttf", "400"],
   ["Bagel Fat One", "fonts/BagelFatOne-Regular.ttf", "400"],
   ["IBM Plex Mono", "fonts/IBMPlexMono-SemiBold.ttf", "600"],
+  ["REATIC", "fonts/REATIC-Bold.ttf", "400"],
+  ["REATIC Narrow", "fonts/REATIC-NarrowBold.ttf", "400"],
 ];
 
 export function useFonts() {
@@ -44,7 +49,11 @@ export function useFonts() {
     Promise.all(
       FONT_FILES.map(([family, file, weight]) => {
         const f = new FontFace(family, `url(${staticFile(file)})`, { weight });
-        return f.load().then((loaded) => document.fonts.add(loaded));
+        // 파일이 없는 글꼴은 건너뛰고 다음 글꼴로 대신함
+        return f.load().then(
+          (loaded) => void document.fonts.add(loaded),
+          () => undefined,
+        );
       }),
     ).then(() => continueRender(handle));
   }, [handle]);
@@ -217,7 +226,7 @@ export const Caption: React.FC<{ at: number; segs: Seg[]; y: number; size?: numb
           fontFamily: F.display,
           fontWeight: 400,
           fontSize: size,
-          letterSpacing: "-0.035em",
+          letterSpacing: "-0.01em",
           color: C.ink,
           whiteSpace: "nowrap",
         }}
@@ -293,7 +302,7 @@ export const Polaroid: React.FC<{
             style={{ filter: `blur(${(1 - develop) * 22}px) brightness(${1 + (1 - develop) * 0.9}) saturate(${0.3 + develop * 0.7}) drop-shadow(0 8px 6px rgba(60, 36, 14, 0.22))` }}
           />
         ) : (
-          <span style={{ fontFamily: F.display, fontWeight: 400, fontSize: photo * 0.62, color: C.ink, opacity: 0.85, lineHeight: 1 }}>?</span>
+          <span style={{ fontFamily: F.title, fontWeight: 400, fontSize: photo * 0.62, color: C.ink, opacity: 0.85, lineHeight: 1 }}>?</span>
         )}
         <div style={{ position: "absolute", inset: 0, background: "#fffefb", opacity: (1 - develop) * 0.85 }} />
       </div>
@@ -325,7 +334,7 @@ export const PolaroidBack: React.FC<{ width?: number }> = ({ width = 620 }) => (
     }}
   >
     <div style={{ textAlign: "center", color: C.dim }}>
-      <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 230, lineHeight: 1, color: "rgba(43,33,24,0.18)" }}>?</div>
+      <div style={{ fontFamily: F.title, fontWeight: 400, fontSize: 230, lineHeight: 1, color: "rgba(43,33,24,0.18)" }}>?</div>
       <div style={{ fontFamily: F.body, fontSize: 54, marginTop: 20 }}>고민 동물 현상 중</div>
     </div>
   </div>
