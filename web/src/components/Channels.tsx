@@ -70,12 +70,10 @@ export function LiveBanner() {
   );
 }
 
-/** 모든 시청자 화면 아래 */
+/** 모든 시청자 화면 아래: 상담 연락처만 (채널 버튼은 첫 화면과 사연 제출 완료 화면에만) */
 export function SiteFooter() {
-  const { info } = useSite();
   return (
     <footer className="site-footer">
-      <ChannelButtons compact lead={info.on_air ? "지금 방송 중이에요" : "방송에서 만나요"} />
       <p className="site-footer-help">힘든 일이 있다면 청소년상담 1388 (문자 #1388) · 학교폭력 117</p>
     </footer>
   );

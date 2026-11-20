@@ -1426,21 +1426,12 @@
   color: var(--text);
 }
 
-.site-footer .ch-box {
-  align-items: center;
-}
-
-.site-footer .ch-row {
-  justify-content: center;
-}
-
 .site-footer-help {
   margin: 0;
   font-size: 13px;
   color: var(--text-faint);
 }
 
-:root[data-preset="cork"] .site-footer .ch-lead,
 :root[data-preset="cork"] .site-footer-help {
   display: inline-block;
   background: var(--poster, #fffdf6);
