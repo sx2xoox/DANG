@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useSite } from "../lib/site";
+import CorkHome from "./CorkHome";
 
 /** 오늘 날짜를 소인 형식으로 (2026.11.20) */
 function postmarkDate() {
@@ -17,6 +18,8 @@ const TRACK = [
 export default function Home() {
   const { info, session } = useSite();
   const count = info.week_count;
+
+  if (info.preset === "cork") return <CorkHome info={info} loggedIn={!!session} />;
 
   return (
     <div className="post-home">
