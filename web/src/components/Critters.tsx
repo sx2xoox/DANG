@@ -8,10 +8,10 @@ import { useId, type ReactNode } from "react";
              아주 작은 점 눈과 작은 입, 살짝 삐뚤고 물렁한 모양.
    ===================================================================== */
 
-const LINE = "#7a5640";
+const LINE = "#4a2e1e";
 const CREAM = "#fff6e6";
-const O = { stroke: LINE, strokeWidth: 4, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
-const THIN = { ...O, strokeWidth: 3, fill: "none" };
+const O = { stroke: LINE, strokeWidth: 4.8, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+const THIN = { ...O, strokeWidth: 3.6, fill: "none" };
 
 type Ctx = { uid: string; soft: string };
 
@@ -53,7 +53,7 @@ function Face({ ctx, x, y, o = {} }: { ctx: Ctx; x: number; y: number; o?: FaceO
     if (o.eye === "wide")
       return (
         <>
-          <circle cx={ex} cy={y} r="8" fill="#fffdf7" {...O} strokeWidth={3} />
+          <circle cx={ex} cy={y} r="8" fill="#fffdf7" {...O} strokeWidth={3.8} />
           <circle cx={ex} cy={y} r="2.6" fill={LINE} />
         </>
       );
@@ -64,7 +64,7 @@ function Face({ ctx, x, y, o = {} }: { ctx: Ctx; x: number; y: number; o?: FaceO
           <circle cx={ex} cy={y} r="2.8" fill={LINE} />
         </>
       );
-    return <circle cx={ex} cy={y} r="3.4" fill={LINE} />;
+    return <circle cx={ex} cy={y} r="3.9" fill={LINE} />;
   };
   const my = y + 9;
   return (
@@ -78,18 +78,18 @@ function Face({ ctx, x, y, o = {} }: { ctx: Ctx; x: number; y: number; o?: FaceO
       {eye(lx)}
       {eye(rx)}
       {o.brow === "worry" && (
-        <g {...THIN} strokeWidth={2.6}>
+        <g {...THIN} strokeWidth={3.2}>
           <path d={`M${lx - 6},${y - 9} L${lx + 5},${y - 12}`} />
           <path d={`M${rx - 5},${y - 12} L${rx + 6},${y - 9}`} />
         </g>
       )}
       {o.brow === "angry" && (
-        <g {...THIN} strokeWidth={3}>
+        <g {...THIN} strokeWidth={3.6}>
           <path d={`M${lx - 6},${y - 12} L${lx + 5},${y - 8}`} />
           <path d={`M${rx - 5},${y - 8} L${rx + 6},${y - 12}`} />
         </g>
       )}
-      <g {...THIN} strokeWidth={2.6}>
+      <g {...THIN} strokeWidth={3.2}>
         {(o.mouth ?? "w") === "w" && <path d={`M${x - 5},${my} Q${x - 2.5},${my + 4} ${x},${my} Q${x + 2.5},${my + 4} ${x + 5},${my}`} />}
         {o.mouth === "flat" && <path d={`M${x - 4},${my + 1} L${x + 4},${my + 1}`} />}
         {o.mouth === "frown" && <path d={`M${x - 5},${my + 4} Q${x},${my - 1} ${x + 5},${my + 4}`} />}
@@ -102,8 +102,8 @@ function Face({ ctx, x, y, o = {} }: { ctx: Ctx; x: number; y: number; o?: FaceO
 /** 고민 쪽지 */
 const Note = ({ x, y, r = 0, s = 1 }: { x: number; y: number; r?: number; s?: number }) => (
   <g transform={`translate(${x} ${y}) rotate(${r}) scale(${s})`}>
-    <rect x="-17" y="-15" width="34" height="30" fill="#fbe7a0" {...O} strokeWidth={3.4} />
-    <path d="M-9,-3 L9,-3 M-9,5 L3,5" {...THIN} strokeWidth={2.2} opacity={0.5} />
+    <rect x="-17" y="-15" width="34" height="30" fill="#fbe7a0" {...O} strokeWidth={3.8} />
+    <path d="M-9,-3 L9,-3 M-9,5 L3,5" {...THIN} strokeWidth={2.8} opacity={0.8} />
   </g>
 );
 
@@ -175,22 +175,22 @@ const owl: Critter = {
           <circle cx="98" cy="106" r="24" fill={CREAM} />
           <circle cx="142" cy="106" r="24" fill={CREAM} />
         </Fur>
-        <g {...THIN} strokeWidth={2.4} opacity={0.55}>
+        <g {...THIN} strokeWidth={3.6} opacity={0.85}>
           <path d="M108,148 l4,5 l4,-5 M124,148 l4,5 l4,-5 M116,162 l4,5 l4,-5" />
         </g>
         <P d="M62,122 C46,134 48,160 64,170 C74,158 74,136 68,124 Z" fill={dark} />
         <P d="M178,122 C194,134 192,160 176,170 C166,158 166,136 172,124 Z" fill={dark} />
         <Face ctx={ctx} x={120} y={106} o={{ gap: 44, eye: "wide", mouth: "none", blush: false }} />
         {/* 다크서클 */}
-        <g {...THIN} strokeWidth={2.4} opacity={0.6}>
+        <g {...THIN} strokeWidth={3.6} opacity={0.85}>
           <path d="M90,119 Q98,124 106,119 M134,119 Q142,124 150,119" />
         </g>
-        <path d="M113,116 L127,116 L120,128 Z" fill="#f0b25a" {...O} strokeWidth={3} />
+        <path d="M113,116 L127,116 L120,128 Z" fill="#f0b25a" {...O} strokeWidth={3.8} />
         <g {...THIN} stroke="#d99a45" strokeWidth={3.4}>
           <path d="M98,184 l5,4 l5,-4 M132,184 l5,4 l5,-4" />
         </g>
         {/* 초승달 */}
-        <path d="M196,46 C184,48 178,60 184,70 C190,78 202,78 208,70 C198,70 192,58 196,46 Z" fill="#fbe7a0" {...O} strokeWidth={3} />
+        <path d="M196,46 C184,48 178,60 184,70 C190,78 202,78 208,70 C198,70 192,58 196,46 Z" fill="#fbe7a0" {...O} strokeWidth={3.8} />
       </>
     );
   },
@@ -222,7 +222,7 @@ const octopus: Critter = {
           <ellipse cx="120" cy="150" rx="40" ry="14" fill="#e9949e" opacity={0.5} />
         </Fur>
         <Face ctx={ctx} x={120} y={108} o={{ gap: 38, mouth: "o", brow: "worry" }} />
-        <g {...THIN} strokeWidth={3}>
+        <g {...THIN} strokeWidth={3.6}>
           <path d="M196,24 C196,14 210,14 210,24 C210,30 203,30 203,38" />
         </g>
         <circle cx="203" cy="46" r="2.4" fill={LINE} />
@@ -251,23 +251,23 @@ const sloth: Critter = {
           <circle cx="190" cy="172" r="5" />
           <circle cx="156" cy="174" r="5" />
         </g>
-        <path d="M104,122 C96,140 98,164 106,182" {...THIN} opacity={0.6} />
+        <path d="M104,122 C96,140 98,164 106,182" {...THIN} opacity={0.85} />
         <P d={head} fill={fur} />
         <Fur ctx={ctx} id="sh" clip={head}>
           <ellipse cx="70" cy="152" rx="28" ry="22" fill={CREAM} />
         </Fur>
         <path d="M44,144 C50,138 58,140 62,148" {...THIN} stroke="#8d745c" strokeWidth={6} />
         <path d="M96,144 C90,138 82,140 78,148" {...THIN} stroke="#8d745c" strokeWidth={6} />
-        <g {...THIN} strokeWidth={2.6}>
+        <g {...THIN} strokeWidth={3.2}>
           <path d="M49,148 Q54,152 59,148 M81,148 Q86,152 91,148" />
         </g>
         <ellipse cx="70" cy="156" rx="4" ry="3" fill={LINE} />
-        <path d="M64,163 Q70,168 76,163" {...THIN} strokeWidth={2.6} />
+        <path d="M64,163 Q70,168 76,163" {...THIN} strokeWidth={3.2} />
         <P d="M74,172 C54,166 30,168 22,176 C16,184 24,190 34,190 C50,190 66,188 78,184 Z" fill={fur} />
         <g {...THIN} stroke="#fffaf0" strokeWidth={3.4}>
           <path d="M24,178 L15,177 M23,183 L14,185 M26,188 L18,192" />
         </g>
-        <g {...THIN} strokeWidth={2.8} opacity={0.75}>
+        <g {...THIN} strokeWidth={3.4} opacity={0.95}>
           <path d="M118,86 l12,0 l-12,12 l12,0 M138,66 l8,0 l-8,8 l8,0" />
         </g>
       </>
@@ -299,8 +299,8 @@ const hamster: Critter = {
         <Face ctx={ctx} x={120} y={122} o={{ gap: 36, mouth: "w" }} />
         <ellipse cx="120" cy="128" rx="3.2" ry="2.4" fill="#e8877a" />
         {/* 해바라기씨 */}
-        <path d="M120,142 C112,150 112,162 120,166 C128,162 128,150 120,142 Z" fill="#fffaf0" {...O} strokeWidth={3} />
-        <path d="M117,150 L117,160 M123,150 L123,160" {...THIN} strokeWidth={2.2} />
+        <path d="M120,142 C112,150 112,162 120,166 C128,162 128,150 120,142 Z" fill="#fffaf0" {...O} strokeWidth={3.8} />
+        <path d="M117,150 L117,160 M123,150 L123,160" {...THIN} strokeWidth={2.8} />
         <P d="M100,152 C92,150 90,162 98,164 C106,166 110,158 106,154 Z" fill={tan} />
         <P d="M140,152 C148,150 150,162 142,164 C134,166 130,158 134,154 Z" fill={tan} />
       </>
@@ -337,13 +337,13 @@ const cat: Critter = {
         </g>
         {/* 곁눈질하는 한쪽 눈 */}
         <circle cx="132" cy="86" r="3.6" fill={LINE} />
-        <path d="M124,76 L138,80" {...THIN} strokeWidth={3} />
-        <path d="M138,98 l6,-3" {...THIN} strokeWidth={2.6} />
+        <path d="M124,76 L138,80" {...THIN} strokeWidth={3.6} />
+        <path d="M138,98 l6,-3" {...THIN} strokeWidth={3.2} />
         <g fill="#f29a8f" opacity={0.5} filter={ctx.soft}>
           <ellipse cx="136" cy="96" rx="7" ry="4" />
         </g>
         {/* 흥! */}
-        <g {...THIN} strokeWidth={3}>
+        <g {...THIN} strokeWidth={3.6}>
           <path d="M170,40 C172,46 176,48 182,48 M192,48 C198,48 202,46 204,40 M170,66 C172,60 176,58 182,58 M192,58 C198,58 202,60 204,66" />
         </g>
         <P d="M84,182 C82,176 104,176 104,183 C102,188 86,188 84,182 Z" fill={yel} />
@@ -373,7 +373,7 @@ const turtle: Critter = {
         <Fur ctx={ctx} id="ts" clip={shell}>
           <ellipse cx="120" cy="112" rx="34" ry="16" fill="#b9d3a4" />
         </Fur>
-        <g {...THIN} strokeWidth={2.6} opacity={0.5}>
+        <g {...THIN} strokeWidth={3.2} opacity={0.8}>
           <path d="M112,96 L104,130 L128,150 L160,138 L168,104 M104,130 L72,138 M128,150 L126,172 M160,138 L192,148" />
         </g>
         <path d="M66,172 L200,172" {...THIN} strokeWidth={4} />
@@ -415,21 +415,21 @@ const capybara: Critter = {
         <Fur ctx={ctx} id="kh" clip={head}>
           <ellipse cx="80" cy="140" rx="34" ry="18" fill="#dcbb94" />
         </Fur>
-        <g {...THIN} strokeWidth={2.8}>
+        <g {...THIN} strokeWidth={3.4}>
           <path d="M58,112 L68,112 M104,112 L114,112" />
         </g>
         <circle cx="76" cy="132" r="2.4" fill={LINE} />
         <circle cx="94" cy="132" r="2.4" fill={LINE} />
-        <path d="M78,144 Q85,148 92,144" {...THIN} strokeWidth={2.6} />
+        <path d="M78,144 Q85,148 92,144" {...THIN} strokeWidth={3.2} />
         <g fill="#f29a8f" opacity={0.5} filter={ctx.soft}>
           <ellipse cx="50" cy="126" rx="8" ry="5" />
           <ellipse cx="122" cy="126" rx="8" ry="5" />
         </g>
         {/* 귤 */}
         <circle cx="86" cy="62" r="15" fill="#f5b25a" {...O} />
-        <path d="M86,48 C80,40 90,36 96,40 C96,46 92,48 86,48 Z" fill="#9cc47f" {...O} strokeWidth={3} />
+        <path d="M86,48 C80,40 90,36 96,40 C96,46 92,48 86,48 Z" fill="#9cc47f" {...O} strokeWidth={3.8} />
         {/* 김 */}
-        <g {...THIN} strokeWidth={2.8} opacity={0.6}>
+        <g {...THIN} strokeWidth={3.4} opacity={0.85}>
           <path d="M176,92 C170,84 182,78 176,68 M196,96 C190,88 202,82 196,72" />
         </g>
       </>
@@ -450,7 +450,7 @@ export function CritterArt({ id, size = 220 }: { id: keyof typeof CRITTERS | str
         {/* 손그림처럼 선이 아주 살짝 흔들림 (끊기지는 않음) */}
         <filter id={`wob-${uid}`} x="-8%" y="-8%" width="116%" height="116%">
           <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed={id.length * 7} result="n" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="1.8" />
         </filter>
         <filter id={`soft-${uid}`} x="-40%" y="-40%" width="180%" height="180%">
           <feGaussianBlur stdDeviation="4" />
