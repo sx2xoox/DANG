@@ -1,0 +1,86 @@
+/* =====================================================================
+   사이트 글꼴 (모든 디자인 공통, 가장 마지막에 불러와요)
+   - 제목: Bagel Fat One ("Dawoong Display", font-display.css)
+   - 본문·버튼·숫자: Yeon Sung
+   - 손글씨 한 줄: Nanum Pen Script
+   - 접수번호·비밀 코드처럼 정확히 읽어야 하는 것: IBM Plex Mono
+   글꼴 파일은 모두 사이트 안에 들어 있어요. (외부 글꼴 서버를 쓰지 않음)
+   ===================================================================== */
+
+:root,
+:root[data-preset] {
+  --font-display: "Dawoong Display", "Yeon Sung", sans-serif;
+  --font-serif: "Dawoong Display", "Yeon Sung", sans-serif;
+  --font-body: "Yeon Sung", "Pretendard Variable", Pretendard, sans-serif;
+  --font-mono: "Yeon Sung", "Pretendard Variable", Pretendard, sans-serif;
+  --font-code: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --hand: "Nanum Pen Script", "Yeon Sung", sans-serif;
+}
+
+/* Yeon Sung 은 글자가 작게 보여서 크기를 맞춰요 (같은 px 에서 더 커 보이게) */
+body {
+  font-family: var(--font-body);
+  font-size-adjust: 0.6;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size-adjust: inherit;
+}
+
+h1,
+h2,
+.display,
+.brand {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* 손글씨·이모지는 원래 크기 그대로 */
+.cb-sign,
+.lg-hand,
+.cb-note,
+.tc-emoji,
+.result-emoji,
+.wall-emoji,
+.obs-animal-emoji {
+  font-size-adjust: none;
+}
+
+/* 접수번호·비밀 코드·인증 코드: 헷갈리지 않는 고정폭 글꼴 */
+.code-slip-pair strong,
+.receipt-secret strong,
+.receipt-no,
+.golden-code strong,
+.code-input,
+#code {
+  font-family: var(--font-code);
+  font-size-adjust: none;
+}
+
+/* OBS 방송 화면 (디자인별 글꼴 지정보다 우선) */
+.obs-root,
+.obs-root[class] {
+  --font-serif: "Dawoong Display", "Yeon Sung", sans-serif;
+  --font-body: "Yeon Sung", "Pretendard Variable", Pretendard, sans-serif;
+  --font-mono: "Yeon Sung", sans-serif;
+  font-size-adjust: 0.6;
+}
+
+/* 관리자 화면: 오래 읽는 화면이라 본문은 또렷한 Pretendard, 제목만 같은 글꼴 */
+html .adm {
+  --font-serif: "Dawoong Display", "Yeon Sung", sans-serif;
+  --font-body: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-body);
+  font-size-adjust: none;
+}
+
+html .adm h1,
+html .adm h2,
+html .adm .adm-title {
+  font-weight: 400;
+}

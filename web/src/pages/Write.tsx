@@ -368,7 +368,7 @@ export default function Write() {
                   autoComplete="nickname"
                   value={d.chzzk_name}
                   onChange={(e) => set("chzzk_name", e.target.value)}
-                  placeholder="예) 다웅이최고"
+                  placeholder="예) 고민많은고양이"
                   autoFocus
                 />
               </div>
@@ -528,7 +528,7 @@ export default function Write() {
                       value={d.body}
                       onChange={(e) => set("body", e.target.value)}
                       onKeyDown={ctrlEnter(next)}
-                      placeholder="상황을 조금 더 자세히 알려주면 다웅이 더 잘 답해줄 수 있어요."
+                      placeholder="상황을 조금 더 자세히 알려주면 방송에서 더 잘 이야기할 수 있어요."
                     />
                   </div>
                 )}
@@ -642,7 +642,7 @@ export default function Write() {
         )}
 
         {d.step === 8 && (
-          <Step title="어떤 목소리로 읽어줄까요?" headingRef={headingRef} hint="방송에서 다웅이 이 말투로 사연을 읽어줘요.">
+          <Step title="어떤 목소리로 읽어줄까요?" headingRef={headingRef} hint="방송에서 이 말투로 사연을 읽어줘요.">
             <ChoiceGroup name="voice" label="읽어줄 목소리" wide value={d.voice} onChange={(v) => set("voice", v)} options={GOMIN.voices} />
           </Step>
         )}
@@ -666,7 +666,7 @@ export default function Write() {
               <label className="check">
                 <input type="checkbox" checked={!!d.consent_shorts} onChange={(e) => set("consent_shorts", e.target.checked)} />
                 <span>
-                  다웅의 릴스·쇼츠 영상에 이 사연을 써도 돼요
+                  릴스·쇼츠 영상에 이 사연을 써도 돼요
                   <small className="check-sub">이름은 빼고, 사연 내용과 고민 동물만 나와요. 나중에 내 사연 화면에서 언제든 바꿀 수 있어요.</small>
                 </span>
               </label>

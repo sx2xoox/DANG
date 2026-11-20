@@ -17,7 +17,7 @@ const NOTES = [
 const STEPS = [
   { n: "1", title: "쪽지 붙이기", desc: "1분이면 끝, 이름 없이 OK" },
   { n: "2", title: "고민 동물 사진", desc: "붙이자마자 내 고민 동물이 나와요" },
-  { n: "3", title: "방송에서 같이 이야기", desc: "다웅이 읽고 채팅이랑 함께 풀어요" },
+  { n: "3", title: "방송에서 같이 이야기", desc: "방송에서 읽고 채팅이랑 함께 풀어요" },
 ];
 
 const SAMPLE = {
@@ -43,7 +43,7 @@ export default function CorkHome({ info, loggedIn }: { info: HomeInfo; loggedIn:
             <br />
             <mark>뭐든 붙이고 가요</mark>
           </h1>
-          <p className="cb-lead">학교에서 말 못 한 거, 여기선 이름 없이 괜찮아요. 다웅이 방송에서 읽고 같이 고민해 줄게요.</p>
+          <p className="cb-lead">학교에서 말 못 한 거, 여기선 이름 없이 괜찮아요. 방송에서 읽고 같이 고민해 줄게요.</p>
           <p className="cb-sign">— 오늘도 고생했어</p>
           {info.week_theme && (
             <p className="cb-theme">

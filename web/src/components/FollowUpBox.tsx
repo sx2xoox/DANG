@@ -24,7 +24,7 @@ export function FollowUpBox({ auth, items, onChange }: { auth: StoryAuth; items:
       onChange([...items, res.follow_up]);
       setText("");
       setCare(res.care);
-      toast("후속 보고를 남겼어요. 다웅도 볼 수 있어요!");
+      toast("후속 보고를 남겼어요!");
     } catch (err) {
       toast(err instanceof ApiError ? err.message : "저장하지 못했어요");
     } finally {
@@ -35,7 +35,7 @@ export function FollowUpBox({ auth, items, onChange }: { auth: StoryAuth; items:
   return (
     <section className="followup" aria-labelledby="fu-title">
       <h2 id="fu-title">후속 보고</h2>
-      <p>그 뒤로 어떻게 됐는지 이어서 들려주세요. 여러 번 쓸 수 있고, 다웅도 원래 사연 아래에서 볼 수 있어요. 방송의 "지난 사연자분들 근황" 코너에서 소개될 수도 있어요.</p>
+      <p>그 뒤로 어떻게 됐는지 이어서 들려주세요. 여러 번 쓸 수 있고, 방송의 "지난 사연자분들 근황" 코너에서 소개될 수도 있어요.</p>
       {care && <HelpLines />}
       {items.length > 0 && (
         <ol className="follow-list">

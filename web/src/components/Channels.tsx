@@ -26,7 +26,9 @@ function YoutubeIcon() {
  */
 export function ChannelButtons({ lead, compact = false, className = "" }: { lead?: string; compact?: boolean; className?: string }) {
   const { info } = useSite();
-  if (!info.chzzk_url && !info.youtube_url) return null;
+  const hasLinks = !!(info.chzzk_url || info.youtube_url);
+  // 채널 주소가 없어도 방송 시간은 보여줘요
+  if (!hasLinks && !info.schedule_text) return null;
   return (
     <div className={`ch-box ${compact ? "is-compact" : ""} ${className}`}>
       {(lead || info.schedule_text) && (
@@ -36,7 +38,7 @@ export function ChannelButtons({ lead, compact = false, className = "" }: { lead
           {info.schedule_text && <b>{info.schedule_text}</b>}
         </p>
       )}
-      <div className="ch-row">
+      {hasLinks && <div className="ch-row">
         {info.chzzk_url && (
           <a className="ch-btn ch-chzzk" href={info.chzzk_url} target="_blank" rel="noopener noreferrer" onClick={() => trackOut("chzzk")}>
             <ChzzkIcon />
@@ -50,7 +52,7 @@ export function ChannelButtons({ lead, compact = false, className = "" }: { lead
             <span>유튜브 구독</span>
           </a>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
@@ -73,7 +75,7 @@ export function SiteFooter() {
   const { info } = useSite();
   return (
     <footer className="site-footer">
-      <ChannelButtons compact lead={info.on_air ? "지금 방송 중이에요" : "다웅 방송에서 만나요"} />
+      <ChannelButtons compact lead={info.on_air ? "지금 방송 중이에요" : "방송에서 만나요"} />
       <p className="site-footer-help">힘든 일이 있다면 청소년상담 1388 (문자 #1388) · 학교폭력 117</p>
     </footer>
   );

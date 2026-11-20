@@ -64,13 +64,13 @@ export function ReviewBox({ auth, review, onChange }: { auth: StoryAuth; review:
     ? ""
     : review.status === "approved"
       ? review.share
-        ? "다웅이 확인했고, 첫 화면 후기 벽에 올라갔어요."
-        : "다웅이 확인했어요. (후기 벽에는 올리지 않아요)"
+        ? "확인을 거쳐 첫 화면 후기 벽에 올라갔어요."
+        : "잘 전달됐어요. (후기 벽에는 올리지 않아요)"
       : review.status === "hidden"
         ? "후기는 잘 저장됐어요. 후기 벽에는 보이지 않아요."
         : review.share
-          ? "다웅이 확인하면 첫 화면 후기 벽에 올라가요."
-          : "잘 남겼어요. 다웅이 읽어볼 거예요.";
+          ? "확인을 거치면 첫 화면 후기 벽에 올라가요."
+          : "잘 남겼어요. 고마워요!";
 
   return (
     <section className="review-box" aria-labelledby="rv-title">
@@ -116,7 +116,7 @@ export function ReviewBox({ auth, review, onChange }: { auth: StoryAuth; review:
               className="input"
               value={comment}
               maxLength={REVIEW_MAX + 20}
-              placeholder="예) 진짜 화해했어요 다웅 최고"
+              placeholder="예) 진짜 화해했어요! 고마워요"
               onChange={(e) => setComment(e.target.value)}
               aria-describedby="rv-count"
             />
@@ -133,7 +133,7 @@ export function ReviewBox({ auth, review, onChange }: { auth: StoryAuth; review:
             <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} />
             <span>
               다른 사람들에게 보여줘도 돼요
-              <small>체크하면 다웅이 확인한 뒤 첫 화면 후기 벽에 고민 동물, 반응, 한 줄 후기만 보여요. 사연 내용과 이름은 절대 보이지 않아요.</small>
+              <small>체크하면 확인을 거쳐 첫 화면 후기 벽에 고민 동물, 반응, 한 줄 후기만 보여요. 사연 내용과 이름은 절대 보이지 않아요.</small>
             </span>
           </label>
           {error && (

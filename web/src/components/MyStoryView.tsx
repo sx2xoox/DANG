@@ -48,7 +48,7 @@ export function MyStoryView({
           ) : (
             <section className="golden-box">
               <h2>황금 고민 동물 발견!</h2>
-              <p className="golden-desc">인증하면 다웅이 치지직 구독권을 드려요. 로그인해서 내 사연함에서 신청해 주세요.</p>
+              <p className="golden-desc">인증하면 치지직 구독권을 드려요. 로그인해서 내 사연함에서 신청해 주세요.</p>
             </section>
           ))}
 
@@ -101,8 +101,8 @@ function ShortsConsent({ auth, on, onChange }: { auth: StoryAuth; on: boolean; o
     <label className="check shorts-consent">
       <input type="checkbox" checked={on} disabled={busy} onChange={(e) => toggle(e.target.checked)} />
       <span>
-        다웅의 릴스·쇼츠 영상에 이 사연을 써도 돼요
-        <small className="check-sub">이름은 빼고, 사연 내용과 고민 동물만 나와요. 이미 올라간 영상은 다웅에게 따로 말해 주세요.</small>
+        릴스·쇼츠 영상에 이 사연을 써도 돼요
+        <small className="check-sub">이름은 빼고, 사연 내용과 고민 동물만 나와요. 이미 올라간 영상은 방송 채팅으로 알려 주세요.</small>
       </span>
     </label>
   );

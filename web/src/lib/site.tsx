@@ -16,7 +16,7 @@ export type HomeInfo = {
   /** 내 채널 (관리자 설정) */
   chzzk_url: string | null;
   youtube_url: string | null;
-  /** 방송 시간 안내 (예: 매주 금 밤 9시) */
+  /** 방송 시간 안내 (예: 매주 토요일 밤 9시) */
   schedule_text: string;
   /** 관리자가 "방송 시작"을 누르고 아직 끝나지 않았으면 true */
   on_air: boolean;
@@ -24,7 +24,7 @@ export type HomeInfo = {
 
 const DEFAULT_INFO: HomeInfo = {
   site_name: "다웅 고민 사연함",
-  tagline: "다웅이 방송에서 직접 읽어주는 고민 상담 코너",
+  tagline: "방송에서 같이 읽고 이야기하는 고민 상담 코너",
   week_theme: "",
   preset: "cork",
   accepting: true,
@@ -33,7 +33,7 @@ const DEFAULT_INFO: HomeInfo = {
   total_aired: 0,
   chzzk_url: null,
   youtube_url: null,
-  schedule_text: "",
+  schedule_text: "매주 토요일 밤 9시",
   on_air: false,
 };
 
