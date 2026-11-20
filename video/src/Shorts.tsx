@@ -145,9 +145,9 @@ const BoardAndPhone: React.FC = () => {
         ))}
         <AbsoluteFill style={{ background: `rgba(30, 20, 10, ${dim})`, zIndex: 200 }} />
       </AbsoluteFill>
-      <Caption at={M.caption1} y={820} size={104} segs={[{ t: "이 고민, " }, { t: "어디다", hl: true }, { t: " 말해?" }]} out={S.phone[0] - 6} />
+      <Caption at={M.caption1} y={830} size={90} segs={[{ t: "이 고민, " }, { t: "어디다", hl: true }, { t: " 말해?" }]} out={S.phone[0] - 6} />
       {phoneIn && <Phone />}
-      <Caption at={M.tap + 12} y={110} size={92} rot={1.5} segs={[{ t: "이름 없이, " }, { t: "1분이면 끝", hl: true }]} out={M.phoneOut - 2} />
+      <Caption at={M.tap + 12} y={124} size={74} rot={1.5} segs={[{ t: "이름 없이, " }, { t: "1분이면 끝", hl: true }]} out={M.phoneOut - 2} />
     </AbsoluteFill>
   );
 };
@@ -281,7 +281,7 @@ const StepTemp: React.FC = () => {
     <div>
       <div style={stepTitle}>이 고민, 몇 도쯤?</div>
       <div style={{ margin: "40px 56px 0", textAlign: "center" }}>
-        <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 220, color: col, lineHeight: 1, letterSpacing: "-0.05em" }}>{t}°</div>
+        <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 186, color: col, lineHeight: 1, letterSpacing: "-0.05em" }}>{t}°</div>
         <div style={{ fontFamily: F.hand, fontSize: 84, color: C.ink, marginTop: 20 }}>{label}</div>
         <div style={{ position: "relative", height: 28, marginTop: 90, background: "linear-gradient(90deg, #2563eb, #ffc400 50%, #e5533d)" }}>
           <div
@@ -374,8 +374,8 @@ const Reveal: React.FC = () => {
   return (
     <AbsoluteFill>
       <CorkBg dim={dim} />
-      {frame < M.flip && <Caption at={M.drop + 15 - base} y={200} size={98} segs={[{ t: "내 고민 동물은" }]} />}
-      {frame >= M.flip && <Caption at={M.flip + 15 - base} y={140} size={86} rot={-1.5} segs={[{ t: "쓰자마자 나오는 " }, { t: "내 고민 동물", hl: true }]} />}
+      {frame < M.flip && <Caption at={M.drop + 15 - base} y={214} size={78} segs={[{ t: "내 고민 동물은" }]} />}
+      {frame >= M.flip && <Caption at={M.flip + 15 - base} y={154} size={70} rot={-1.5} segs={[{ t: "쓰자마자 나오는 " }, { t: "내 고민 동물", hl: true }]} />}
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
         <div
           style={{
@@ -446,10 +446,10 @@ const Cards: React.FC = () => {
         })}
         <AbsoluteFill style={{ background: `rgba(30, 20, 10, ${back * 0.42})`, zIndex: 10 }} />
       </AbsoluteFill>
-      <Caption at={M.deal[5] + 6 - base} y={90} size={100} segs={[{ t: "사연마다 " }, { t: "다른 동물", hl: true }]} out={M.question - 5 - base} />
+      <Caption at={M.deal[5] + 6 - base} y={104} size={80} segs={[{ t: "사연마다 " }, { t: "다른 동물", hl: true }]} out={M.question - 5 - base} />
       {asked && (
         <>
-          <Caption at={M.question + 10 - base} y={180} size={110} segs={[{ t: "너는 " }, { t: "뭐가", hl: true }, { t: " 나올까" }]} />
+          <Caption at={M.question + 10 - base} y={196} size={88} segs={[{ t: "너는 " }, { t: "뭐가", hl: true }, { t: " 나올까" }]} />
           <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", zIndex: 15 }}>
             <div style={{ marginTop: 170, transform: `translateY(${s.y}px) scale(${s.scale}) rotate(${-3 + s.wobble}deg)`, opacity: s.opacity }}>
               <Pin size={44} style={{ left: "50%", marginLeft: -22, top: -16 }} />
@@ -588,8 +588,8 @@ const Live: React.FC = () => {
           })}
         </div>
       </div>
-      <Caption at={10} y={90} size={96} rot={1.5} segs={[{ t: "방송에서 " }, { t: "같이 읽고", hl: true }]} out={M.chat[1] + 8 - base} />
-      <Caption at={M.chat[1] + 14 - base} y={90} size={96} rot={-1.5} segs={[{ t: "채팅으로 " }, { t: "같이 고민해", hl: true }]} />
+      <Caption at={10} y={108} size={76} rot={1.5} segs={[{ t: "방송에서 " }, { t: "같이 읽고", hl: true }]} out={M.chat[1] + 8 - base} />
+      <Caption at={M.chat[1] + 14 - base} y={108} size={76} rot={-1.5} segs={[{ t: "채팅으로 " }, { t: "같이 고민해", hl: true }]} />
     </AbsoluteFill>
   );
 };
@@ -625,7 +625,7 @@ const End: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           }}
         >
           <Pin size={46} style={{ left: "50%", marginLeft: -23, top: -14 }} />
-          <div style={{ fontFamily: F.title, fontWeight: 400, fontSize: 126, lineHeight: 1.12, letterSpacing: "-0.05em", color: C.ink }}>
+          <div style={{ fontFamily: F.title, fontWeight: 400, fontSize: 106, lineHeight: 1.16, letterSpacing: "-0.05em", color: C.ink }}>
             고민 쪽지
             <br />
             <span
