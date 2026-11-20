@@ -4,6 +4,7 @@ import { AnimalCard, useRevealOnce, type Animal } from "./AnimalCard";
 import { StampSticker, temperatureColor, useToast } from "./ui";
 import { formatDate, VIEWER_STATUS, WAITING_NOTICE } from "../lib/format";
 import { saveNodeAsImage, shareNodeAsImage } from "../lib/image";
+import { Mascot } from "./Mascot";
 
 export type ResultStory = {
   id: string;
@@ -74,9 +75,7 @@ export function ResultView({ story, animal, siteName, marks = {} }: { story: Res
         <p className="result-kicker">“{story.summary}” 를 보낸 당신의 고민 동물은</p>
         {revealed ? (
           <h1 className={`result-name ${justRevealed ? "pop-in" : ""}`}>
-            <span className="result-emoji" aria-hidden="true">
-              {animal.emoji}
-            </span>
+            <Mascot name={animal.name} emoji={animal.emoji} still className="result-emoji" />
             {animal.name}
           </h1>
         ) : (

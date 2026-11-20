@@ -1,6 +1,8 @@
 import { forwardRef, useState } from "react";
 import { GOMIN } from "@shared/boxes.ts";
 import { siteHost } from "../lib/growth";
+import { moodFromStamp } from "@shared/mascots.ts";
+import { Mascot } from "./Mascot";
 
 export type Animal = {
   name: string;
@@ -80,9 +82,7 @@ export const AnimalCard = forwardRef<HTMLDivElement, Props>(function AnimalCard(
                   {serial !== undefined && <span>No.{String(serial).padStart(3, "0")}</span>}
                 </div>
                 <div className="tc-window">
-                  <span className="tc-emoji" aria-hidden="true">
-                    {animal.emoji}
-                  </span>
+                  <Mascot name={animal.name} emoji={animal.emoji} mood={moodFromStamp(stamp)} golden={golden} className="tc-mascot" />
                   {(aired || reviewed) && (
                     <span className="tc-marks">
                       {aired && <span className="tc-mark tc-mark-aired">방송에서 읽혔어요</span>}

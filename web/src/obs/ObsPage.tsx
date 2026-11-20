@@ -7,6 +7,8 @@ import { personLabel } from "../lib/format";
 import { StampSticker } from "../components/ui";
 import { Roulette, type RouletteCandidate } from "../components/Roulette";
 import "../styles/obs.css";
+import { Mascot } from "../components/Mascot";
+import { moodFromStamp } from "@shared/mascots.ts";
 
 // =====================================================================
 // OBS 방송 화면 (1920×1080 투명 배경)
@@ -426,9 +428,7 @@ function ObsLetter({
             {animal && (
               <>
                 <span className="obs-animal-k">이 사연의 고민 동물</span>
-                <span className="obs-animal-emoji" aria-hidden="true">
-                  {animal.emoji}
-                </span>
+                <Mascot name={animal.name} emoji={animal.emoji} mood={moodFromStamp(card.stamp)} className="obs-animal-emoji" />
                 <span className="obs-animal-name">{animal.name}</span>
                 {animal.why && <span className="obs-animal-why">{animal.why}</span>}
                 {animal.quote && <span className="obs-animal-quote">“{animal.quote}”</span>}

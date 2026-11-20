@@ -13,6 +13,7 @@ import "./styles/post.css";
 import "./styles/result.css";
 import "./styles/lounge.css";
 import "./styles/cork.css";
+import "./styles/mascot.css";
 import "./styles/fonts.css";
 import App from "./App";
 

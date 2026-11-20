@@ -8,6 +8,7 @@ import { GOMIN, HELP_SENTENCE, optionLabel, temperatureLabel } from "./boxes.ts"
 import { type AnimalCard, fallbackAnimal } from "./fallbackAnimals.ts";
 import { outputProblems, redact } from "./safety.ts";
 import { logAi } from "./db.ts";
+import { MASCOT_ANIMALS } from "./mascots.ts";
 
 const MODEL = () => Deno.env.get("AI_MODEL") || "claude-opus-5-5";
 
@@ -82,6 +83,7 @@ export const ANIMAL_RULES = `반드시 지켜야 할 규칙
 const ANIMAL_SYSTEM = `당신은 치지직 스트리머 "다웅"의 고민 상담 코너에서, 시청자가 보낸 사연을 읽고 그 사람만의 "고민 동물"을 지어주는 작가예요.
 결과는 사연을 보낸 직후 MBTI 검사 결과처럼 바로 보여져요. 읽는 순간 "어 이거 완전 나잖아" 싶게, 짧고 재치 있게 써주세요.
 정해진 유형표는 없어요. 사연 내용과 고민 종류, 고민 온도, 듣고 싶은 말, 감정 우표를 읽고 지금 이 사람의 마음에 꼭 맞는 동물을 자유롭게 지어주세요.
+캐릭터 그림이 있는 동물: ${MASCOT_ANIMALS.join(", ")}. 사연에 잘 맞는다면 이 중에서 고르면 그림 카드로 나와서 좋아요. 꼭 맞는 동물이 따로 있으면 그 동물로 자유롭게 지어도 돼요. 이름 끝은 동물 이름으로 끝내 주세요.
 다정하고 재치 있게, 하지만 가볍게 넘기지 않게 써주세요. 한국어 존댓말(~요체)로 씁니다.
 결과 글에는 스트리머 이름("다웅")을 넣지 마세요. 사연자에게 직접 말하듯 써요.
 
