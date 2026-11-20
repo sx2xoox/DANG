@@ -1,59 +1,231 @@
 {
   "fps": 30,
-  "bpm": 120,
-  "beatFrames": 15,
-  "durationFrames": 660,
+  "durationFrames": 1016,
   "width": 1080,
   "height": 1920,
   "scenes": {
-    "hook": [0, 60],
-    "board": [60, 120],
-    "phone": [120, 240],
-    "tension": [240, 300],
-    "reveal": [300, 360],
-    "carousel": [360, 420],
-    "question": [420, 480],
-    "live": [480, 540],
-    "end": [540, 660]
+    "board": [
+      0,
+      238
+    ],
+    "phone": [
+      238,
+      374
+    ],
+    "reveal": [
+      374,
+      516
+    ],
+    "cards": [
+      516,
+      606
+    ],
+    "question": [
+      606,
+      671
+    ],
+    "live": [
+      671,
+      886
+    ],
+    "end": [
+      886,
+      1016
+    ]
   },
-  "sfx": [
-    { "f": 0, "type": "pin" },
-    { "f": 30, "type": "tick" },
-    { "f": 60, "type": "pin" },
-    { "f": 75, "type": "pin" },
-    { "f": 90, "type": "pin" },
-    { "f": 105, "type": "pin" },
-    { "f": 120, "type": "whoosh" },
-    { "f": 135, "type": "tap" },
-    { "f": 150, "type": "tick" },
-    { "f": 165, "type": "swish" },
-    { "f": 210, "type": "stamp" },
-    { "f": 240, "type": "flutter" },
-    { "f": 255, "type": "heartbeat" },
-    { "f": 285, "type": "heartbeat" },
-    { "f": 270, "type": "riser" },
-    { "f": 300, "type": "impact" },
-    { "f": 304, "type": "whir" },
-    { "f": 315, "type": "tick" },
-    { "f": 330, "type": "tape" },
-    { "f": 360, "type": "flip" },
-    { "f": 375, "type": "flip" },
-    { "f": 390, "type": "flip" },
-    { "f": 405, "type": "flip" },
-    { "f": 420, "type": "thud" },
-    { "f": 435, "type": "tick" },
-    { "f": 480, "type": "whoosh" },
-    { "f": 495, "type": "chat" },
-    { "f": 503, "type": "chat" },
-    { "f": 510, "type": "chat" },
-    { "f": 518, "type": "chat" },
-    { "f": 525, "type": "chat" },
-    { "f": 540, "type": "pin" },
-    { "f": 570, "type": "pen" },
-    { "f": 600, "type": "impact" }
+  "marks": {
+    "caption1": 200,
+    "tap": 256,
+    "slide1": 278,
+    "tempFrom": 286,
+    "tempTo": 318,
+    "slide2": 326,
+    "stamp": 342,
+    "phoneOut": 368,
+    "drop": 374,
+    "heart": [
+      392,
+      422
+    ],
+    "tremble": 409,
+    "flip": 439,
+    "tapeOn": 473,
+    "deal": [
+      516,
+      529,
+      540,
+      549,
+      556,
+      562
+    ],
+    "question": 606,
+    "readFrom": 696,
+    "readTo": 776,
+    "chat": [
+      721,
+      748,
+      766,
+      792,
+      806,
+      830
+    ],
+    "pick": 852,
+    "endSlam": 886,
+    "pen": 916,
+    "brand": 948
+  },
+  "notes": [
+    6,
+    34,
+    58,
+    77,
+    94,
+    108,
+    120,
+    129,
+    138,
+    145,
+    150,
+    155,
+    159,
+    163,
+    166,
+    168,
+    170,
+    172,
+    174,
+    176,
+    178,
+    180,
+    182,
+    184,
+    186,
+    188,
+    190,
+    192,
+    194
   ],
-  "music": {
-    "dropBar": 4,
-    "outroFromFrame": 600
-  }
+  "sfx": [
+    {
+      "f": 200,
+      "type": "thud"
+    },
+    {
+      "f": 238,
+      "type": "whoosh"
+    },
+    {
+      "f": 256,
+      "type": "tap"
+    },
+    {
+      "f": 286,
+      "type": "swish"
+    },
+    {
+      "f": 342,
+      "type": "stamp"
+    },
+    {
+      "f": 374,
+      "type": "flutter"
+    },
+    {
+      "f": 392,
+      "type": "heartbeat"
+    },
+    {
+      "f": 422,
+      "type": "heartbeat"
+    },
+    {
+      "f": 404,
+      "type": "riser",
+      "to": 439
+    },
+    {
+      "f": 439,
+      "type": "impact"
+    },
+    {
+      "f": 443,
+      "type": "whir"
+    },
+    {
+      "f": 473,
+      "type": "tape"
+    },
+    {
+      "f": 516,
+      "type": "flip"
+    },
+    {
+      "f": 529,
+      "type": "flip"
+    },
+    {
+      "f": 540,
+      "type": "flip"
+    },
+    {
+      "f": 549,
+      "type": "flip"
+    },
+    {
+      "f": 556,
+      "type": "flip"
+    },
+    {
+      "f": 562,
+      "type": "flip"
+    },
+    {
+      "f": 606,
+      "type": "thud"
+    },
+    {
+      "f": 671,
+      "type": "whoosh"
+    },
+    {
+      "f": 721,
+      "type": "chat"
+    },
+    {
+      "f": 748,
+      "type": "chat"
+    },
+    {
+      "f": 766,
+      "type": "chat"
+    },
+    {
+      "f": 792,
+      "type": "chat"
+    },
+    {
+      "f": 806,
+      "type": "chat"
+    },
+    {
+      "f": 830,
+      "type": "chat"
+    },
+    {
+      "f": 852,
+      "type": "marker"
+    },
+    {
+      "f": 886,
+      "type": "pin"
+    },
+    {
+      "f": 916,
+      "type": "pen"
+    },
+    {
+      "f": 948,
+      "type": "soft"
+    }
+  ]
 }

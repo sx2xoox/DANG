@@ -12,7 +12,7 @@ const dur = tl.durationFrames / tl.fps + 0.5;
 const N = Math.ceil(dur * SR);
 const music = new Float32Array(N);
 const fx = new Float32Array(N);
-const beatSec = 60 / tl.bpm;
+const beatSec = 60 / 92;
 const barSec = beatSec * 4;
 const fr = (f) => f / tl.fps;
 
@@ -101,33 +101,76 @@ function bass(t0, len, n, amp = 0.22) {
   add(music, t0, len, (t) => Math.sin(2 * Math.PI * f * t) * amp * Math.min(1, t / 0.01) * Math.exp(-t * 2.2));
 }
 
-const totalBars = Math.ceil(tl.durationFrames / tl.fps / barSec);
-const outroT = fr(tl.music.outroFromFrame);
-for (let bar = 0; bar < totalBars; bar++) {
-  const t = bar * barSec;
-  const chord = CHORDS[bar % 4];
-  if (t >= outroT) {
-    // 마지막: 긴 화음 하나로 마무리
-    pad(t, barSec * 1.2, CHORDS[3], 0.055);
-    bass(t, barSec, BASS[3], 0.2);
-    break;
-  }
-  if (bar === tl.music.dropBar) {
-    // 긴장 구간: 북 없이, 화음을 낮게 깔기만
-    pad(t, barSec, chord.map((n) => n - 12), 0.04);
+function rim(buf, t0, amp = 0.16) {
+  add(buf, t0, 0.05, (t) => Math.sin(2 * Math.PI * 1150 * t) * amp * Math.exp(-t * 110));
+  hpNoise(buf, t0, 0.02, amp * 0.6, exp(200));
+}
+
+function pluck(t0, n, amp = 0.06) {
+  const f = NOTE(n);
+  add(music, t0, 0.9, (t) => (Math.sin(2 * Math.PI * f * t) + 0.3 * Math.sin(4 * Math.PI * f * t)) * amp * Math.min(1, t / 0.004) * Math.exp(-t * 5));
+}
+
+// 장면에 맞춘 구성: 박자를 화면에 끼워 맞추지 않고, 장면이 바뀌는 순간에 음악이 새로 시작합니다.
+//  board   : 화음만 깔고 쪽지 붙는 소리가 주인공
+//  groove  : 부드러운 리듬 (세게 치는 북 없이)
+//  tension : 낮은 화음과 심장 소리
+//  live    : 북 없이 잔잔하게 (읽고 이야기 나누는 구간)
+//  end     : 긴 화음으로 마무리
+const M = tl.marks;
+const SECTIONS = [
+  { kind: "board", from: 0, to: M.caption1 },
+  { kind: "groove", from: M.caption1, to: M.drop },
+  { kind: "tension", from: M.drop, to: M.flip },
+  { kind: "groove", from: M.flip, to: tl.scenes.live[0] },
+  { kind: "live", from: tl.scenes.live[0], to: M.endSlam },
+  { kind: "end", from: M.endSlam, to: tl.durationFrames },
+];
+let chordAt = 0;
+for (const sec of SECTIONS) {
+  const t0 = fr(sec.from);
+  const t1 = fr(sec.to);
+  if (sec.kind === "end") {
+    pad(t0, t1 - t0, CHORDS[3], 0.055);
+    bass(t0, barSec, BASS[3], 0.2);
+    [60, 64, 67, 71, 76].forEach((n, i) => pluck(t0 + 0.25 + i * 0.22, n, 0.06));
     continue;
   }
-  pad(t, barSec, chord, bar === 0 ? 0.035 : 0.05);
-  for (let b = 0; b < 4; b++) {
-    const bt = t + b * beatSec;
-    if (bar > 0 || b >= 2) {
-      if (b === 0 || b === 2) kick(music, bt, 0.85);
-      if (b === 1 || b === 3) snare(music, bt, 0.38);
+  for (let bar = 0; t0 + bar * barSec < t1 - 0.05; bar++) {
+    const t = t0 + bar * barSec;
+    const len = Math.min(barSec, t1 - t);
+    const ci = chordAt++ % 4;
+    const chord = CHORDS[ci];
+    const inBar = (bt) => bt < t1 - 0.02;
+    if (sec.kind === "board") {
+      pad(t, len, chord, 0.02 + 0.006 * bar);
+      continue;
     }
-    if (b === 0 || b === 2) bass(bt, beatSec * 2, BASS[bar % 4]);
-    if (bar > 0) {
-      hat(music, bt + beatSec / 2, 0.1);
-      hat(music, bt, 0.06);
+    if (sec.kind === "tension") {
+      pad(t, len, chord.map((n) => n - 12), 0.04);
+      continue;
+    }
+    const live = sec.kind === "live";
+    pad(t, len, chord, live ? 0.042 : 0.048);
+    for (let b = 0; b < 4; b++) {
+      const bt = t + b * beatSec;
+      if (!inBar(bt)) break;
+      if (b === 0 || b === 2) bass(bt, beatSec * 2, BASS[ci], live ? 0.13 : 0.18);
+      if (!live) {
+        if (b === 0 || b === 2) kick(music, bt, 0.42);
+        if (b === 1 || b === 3) rim(music, bt, 0.15);
+        if (inBar(bt + beatSec / 2)) hat(music, bt + beatSec / 2, 0.055);
+      } else if (b === 3) {
+        rim(music, bt, 0.08);
+      } else if (inBar(bt + beatSec / 2)) {
+        hat(music, bt + beatSec / 2, 0.03);
+      }
+    }
+    // 화음을 풀어 치는 가락
+    const arp = live ? [[0, 0], [2.5, 2]] : [[0, 0], [1.5, 2], [2.5, 1], [3.5, 3]];
+    for (const [b, k] of arp) {
+      const bt = t + b * beatSec;
+      if (inBar(bt)) pluck(bt, chord[k] + 12, live ? 0.045 : 0.055);
     }
   }
 }
@@ -140,10 +183,18 @@ for (let i = 0; i < N; i++) {
 
 // ------------------------------------------------------------------ 효과음
 const SFX = {
-  pin(t0) {
-    add(fx, t0, 0.04, (t) => Math.sin(2 * Math.PI * 2100 * t) * 0.45 * Math.exp(-t * 140));
-    add(fx, t0, 0.08, (t) => Math.sin(2 * Math.PI * 420 * t) * 0.55 * Math.exp(-t * 60));
-    hpNoise(fx, t0, 0.012, 0.5, exp(300));
+  pin(t0, e, amp = 1, pitch = 1) {
+    add(fx, t0, 0.04, (t) => Math.sin(2 * Math.PI * 2100 * pitch * t) * 0.45 * amp * Math.exp(-t * 140));
+    add(fx, t0, 0.08, (t) => Math.sin(2 * Math.PI * 420 * pitch * t) * 0.55 * amp * Math.exp(-t * 60));
+    hpNoise(fx, t0, 0.012, 0.5 * amp, exp(300));
+  },
+  marker(t0) {
+    filteredNoise(t0, 0.3, 0.7, (t) => Math.sin(Math.PI * Math.min(1, t / 0.3)) ** 2, 0.45);
+  },
+  soft(t0) {
+    for (const [n, d] of [[72, 0], [79, 0.09]]) {
+      add(fx, t0 + d, 0.7, (t) => Math.sin(2 * Math.PI * NOTE(n) * t) * 0.14 * Math.exp(-t * 6));
+    }
   },
   tick(t0) {
     add(fx, t0, 0.03, (t) => Math.sin(2 * Math.PI * 1500 * t) * 0.18 * Math.exp(-t * 120));
@@ -174,9 +225,9 @@ const SFX = {
       add(fx, t0 + d, 0.2, (t) => Math.sin(2 * Math.PI * 52 * t) * (d ? 0.55 : 0.75) * Math.exp(-t * 18));
     }
   },
-  riser(t0) {
+  riser(t0, e) {
     let y = 0;
-    const len = fr(300) - t0;
+    const len = fr(e.to) - t0;
     add(fx, t0, len, (t) => {
       const p = t / len;
       y += (0.02 + 0.4 * p * p) * (rnd() - y);
@@ -222,8 +273,16 @@ const SFX = {
 for (const e of tl.sfx) {
   const fn = SFX[e.type];
   if (!fn) throw new Error(`unknown sfx ${e.type}`);
-  fn(fr(e.f));
+  fn(fr(e.f), e);
 }
+
+// 쪽지 붙는 소리: 처음엔 또렷하게 하나씩, 빨라질수록 작고 가볍게
+tl.notes.forEach((f, i) => {
+  const k = i / (tl.notes.length - 1);
+  SFX.pin(fr(f), null, i === 0 ? 1 : 0.85 - 0.45 * k, 1 + 0.25 * k + 0.08 * rnd());
+});
+// 쪽지가 몰아칠 때 깔리는 바람 소리
+SFX.riser(fr(tl.notes[8]), { to: tl.marks.caption1 });
 
 // ------------------------------------------------------------------ 섞기 + 덕킹
 // 효과음이 날 때 음악을 살짝 낮춰서 효과가 또렷하게 들리게

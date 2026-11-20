@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { continueRender, delayRender, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { continueRender, delayRender, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import tl from "./timeline.json";
 
 // ------------------------------------------------------------------ 색 (사이트 코르크 보드와 같은 값)
@@ -50,10 +50,10 @@ export function useFonts() {
   }, [handle]);
 }
 
-// ------------------------------------------------------------------ 박자 / 움직임 도우미
-export const B = tl.beatFrames;
+// ------------------------------------------------------------------ 움직임 도우미
+export const FPS = tl.fps;
 
-/** 박자에 맞춘 "탁" 하고 박히는 등장 (위에서 떨어지며 살짝 튕김) */
+/** "탁" 하고 박히는 등장 (위에서 떨어지며 살짝 튕김) */
 export function useSlam(at: number, opts: { from?: number; stiffness?: number } = {}) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -83,11 +83,10 @@ export function shakeAt(frame: number, hits: { f: number; power: number }[]) {
   return { x, y };
 }
 
-/** 매 박자 첫 순간에 아주 살짝 커졌다 돌아옴 (리듬감) */
-export function beatPulse(frame: number, amount = 0.018) {
-  const d = frame % B;
-  return 1 + amount * Math.exp(-d / 2.5);
-}
+/** 고민 동물 그림 (사이트와 같은 파일) */
+export const Mascot: React.FC<{ id: string; size: number; style?: React.CSSProperties }> = ({ id, size, style }) => (
+  <Img src={staticFile(`mascots/${id}.webp`)} style={{ width: size, height: size, objectFit: "contain", display: "block", ...style }} />
+);
 
 // ------------------------------------------------------------------ 배경
 export const CorkBg: React.FC<{ dim?: number }> = ({ dim = 0 }) => (
@@ -137,9 +136,11 @@ export const PostIt: React.FC<{
   text: string;
   size?: number;
   fontSize?: number;
-}> = ({ at, x, y, rot, color, text, size = 400, fontSize = 64 }) => {
+  z?: number;
+}> = ({ at, x, y, rot, color, text, size = 400, fontSize = 64, z = 1 }) => {
   const s = useSlam(at);
   if (!s.visible) return null;
+  const pin = Math.max(22, size * 0.085);
   return (
     <div
       style={{
@@ -151,16 +152,17 @@ export const PostIt: React.FC<{
         transformOrigin: "50% 0%",
         transform: `translateY(${s.y}px) scale(${s.scale}) rotate(${rot + s.wobble}deg)`,
         opacity: s.opacity,
+        zIndex: z,
       }}
     >
-      <Pin style={{ left: size / 2 - 17, top: -12 }} />
+      <Pin size={pin} style={{ left: size / 2 - pin / 2, top: -pin * 0.35 }} />
       <div
         style={{
           width: "100%",
           height: "100%",
           background: color,
           boxShadow: "0 18px 22px -8px rgba(60, 36, 14, 0.45), 0 2px 0 rgba(0,0,0,0.05)",
-          padding: "70px 40px 30px",
+          padding: `${size * 0.17}px ${size * 0.1}px ${size * 0.07}px`,
           boxSizing: "border-box",
           fontFamily: F.hand,
           fontSize,
@@ -243,7 +245,7 @@ export const Caption: React.FC<{ at: number; segs: Seg[]; y: number; size?: numb
 };
 
 // ------------------------------------------------------------------ 폴라로이드 (고민 동물 카드)
-export type AnimalInfo = { emoji: string; name: string; quote: string; bg: string };
+export type AnimalInfo = { id: string; name: string; quote: string; bg: string };
 
 export const Polaroid: React.FC<{
   animal: AnimalInfo | null;
@@ -285,15 +287,11 @@ export const Polaroid: React.FC<{
         }}
       >
         {animal ? (
-          <span
-            style={{
-              fontSize: photo * 0.52,
-              lineHeight: 1,
-              filter: `blur(${(1 - develop) * 22}px) brightness(${1 + (1 - develop) * 0.9}) saturate(${0.3 + develop * 0.7})`,
-            }}
-          >
-            {animal.emoji}
-          </span>
+          <Mascot
+            id={animal.id}
+            size={photo * 0.8}
+            style={{ filter: `blur(${(1 - develop) * 22}px) brightness(${1 + (1 - develop) * 0.9}) saturate(${0.3 + develop * 0.7}) drop-shadow(0 8px 6px rgba(60, 36, 14, 0.22))` }}
+          />
         ) : (
           <span style={{ fontFamily: F.display, fontWeight: 400, fontSize: photo * 0.62, color: C.ink, opacity: 0.85, lineHeight: 1 }}>?</span>
         )}
