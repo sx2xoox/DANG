@@ -75,7 +75,7 @@ export const AnimalCard = forwardRef<HTMLDivElement, Props>(function AnimalCard(
             {animal && (
               <>
                 <div className="tc-top">
-                  <span>{golden ? "★ 황금 고민 동물 ★" : "고민 동물 도감"}</span>
+                  <span>{golden ? (compact ? "★ 황금" : "★ 황금 고민 동물 ★") : compact ? "고민 동물" : "고민 동물 도감"}</span>
                   {serial !== undefined && <span>No.{String(serial).padStart(3, "0")}</span>}
                 </div>
                 <div className="tc-window">

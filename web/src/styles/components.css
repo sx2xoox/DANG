@@ -1237,7 +1237,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.65) 45%, transparent 60%);
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.4) 45%, transparent 55%);
   background-size: 250% 100%;
   animation: goldShine 3.2s ease-in-out infinite;
   pointer-events: none;
@@ -1257,4 +1257,26 @@
   .tc-golden.is-revealed .tc-front::after {
     animation: none;
   }
+}
+
+/* 도감의 작은 카드: 번호·동물·이름·이유·한마디만 (넘치는 글자는 말줄임) */
+.tc-top span {
+  white-space: nowrap;
+}
+
+.tc-compact .tc-tags,
+.tc-compact .tc-foot {
+  display: none;
+}
+
+.tc-compact .tc-why,
+.tc-compact .tc-quote {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.tc-compact .tc-quote {
+  margin-top: auto;
 }
