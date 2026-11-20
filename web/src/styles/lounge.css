@@ -1,0 +1,1300 @@
+/* =====================================================================
+   "동네 고민 상담소" (lounge, 기본 디자인)
+   나이도, 고민 크기도 상관없이 편하게 들어와 이야기하는 곳.
+   연한 세이지·귀리색 바탕 + 짙은 숲색 글씨 + 복숭아색 포인트.
+   제목은 부드러운 명조(고운바탕), 본문은 Pretendard, 숫자는 IBM Plex Mono.
+   큰 그림자·형광색·네온 없이, 둥근 모서리와 넉넉한 여백으로.
+   ===================================================================== */
+
+:root[data-preset="lounge"] {
+  --forest: #1f3a32;
+  --forest-2: #2c5246;
+  --sage: #eef0e6;
+  --oat: #fbfaf5;
+  --peach: #f0a58c;
+  --peach-deep: #c9563b;
+  --peach-soft: #fbe3d9;
+  --leaf: #3ea76a;
+
+  /* 공용 토큰 */
+  --bg: var(--sage);
+  --bg-image: none;
+  --bg-size: auto;
+  --surface: var(--oat);
+  --surface-2: #f3f4ec;
+  --surface-3: #e5e9dc;
+  --border: #d4dacb;
+  --border-strong: #b9c3b1;
+  --text: var(--forest);
+  --text-dim: #4f625a;
+  --text-faint: #6c7b73;
+  --accent: var(--forest);
+  --accent-text: #ffffff;
+  --accent-soft: var(--peach-soft);
+  --link: #2c6a55;
+  --danger: #b33a26;
+  --danger-bg: #fbe6df;
+  --info-bg: #e6efe9;
+  --info-text: var(--forest);
+  --paper: var(--oat);
+  --paper-2: var(--peach-soft);
+  --paper-text: var(--forest);
+  --paper-dim: #4f625a;
+  --radius: 24px;
+  --radius-sm: 16px;
+  --shadow: 0 10px 30px rgba(31, 58, 50, 0.08);
+  --shadow-pop: none;
+  --outline: 0 0 0 1px rgba(31, 58, 50, 0.06);
+  --header-bg: rgba(238, 240, 230, 0.9);
+  --font-display: "Gowun Batang", "Nanum Myeongjo", serif;
+  --font-serif: "Gowun Batang", "Nanum Myeongjo", serif;
+
+  /* 다웅 우체국 쪽 이름 (결과·접수증 등에서 씀) */
+  --ink: var(--forest);
+  --ink-soft: #3c544b;
+  --ink-faint: #6c7b73;
+  --paper-env: var(--oat);
+  --yellow: #f6c453;
+  --red: var(--peach-deep);
+  --blue: #2c6a55;
+  color-scheme: light;
+}
+
+/* ---------------------------------------------------------------- 헤더 */
+:root[data-preset="lounge"] .app-header {
+  border-bottom: 1px solid rgba(31, 58, 50, 0.08);
+}
+
+:root[data-preset="lounge"] .brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+
+:root[data-preset="lounge"] .brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--forest);
+}
+
+:root[data-preset="lounge"] .brand-mark svg {
+  stroke: var(--sage);
+  width: 17px;
+  height: 17px;
+}
+
+:root[data-preset="lounge"] .app-header .btn {
+  min-height: 40px;
+  border-radius: 999px;
+  font-weight: 700;
+  border-color: rgba(31, 58, 50, 0.18);
+  background: var(--oat);
+}
+
+:root[data-preset="lounge"] .app-header .btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------- 기본 부품 */
+:root[data-preset="lounge"] .card {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+:root[data-preset="lounge"] .btn {
+  border-radius: 16px;
+  border-color: rgba(31, 58, 50, 0.16);
+  background: var(--oat);
+}
+
+:root[data-preset="lounge"] .btn-primary {
+  background: var(--forest);
+  color: #fff;
+  border-color: transparent;
+}
+
+:root[data-preset="lounge"] .btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+:root[data-preset="lounge"] .input,
+:root[data-preset="lounge"] .textarea,
+:root[data-preset="lounge"] .select {
+  background: #fff;
+  border: 1.5px solid #cdd5c4;
+  border-radius: 14px;
+}
+
+:root[data-preset="lounge"] .input:focus,
+:root[data-preset="lounge"] .textarea:focus,
+:root[data-preset="lounge"] .select:focus {
+  outline: none;
+  border-color: var(--forest);
+  box-shadow: 0 0 0 3px rgba(31, 58, 50, 0.12);
+}
+
+:root[data-preset="lounge"] .choice {
+  border: 1.5px solid #d4dacb;
+  background: var(--oat);
+  border-radius: 16px;
+}
+
+:root[data-preset="lounge"] .choice:has(input:checked) {
+  border-color: var(--forest);
+  background: var(--peach-soft);
+  box-shadow: 0 0 0 1.5px var(--forest);
+}
+
+:root[data-preset="lounge"] .choice:has(input:focus-visible) {
+  outline-color: var(--forest);
+}
+
+:root[data-preset="lounge"] .check {
+  background: var(--oat);
+  border: 1px solid #e0e5d8;
+}
+
+:root[data-preset="lounge"] .check input {
+  accent-color: var(--forest);
+}
+
+:root[data-preset="lounge"] .tabs {
+  background: #e3e8db;
+  border-radius: 16px;
+}
+
+:root[data-preset="lounge"] .tabs button[aria-selected="true"] {
+  background: var(--oat);
+  box-shadow: 0 2px 8px rgba(31, 58, 50, 0.08);
+}
+
+:root[data-preset="lounge"] .chip-yellow {
+  background: var(--peach-soft);
+  color: var(--peach-deep);
+}
+
+:root[data-preset="lounge"] :focus-visible {
+  outline-color: var(--forest);
+}
+
+:root[data-preset="lounge"] .toast {
+  background: var(--forest);
+  border-radius: 999px;
+}
+
+:root[data-preset="lounge"] .notice {
+  border-radius: 16px;
+}
+
+/* "다웅 우체국" 쪽 버튼 (결과 화면, 조회 화면 등) */
+:root[data-preset="lounge"] .post-btn {
+  border-radius: 16px;
+}
+
+:root[data-preset="lounge"] .post-btn-main {
+  background: var(--forest);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 17px;
+  box-shadow: none;
+}
+
+:root[data-preset="lounge"] .post-btn-main:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(31, 58, 50, 0.18);
+}
+
+:root[data-preset="lounge"] .post-btn-main:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+:root[data-preset="lounge"] .post-btn-sub {
+  border: 1.5px solid rgba(31, 58, 50, 0.22);
+  background: var(--oat);
+  color: var(--forest);
+}
+
+:root[data-preset="lounge"] .post-link {
+  color: var(--text-dim);
+}
+
+/* 도움 연락처 */
+:root[data-preset="lounge"] .help-lines {
+  border-radius: 20px;
+}
+
+/* =====================================================================
+   첫 화면
+   ===================================================================== */
+.lg-home {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 36px) 16px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(22px, 4vw, 36px);
+}
+
+.lg-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: clamp(20px, 4vw, 40px);
+  align-items: center;
+}
+
+.lg-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--oat);
+  border-radius: 32px;
+  padding: clamp(28px, 5vw, 56px) clamp(22px, 4.5vw, 52px);
+  box-shadow: var(--shadow);
+}
+
+.lg-sun {
+  position: absolute;
+  right: -70px;
+  top: -70px;
+  width: clamp(190px, 26vw, 300px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--peach-soft);
+}
+
+.lg-pills {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lg-open,
+.lg-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--sage);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.lg-open i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--leaf);
+  box-shadow: 0 0 0 4px rgba(62, 167, 106, 0.18);
+}
+
+.lg-open.is-closed i {
+  background: #9aa59e;
+  box-shadow: none;
+}
+
+.lg-theme {
+  background: var(--peach-soft);
+  color: var(--peach-deep);
+}
+
+.lg-hero h1 {
+  position: relative;
+  margin-top: 22px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(34px, 5.6vw, 60px);
+  line-height: 1.32;
+  letter-spacing: -0.035em;
+}
+
+.lg-hero h1 u {
+  text-decoration: none;
+  background: linear-gradient(transparent 62%, var(--peach-soft) 62%);
+}
+
+.lg-lead {
+  position: relative;
+  margin: 18px 0 0;
+  max-width: 34em;
+  font-size: clamp(16px, 1.6vw, 18px);
+  line-height: 1.75;
+  color: var(--text-dim);
+}
+
+.lg-br {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .lg-br {
+    display: inline;
+  }
+}
+
+.lg-hand {
+  position: relative;
+  margin: 14px 0 0;
+  font-family: "Nanum Pen Script", var(--font-body);
+  font-size: 25px;
+  color: var(--peach-deep);
+  transform: rotate(-2deg);
+  transform-origin: left center;
+}
+
+.lg-cta {
+  position: relative;
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lg-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 16px 22px;
+  border-radius: 18px;
+  font-weight: 800;
+  font-size: 17px;
+  text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.lg-btn:hover {
+  transform: translateY(-1px);
+}
+
+.lg-btn-main {
+  background: var(--forest);
+  color: #fff;
+}
+
+.lg-btn-main:hover {
+  box-shadow: 0 10px 22px rgba(31, 58, 50, 0.2);
+}
+
+.lg-btn-sub {
+  background: var(--sage);
+  color: var(--forest);
+}
+
+.lg-closed {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--sage);
+  font-weight: 600;
+}
+
+.lg-login {
+  position: relative;
+  margin: 14px 0 0;
+  font-size: 14px;
+}
+
+.lg-login a {
+  color: var(--text-dim);
+  text-underline-offset: 4px;
+}
+
+.lg-sample {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.lg-sample-label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.lg-sample-card {
+  width: min(320px, 86%);
+  transform: rotate(2deg);
+}
+
+.lg-examples h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.lg-examples ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lg-examples li {
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--oat);
+  border: 1px solid #dfe4d6;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lg-examples li:nth-child(3n + 2) {
+  background: var(--peach-soft);
+  border-color: transparent;
+}
+
+.lg-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lg-steps li {
+  background: var(--oat);
+  border-radius: 20px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lg-steps b {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--peach-deep);
+}
+
+.lg-steps strong {
+  font-size: 16px;
+}
+
+.lg-steps span {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.lg-count {
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  color: var(--text-dim);
+}
+
+.lg-count b {
+  font-family: var(--font-mono);
+  color: var(--forest);
+}
+
+@media (max-width: 899px) {
+  .lg-top {
+    grid-template-columns: 1fr;
+  }
+  .lg-cta {
+    grid-template-columns: 1fr;
+  }
+  .lg-sample-card {
+    width: min(300px, 82%);
+  }
+}
+
+@media (max-width: 560px) {
+  .lg-steps {
+    grid-template-columns: 1fr;
+  }
+  .lg-steps li {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 10px;
+  }
+  .lg-steps span {
+    flex-basis: 100%;
+  }
+}
+
+/* =====================================================================
+   고민 동물 카드 (트레이딩 카드 → 부드러운 종이 카드)
+   이모지는 흑백으로 바꿔 색 위에 찍어, 인쇄한 그림처럼 보여요.
+   ===================================================================== */
+:root[data-preset="lounge"] .tc-face {
+  border-radius: 26px;
+}
+
+:root[data-preset="lounge"] .tc-back {
+  background: var(--forest);
+  border: none;
+  box-shadow: 0 18px 40px rgba(31, 58, 50, 0.25);
+}
+
+:root[data-preset="lounge"] .tc-back-pattern {
+  background-image: radial-gradient(rgba(251, 227, 217, 0.18) 1.2px, transparent 1.8px);
+  background-size: 16px 16px;
+}
+
+:root[data-preset="lounge"] .tc-mystery circle {
+  fill: rgba(251, 227, 217, 0.08);
+  stroke: var(--peach);
+}
+
+:root[data-preset="lounge"] .tc-mystery text {
+  fill: var(--peach-soft);
+  font-family: var(--font-display);
+}
+
+:root[data-preset="lounge"] .tc-back-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--peach-soft);
+}
+
+:root[data-preset="lounge"] .tc-back-sub {
+  color: #cfdad3;
+}
+
+:root[data-preset="lounge"] .tc-front {
+  background: var(--oat);
+  color: var(--forest);
+  border: none;
+  box-shadow: 0 0 0 1px rgba(31, 58, 50, 0.08), 0 18px 40px rgba(31, 58, 50, 0.14);
+  padding: 16px 18px 14px;
+  gap: 8px;
+}
+
+:root[data-preset="lounge"] .tc-top,
+:root[data-preset="lounge"] .tc-foot {
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .tc-top span:last-child,
+:root[data-preset="lounge"] .tc-foot span:last-child {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+:root[data-preset="lounge"] .tc-window {
+  border: none;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--tc-accent) 18%, #fbf1ea);
+}
+
+:root[data-preset="lounge"] .tc-emoji {
+  filter: grayscale(1) sepia(0.55) contrast(1.12) brightness(1.04);
+  mix-blend-mode: multiply;
+}
+
+:root[data-preset="lounge"] .tc-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--forest);
+  letter-spacing: -0.03em;
+}
+
+:root[data-preset="lounge"] .tc-why {
+  color: var(--text-dim);
+}
+
+:root[data-preset="lounge"] .tc-desc {
+  color: #34493f;
+}
+
+:root[data-preset="lounge"] .tc-quote {
+  background: var(--sage);
+  color: var(--forest);
+  font-family: var(--font-display);
+  font-weight: 700;
+  border-radius: 14px;
+}
+
+:root[data-preset="lounge"] .tc-tags span {
+  background: transparent;
+  color: var(--peach-deep);
+  border: 1px solid rgba(201, 86, 59, 0.35);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .tc-addr {
+  color: var(--forest);
+}
+
+/* 도장: 둥근 고무 도장 느낌 */
+:root[data-preset="lounge"] .tc-mark {
+  border-radius: 999px;
+  background: rgba(251, 250, 245, 0.92);
+}
+
+:root[data-preset="lounge"] .tc-mark-aired {
+  color: var(--peach-deep);
+}
+
+:root[data-preset="lounge"] .tc-mark-review {
+  color: var(--forest-2);
+}
+
+/* 황금 동물: 금박 종이 */
+:root[data-preset="lounge"] .tc-golden .tc-front {
+  background: linear-gradient(155deg, #fff8dc 0%, #f6d77a 45%, #fff2c2 60%, #e9bf4f 100%);
+  color: #3b2a00;
+  box-shadow: 0 0 0 2px #c99a2e, 0 18px 46px rgba(201, 154, 46, 0.4);
+}
+
+:root[data-preset="lounge"] .tc-golden .tc-window {
+  background: rgba(255, 251, 235, 0.7);
+}
+
+:root[data-preset="lounge"] .tc-golden .tc-top,
+:root[data-preset="lounge"] .tc-golden .tc-foot {
+  color: #7a5200;
+}
+
+:root[data-preset="lounge"] .tc-golden .tc-quote {
+  background: rgba(255, 251, 235, 0.75);
+  color: #4a3500;
+}
+
+:root[data-preset="lounge"] .tc-golden .tc-tags span {
+  color: #7a5200;
+  border-color: rgba(122, 82, 0, 0.4);
+}
+
+:root[data-preset="lounge"] .tc-button:hover .tc-back {
+  box-shadow: 0 22px 46px rgba(31, 58, 50, 0.32);
+}
+
+/* 후기 벽 */
+:root[data-preset="lounge"] .lg-home .review-wall {
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+:root[data-preset="lounge"] .review-wall-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--forest);
+}
+
+:root[data-preset="lounge"] .wall-card {
+  background: var(--oat);
+  color: var(--forest);
+  border-radius: 20px;
+  box-shadow: 0 0 0 1px rgba(31, 58, 50, 0.06), 0 8px 20px rgba(31, 58, 50, 0.07);
+}
+
+:root[data-preset="lounge"] .wall-card:nth-child(3n + 2) {
+  background: var(--peach-soft);
+}
+
+:root[data-preset="lounge"] .wall-emoji {
+  filter: grayscale(1) sepia(0.55) contrast(1.1);
+}
+
+:root[data-preset="lounge"] .wall-reaction {
+  color: var(--text-dim);
+}
+
+:root[data-preset="lounge"] .wall-comment {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* =====================================================================
+   결과 화면 (제출 직후 / 사연 조회 / 내 사연함)
+   ===================================================================== */
+:root[data-preset="lounge"] .result-meta span:last-child {
+  color: var(--peach-deep);
+}
+
+:root[data-preset="lounge"] .result-kicker {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .result-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--forest);
+}
+
+:root[data-preset="lounge"] .result-emoji {
+  filter: grayscale(1) sepia(0.55) contrast(1.1);
+}
+
+:root[data-preset="lounge"] .result-detail {
+  background: var(--oat);
+  color: var(--forest);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+
+:root[data-preset="lounge"] .result-section h2 {
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid #dfe4d6;
+}
+
+:root[data-preset="lounge"] .result-why,
+:root[data-preset="lounge"] .result-quote,
+:root[data-preset="lounge"] .result-morph strong,
+:root[data-preset="lounge"] .result-morph-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .result-comment {
+  color: #34493f;
+}
+
+:root[data-preset="lounge"] .result-quote {
+  color: var(--peach-deep);
+}
+
+:root[data-preset="lounge"] .result-tags {
+  color: var(--forest-2);
+}
+
+:root[data-preset="lounge"] .result-morph {
+  border: none;
+  background: var(--peach-soft);
+  border-radius: 18px;
+}
+
+:root[data-preset="lounge"] .result-morph-label {
+  color: var(--peach-deep);
+}
+
+:root[data-preset="lounge"] .ingredients {
+  border: none;
+  background: var(--sage);
+  border-radius: 20px;
+  padding: 4px 16px;
+}
+
+:root[data-preset="lounge"] .ingredients > div {
+  border-bottom: 1px solid rgba(31, 58, 50, 0.1);
+}
+
+:root[data-preset="lounge"] .ingredients > div:first-child {
+  border-bottom-width: 1px;
+  border-bottom-color: rgba(31, 58, 50, 0.1);
+}
+
+:root[data-preset="lounge"] .ingredients > div:last-child {
+  border-bottom: none;
+}
+
+:root[data-preset="lounge"] .ing-bar {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(31, 58, 50, 0.1);
+}
+
+:root[data-preset="lounge"] .ing-val small {
+  color: var(--text-dim);
+}
+
+:root[data-preset="lounge"] .result-share .post-btn-sub {
+  background: var(--oat);
+  border-color: rgba(31, 58, 50, 0.16);
+  color: var(--forest);
+}
+
+/* 진행 상황 */
+:root[data-preset="lounge"] .status-track,
+:root[data-preset="lounge"] .followup,
+:root[data-preset="lounge"] .my-letter,
+:root[data-preset="lounge"] .lookup-manage {
+  background: var(--oat);
+  border-radius: 24px;
+  padding: 20px 22px;
+  border-top: none;
+  box-shadow: 0 0 0 1px rgba(31, 58, 50, 0.05);
+}
+
+:root[data-preset="lounge"] .status-track-head h2,
+:root[data-preset="lounge"] .followup h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .status-pill {
+  border: none;
+  border-radius: 999px;
+  padding: 5px 14px;
+  background: var(--sage);
+}
+
+:root[data-preset="lounge"] .tone-yellow {
+  color: var(--peach-deep);
+  background: var(--peach-soft) !important;
+}
+
+:root[data-preset="lounge"] .tone-blue {
+  color: var(--forest-2);
+}
+
+:root[data-preset="lounge"] .st-steps li.st-done::before {
+  border-top-color: var(--forest);
+}
+
+:root[data-preset="lounge"] .st-dot {
+  background: var(--oat);
+  border-color: #c3ccbb;
+}
+
+:root[data-preset="lounge"] .st-done .st-dot {
+  background: var(--forest);
+  border-color: var(--forest);
+}
+
+:root[data-preset="lounge"] .st-now .st-dot {
+  border-color: var(--peach-deep);
+  background: var(--peach-soft);
+  box-shadow: 0 0 0 5px rgba(240, 165, 140, 0.3);
+}
+
+:root[data-preset="lounge"] .status-waiting {
+  border-left: none;
+  border-radius: 14px;
+  background: var(--peach-soft);
+}
+
+/* 방송 결과 */
+:root[data-preset="lounge"] .air-result {
+  background: var(--oat);
+  color: var(--forest);
+  border-top: none;
+  border-radius: 28px;
+  box-shadow: 0 0 0 2px var(--peach-soft), var(--shadow);
+}
+
+:root[data-preset="lounge"] .air-badge {
+  border: none;
+  border-radius: 999px;
+  background: var(--peach-deep);
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 12px;
+  transform: none;
+}
+
+:root[data-preset="lounge"] .air-main h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .air-date,
+:root[data-preset="lounge"] .air-hint,
+:root[data-preset="lounge"] .air-novod,
+:root[data-preset="lounge"] .air-note-who {
+  color: var(--text-dim);
+}
+
+:root[data-preset="lounge"] .air-note {
+  border-left: none;
+  border-radius: 18px;
+  background: var(--sage);
+  padding: 14px 16px;
+}
+
+:root[data-preset="lounge"] .air-note p {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .private-msg {
+  border: none;
+  border-radius: 24px;
+  background: #e6efe9;
+}
+
+:root[data-preset="lounge"] .private-msg h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* 상담 후기 */
+:root[data-preset="lounge"] .review-box {
+  border: none;
+  border-radius: 24px;
+  background: var(--oat);
+  box-shadow: 0 0 0 2px var(--peach-soft);
+}
+
+:root[data-preset="lounge"] .review-box h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .review-reaction {
+  border: 1.5px solid #d4dacb;
+  background: #fff;
+  border-radius: 18px;
+}
+
+:root[data-preset="lounge"] .review-reaction.is-on {
+  border-color: var(--forest);
+  background: var(--peach-soft);
+  box-shadow: 0 0 0 1.5px var(--forest);
+}
+
+:root[data-preset="lounge"] .review-chip {
+  border-color: var(--peach);
+  background: var(--peach-soft);
+}
+
+/* 사연 조회 코드 쪽지 */
+:root[data-preset="lounge"] .code-slip {
+  background: var(--oat);
+  color: var(--forest);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+
+:root[data-preset="lounge"] .code-slip::before {
+  display: none;
+}
+
+:root[data-preset="lounge"] .code-slip-head h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .code-slip-head p {
+  color: var(--text-dim);
+}
+
+:root[data-preset="lounge"] .code-slip-pair {
+  border: none;
+  background: var(--sage);
+  border-radius: 18px;
+}
+
+:root[data-preset="lounge"] .code-slip-pair > div + div {
+  border-left: 1px solid rgba(31, 58, 50, 0.12);
+}
+
+:root[data-preset="lounge"] .code-slip-pair span {
+  color: var(--text-dim);
+}
+
+:root[data-preset="lounge"] .code-slip-login {
+  border-top: 1px solid #dfe4d6;
+}
+
+:root[data-preset="lounge"] .code-slip-note a {
+  color: var(--link);
+}
+
+@media (max-width: 420px) {
+  :root[data-preset="lounge"] .code-slip-pair > div + div {
+    border-left: none;
+    border-top: 1px solid rgba(31, 58, 50, 0.12);
+  }
+}
+
+/* 황금 동물 상자 */
+:root[data-preset="lounge"] .golden-box {
+  border: none;
+  border-radius: 28px;
+  background: linear-gradient(150deg, #fff8dc, #f6d77a 60%, #e9bf4f);
+  box-shadow: 0 16px 36px -12px rgba(201, 154, 46, 0.55);
+}
+
+:root[data-preset="lounge"] .golden-box h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .golden-code {
+  border-radius: 16px;
+}
+
+/* 도감 안내 · 칩 */
+:root[data-preset="lounge"] .dex-rule {
+  border-left: none;
+  border-radius: 16px;
+  background: var(--oat);
+}
+
+:root[data-preset="lounge"] .chip-gold {
+  background: linear-gradient(150deg, #fff3c4, #f0c75a);
+}
+
+/* 보내는 연출: 숲색 우체통 대신 복숭아색 사연함 */
+:root[data-preset="lounge"] .mailbox {
+  background: var(--peach);
+  box-shadow: inset -12px 0 0 rgba(31, 58, 50, 0.08);
+}
+
+:root[data-preset="lounge"] .mailbox-slot {
+  background: var(--forest);
+}
+
+:root[data-preset="lounge"] .letter-paper {
+  background: var(--oat);
+  box-shadow: 0 6px 14px rgba(31, 58, 50, 0.18);
+}
+
+:root[data-preset="lounge"] .letter-flap {
+  background: var(--peach-soft);
+}
+
+:root[data-preset="lounge"] .send-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--forest);
+}
+
+/* 저장용 접수증 */
+:root[data-preset="lounge"] .receipt {
+  border-radius: 24px;
+}
+
+:root[data-preset="lounge"] .receipt-kind,
+:root[data-preset="lounge"] .receipt-no,
+:root[data-preset="lounge"] .receipt-summary,
+:root[data-preset="lounge"] .receipt-mystery strong {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+:root[data-preset="lounge"] .receipt-kind {
+  color: var(--peach-deep);
+}
+
+:root[data-preset="lounge"] .receipt-no {
+  color: var(--forest);
+}
+
+:root[data-preset="lounge"] .receipt-badge {
+  background: var(--peach-soft);
+  color: var(--peach-deep);
+}
+
+:root[data-preset="lounge"] .receipt-mystery {
+  background: var(--sage);
+  color: var(--forest);
+}
+
+:root[data-preset="lounge"] .receipt-mystery strong {
+  color: var(--forest);
+}
+
+:root[data-preset="lounge"] .receipt-mystery p {
+  color: var(--text-dim);
+}
+
+:root[data-preset="lounge"] .mystery-silhouette {
+  color: var(--forest);
+  border-color: var(--peach);
+  filter: grayscale(1) sepia(0.5);
+}
+
+/* =====================================================================
+   사연 쓰기 · 내 사연함 · 그 밖의 화면
+   ===================================================================== */
+:root[data-preset="lounge"] .display {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+:root[data-preset="lounge"] .write-progress {
+  background: #dfe4d6;
+}
+
+:root[data-preset="lounge"] .write-progress-bar {
+  background: var(--forest);
+}
+
+:root[data-preset="lounge"] .status-yellow {
+  background: var(--peach-soft);
+  color: var(--peach-deep);
+}
+
+:root[data-preset="lounge"] .status-blue {
+  background: #e3ece6;
+  color: var(--forest-2);
+}
+
+:root[data-preset="lounge"] .my-row-animal,
+:root[data-preset="lounge"] .tl-emoji {
+  filter: grayscale(1) sepia(0.55) contrast(1.1);
+}
+
+/* =====================================================================
+   OBS 방송 화면 (상담소 디자인): 둥근 종이 편지 + 숲색 카드 뒷면
+   ===================================================================== */
+.obs-root.obs-lounge {
+  --ink: #1f3a32;
+  --paper-env: #fbfaf5;
+  --font-serif: "Gowun Batang", "Nanum Myeongjo", serif;
+}
+
+.obs-root.obs-lounge .obs-letter {
+  border-radius: 44px;
+  background: #fbfaf5;
+  box-shadow: 0 0 0 10px rgba(238, 240, 230, 0.92), 0 36px 90px rgba(20, 38, 32, 0.35);
+}
+
+.obs-root.obs-lounge .obs-paper {
+  padding: 48px 64px 30px;
+  border-radius: 44px;
+}
+
+.obs-root.obs-lounge .obs-no {
+  color: #6c7b73;
+}
+
+.obs-root.obs-lounge .obs-cat {
+  border: none;
+  border-radius: 999px;
+  background: #fbe3d9;
+  color: #c9563b;
+  padding: 4px 16px;
+}
+
+.obs-root.obs-lounge .obs-voice {
+  border: none;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #eef0e6;
+}
+
+.obs-root.obs-lounge .obs-voice-k {
+  background: #1f3a32;
+  color: #fbe3d9;
+}
+
+.obs-root.obs-lounge .obs-voice-v {
+  font-weight: 700;
+}
+
+.obs-root.obs-lounge .obs-animal-back {
+  border-radius: 40px;
+  background: #1f3a32;
+  color: #fbe3d9;
+  box-shadow: 0 0 0 10px rgba(238, 240, 230, 0.92), 0 30px 70px rgba(20, 38, 32, 0.35);
+}
+
+.obs-root.obs-lounge .obs-q {
+  color: #f0a58c;
+  font-weight: 700;
+}
+
+.obs-root.obs-lounge .obs-animal-sub {
+  color: #cfdad3;
+}
+
+.obs-root.obs-lounge .obs-animal-front {
+  border-radius: 40px;
+  background: #fbfaf5;
+  box-shadow: 0 0 0 10px rgba(238, 240, 230, 0.92), 0 30px 70px rgba(20, 38, 32, 0.35);
+}
+
+.obs-root.obs-lounge .obs-animal-emoji {
+  filter: grayscale(1) sepia(0.55) contrast(1.1);
+}
+
+.obs-root.obs-lounge .obs-animal-title,
+.obs-root.obs-lounge .obs-animal-name {
+  font-weight: 700;
+}
+
+.obs-root.obs-lounge .obs-animal-k,
+.obs-root.obs-lounge .obs-animal-why {
+  color: #4f625a;
+}
+
+.obs-root.obs-lounge .obs-animal-quote {
+  border-radius: 18px;
+  background: #eef0e6;
+  color: #1f3a32;
+  font-family: var(--font-serif);
+  font-weight: 700;
+}
+
+.obs-root.obs-lounge .obs-animal-tags span {
+  border: 1.5px solid rgba(201, 86, 59, 0.4);
+  border-radius: 999px;
+  color: #c9563b;
+}
+
+/* 편지가 아래에서 부드럽게 올라와요 */
+.obs-root.obs-lounge .is-entering .obs-letter {
+  animation: loungeRise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.obs-root.obs-lounge .is-leaving .obs-letter {
+  animation: loungeSink 0.5s cubic-bezier(0.5, 0, 0.8, 0.4) forwards;
+}
+
+@keyframes loungeRise {
+  from {
+    opacity: 0;
+    transform: translateY(60px) scale(0.98);
+  }
+}
+
+@keyframes loungeSink {
+  to {
+    opacity: 0;
+    transform: translateY(60px) scale(0.98);
+  }
+}
+
+/* 룰렛 (관리자 방송 화면 · OBS): 빨강·노랑 오락기 대신 숲색·복숭아색 */
+.rl-lounge .rl-cabinet {
+  background: linear-gradient(180deg, #2c5246, #1f3a32);
+  border-color: #f0a58c;
+}
+
+.rl-lounge .rl-marquee,
+.rl-lounge .rl-slot {
+  background: #fbfaf5;
+}
+
+.rl-lounge .rl-title {
+  color: #1f3a32;
+  font-family: "Gowun Batang", serif;
+  font-weight: 700;
+}
+
+.rl-lounge .rl-bulbs span {
+  background: #f0a58c;
+}
+
+.rl-lounge .rl-slot {
+  border-color: #f0a58c;
+}
+
+.rl-lounge .rl-row {
+  color: #6c7b73;
+}
+
+.rl-lounge .rl-row.is-center {
+  background: #fbe3d9;
+  color: #1f3a32;
+}
+
+.rl-lounge .rl-frame {
+  background: linear-gradient(#fbfaf5, transparent 26%, transparent 74%, #fbfaf5);
+}

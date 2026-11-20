@@ -1077,7 +1077,7 @@ async function updateSettings(body: Record<string, unknown>) {
   if (typeof s.tagline === "string") patch.tagline = str(s.tagline, 80);
   if (typeof s.week_theme === "string") patch.week_theme = str(s.week_theme, 40);
   if (typeof s.preset === "string") {
-    if (!["classic", "cork", "gacha"].includes(s.preset)) throw new HttpError(400, "알 수 없는 디자인이에요.");
+    if (!["lounge", "classic", "cork", "gacha"].includes(s.preset)) throw new HttpError(400, "알 수 없는 디자인이에요.");
     patch.preset = s.preset;
   }
   if (typeof s.accepting === "boolean") patch.accepting = s.accepting;

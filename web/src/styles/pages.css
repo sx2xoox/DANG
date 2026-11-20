@@ -1638,3 +1638,9 @@
     -webkit-mask-image: none;
   }
 }
+
+/* 후기 벽은 부모가 flex 여도 화면 너비를 넘지 않게 */
+.review-wall {
+  min-width: 0;
+  width: 100%;
+}

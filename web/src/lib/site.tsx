@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
-export type Preset = "classic" | "cork" | "gacha";
+export type Preset = "lounge" | "classic" | "cork" | "gacha";
 
 export type HomeInfo = {
   site_name: string;
@@ -19,7 +19,7 @@ const DEFAULT_INFO: HomeInfo = {
   site_name: "다웅 고민 사연함",
   tagline: "다웅이 방송에서 직접 읽어주는 고민 상담 코너",
   week_theme: "",
-  preset: "classic",
+  preset: "lounge",
   accepting: true,
   week_count: 0,
   queue_count: 0,
@@ -46,7 +46,7 @@ const Ctx = createContext<SiteCtx>({
 
 export function applyPreset(p: Preset) {
   document.documentElement.dataset.preset = p;
-  const theme = p === "classic" ? "#0B1220" : p === "cork" ? "#6B4428" : "#F1EAFF";
+  const theme = p === "lounge" ? "#EEF0E6" : p === "classic" ? "#0B1220" : p === "cork" ? "#6B4428" : "#F1EAFF";
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme);
 }
 

@@ -2480,3 +2480,27 @@
   color: var(--text-dim);
   border-bottom: 1.5px solid var(--ink);
 }
+
+.thumb-lounge {
+  background: #eef0e6;
+}
+
+.thumb-lounge .t-head {
+  background: #eef0e6;
+  border-bottom: 1px solid #d4dacb;
+}
+
+.thumb-lounge .t-card {
+  background: #fbfaf5;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(31, 58, 50, 0.12);
+}
+
+.thumb-lounge .t-line {
+  background: #1f3a32;
+}
+
+.thumb-lounge .t-btn {
+  background: #1f3a32;
+  border-radius: 4px;
+}

@@ -232,7 +232,7 @@ export default function ObsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantCard?.id, wantCard, shown?.card.id, shown?.leaving]);
 
-  const preset: Preset = state?.preset ?? "classic";
+  const preset: Preset = state?.preset ?? "lounge";
 
   return (
     <div className={`obs-root obs-${preset}`}>

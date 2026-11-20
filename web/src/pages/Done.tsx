@@ -207,11 +207,12 @@ export const ReceiptCard = forwardRef<HTMLDivElement, { receipt: Receipt; siteNa
 
 /** 편지가 접혀 들어가는 짧은 연출 (프리셋마다 다름) */
 function SendingAnimation({ preset }: { preset: Preset }) {
-  const label = preset === "cork" ? "게시판에 붙이는 중…" : preset === "gacha" ? "캡슐에 담는 중…" : "우체통에 넣는 중…";
+  const label =
+    preset === "cork" ? "게시판에 붙이는 중…" : preset === "gacha" ? "캡슐에 담는 중…" : preset === "lounge" ? "사연함에 살며시 넣는 중…" : "우체통에 넣는 중…";
   return (
     <div className={`send-anim send-${preset}`} role="status" aria-live="polite">
       <div className="send-stage" aria-hidden="true">
-        {preset === "classic" && (
+        {(preset === "classic" || preset === "lounge") && (
           <>
             <div className="mailbox">
               <div className="mailbox-slot" />

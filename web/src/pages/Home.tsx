@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useSite } from "../lib/site";
 import CorkHome from "./CorkHome";
+import LoungeHome from "./LoungeHome";
 import { ReviewWall } from "../components/ReviewWall";
 
 /** 오늘 날짜를 소인 형식으로 (2026.11.20) */
@@ -20,6 +21,7 @@ export default function Home() {
   const { info, session } = useSite();
   const count = info.week_count;
 
+  if (info.preset === "lounge") return <LoungeHome info={info} loggedIn={!!session} />;
   if (info.preset === "cork") return <CorkHome info={info} loggedIn={!!session} />;
 
   return (

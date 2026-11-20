@@ -7,6 +7,7 @@ import "./styles/pages.css";
 import "./styles/post.css";
 import "./styles/cork.css";
 import "./styles/result.css";
+import "./styles/lounge.css";
 import App from "./App";
 
 createRoot(document.getElementById("root")!).render(

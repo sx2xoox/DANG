@@ -21,6 +21,7 @@ type SettingsData = {
 };
 
 const PRESETS: { id: Preset; name: string; desc: string }[] = [
+  { id: "lounge", name: "동네 고민 상담소 (기본)", desc: "연한 세이지색 바탕, 숲색 글씨, 복숭아색 포인트. 누구나 편하게." },
   { id: "classic", name: "다웅 우체국", desc: "남색 책상 위 항공우편 봉투. 명조 제목과 우표, 소인." },
   { id: "cork", name: "코르크 보드", desc: "사연 모집 전단지와 포스트잇, 실로 이은 카드." },
   { id: "gacha", name: "캡슐 뽑기", desc: "또렷한 외곽선과 캡슐 뽑기 기계." },
