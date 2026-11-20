@@ -193,7 +193,6 @@ export const GOMIN: BoxConfig = {
   visibilities: [
     { id: "named", label: "방송에서 이름 공개", desc: "정한 이름을 방송에서 불러줘요" },
     { id: "anonymous", label: "방송에서 익명으로 읽기", desc: "이름 없이 사연만 읽어요" },
-    { id: "private", label: "방장만 보기", desc: "방송에서 읽지 않고 답장만 받아요" },
   ],
   genders: [
     { id: "male", label: "남" },

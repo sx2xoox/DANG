@@ -1,7 +1,7 @@
 // =====================================================================
 // 시청자용 서버 함수
 //   submit         사연 제출 (로그인/비로그인)
-//   lookup         접수번호 + 비밀 코드로 답장 확인
+//   lookup         접수번호 + 비밀 코드로 내 사연(고민 동물, 검토/방송 상태) 조회
 //   delete_by_code 접수번호 + 비밀 코드로 사연 삭제
 //   claim          비로그인으로 낸 사연을 로그인 계정으로 옮기기
 //   delete_account 탈퇴 (원하면 사연도 삭제)
@@ -13,13 +13,6 @@ import { hashCode, randomCode, randomToken, sha256 } from "../_shared/crypto.ts"
 import { detectFlags } from "../_shared/safety.ts";
 import { generateAnimalFor, previousAnimals, transformation } from "../_shared/animalJob.ts";
 import { fallbackAnimal } from "../_shared/fallbackAnimals.ts";
-
-declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
-
-function background(p: Promise<unknown>) {
-  const guarded = p.catch((e) => console.error("background task failed", e));
-  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(guarded);
-}
 
 const SUBMIT_LIMITS = [
   { minutes: 10, device: 3, ip: 6 },
@@ -89,15 +82,15 @@ function nameForViewer(s: any): string {
   return s.display_name;
 }
 
-async function replyBundle(storyId: string) {
+const ANIMAL_FIELDS = "name, emoji, why, description, quote, hashtags, prev_name, prev_emoji, change_reason";
+
+async function storyBundle(storyId: string) {
   const db = adminDb();
-  const [{ data: reply }, { data: animal }, { data: followUps }] = await Promise.all([
-    db.from("replies").select("body, kind, aired_on, vod_url, verdict_yes, verdict_no, sent_at, opened_at").eq("story_id", storyId).maybeSingle(),
-    db.from("worry_animals").select("name, emoji, why, description, quote, hashtags, prev_name, prev_emoji, change_reason").eq("story_id", storyId).maybeSingle(),
+  const [{ data: animal }, { data: followUps }] = await Promise.all([
+    db.from("worry_animals").select(ANIMAL_FIELDS).eq("story_id", storyId).maybeSingle(),
     db.from("follow_ups").select("id, body, created_at").eq("story_id", storyId).order("created_at"),
   ]);
-  const sent = !!reply?.sent_at;
-  return { reply: sent ? reply : null, animal: sent ? animal : null, follow_ups: followUps ?? [] };
+  return { animal, follow_ups: followUps ?? [] };
 }
 
 function viewerStory(s: any) {
@@ -155,7 +148,7 @@ async function submit(req: Request, body: Record<string, unknown>) {
   const visibility = str(body.visibility, 20);
   const consents = body.consents as Record<string, unknown> | undefined;
 
-  const bad = (m: string) => {
+  const bad: (m: string) => never = (m: string) => {
     throw new HttpError(400, m, "invalid");
   };
   if (!["chzzk", "anon"].includes(nameMode)) bad("이름 방식을 골라주세요.");
@@ -233,21 +226,23 @@ async function submit(req: Request, body: Record<string, unknown>) {
 
   await db.from("submit_log").insert({ device_hash: deviceHash, ip_hash: ipHash });
 
-  // 기본 동물을 먼저 저장해 두고 (AI 가 실패해도 사연은 안전), AI 결과로 바꿔치기합니다.
-  const prev = user ? await previousAnimals(user.id, story.id) : [];
-  const fb = fallbackAnimal({ category, temperature, wish, stamp, care });
-  await db.from("worry_animals").insert({
-    story_id: story.id,
-    ...fb,
-    source: "fallback",
-    ...transformation(prev[0], fb.name, ""),
-  });
-
   if (user) {
     await db.from("profiles").upsert({ user_id: user.id, default_name: displayName, name_mode: nameMode, updated_at: new Date().toISOString() });
   }
 
-  background(generateAnimalFor(story, prev));
+  // 사연을 읽고 고민 동물을 바로 지어서 결과 화면에 보여줍니다.
+  // AI 가 늦거나 실패해도 기본 동물로 항상 결과가 나와요. (제출은 이미 저장됨)
+  const prev = user ? await previousAnimals(user.id, story.id) : [];
+  let animal: Record<string, unknown>;
+  try {
+    animal = (await generateAnimalFor(story, prev, 40_000)).animal;
+  } catch (e) {
+    console.error("animal generation failed", e);
+    const fb = fallbackAnimal({ category, temperature, wish, stamp, care });
+    animal = { story_id: story.id, ...fb, source: "fallback", ...transformation(prev[0], fb.name, "") };
+    await db.from("worry_animals").upsert(animal, { onConflict: "story_id" });
+    await db.from("stories").update({ animal_state: "failed" }).eq("id", story.id);
+  }
 
   return json({
     story_id: story.id,
@@ -261,16 +256,23 @@ async function submit(req: Request, body: Record<string, unknown>) {
     created_at: story.created_at,
     care,
     logged_in: !!user,
+    animal: {
+      name: animal.name,
+      emoji: animal.emoji,
+      why: animal.why,
+      description: animal.description,
+      quote: animal.quote,
+      hashtags: animal.hashtags,
+      prev_name: animal.prev_name ?? null,
+      prev_emoji: animal.prev_emoji ?? null,
+      change_reason: animal.change_reason ?? null,
+    },
   });
 }
 
 async function lookup(req: Request, body: Record<string, unknown>) {
   const story = await verifyByCode(req, body);
-  const bundle = await replyBundle(story.id);
-  if (bundle.reply && !bundle.reply.opened_at) {
-    await adminDb().from("replies").update({ opened_at: new Date().toISOString() }).eq("story_id", story.id);
-  }
-  return json({ story: viewerStory(story), ...bundle });
+  return json({ story: viewerStory(story), ...(await storyBundle(story.id)) });
 }
 
 async function deleteByCode(req: Request, body: Record<string, unknown>) {

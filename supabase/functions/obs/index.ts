@@ -1,7 +1,7 @@
 // =====================================================================
 // OBS 방송 카드용 서버 함수 (GET /obs?key=...)
-// 본문은 절대 내보내지 않습니다. 이름(공개 방식 반영), 나이·성별, 한 줄 요약, 우표, 목소리,
-// 그리고 방장이 "공개"를 누른 뒤에만 고민 동물을 내보냅니다.
+// 다웅이 승인한 사연만 방송 화면에 열립니다: 이름(공개 방식 반영), 나이·성별, 한 줄 요약, 본문,
+// 우표, 목소리. 고민 동물은 방장이 "공개"를 누른 뒤에만 내보냅니다.
 // =====================================================================
 import { HttpError, json, serve } from "../_shared/http.ts";
 import { adminDb } from "../_shared/db.ts";
@@ -21,10 +21,10 @@ serve(async (req) => {
   if (b?.story_id && !b.hidden) {
     const { data: s } = await db
       .from("stories")
-      .select("id, receipt_no, display_name, visibility, age, gender, summary, stamp, voice, category")
+      .select("id, receipt_no, display_name, visibility, age, gender, summary, body, stamp, voice, category, status")
       .eq("id", b.story_id)
       .maybeSingle();
-    if (s && s.visibility !== "private") {
+    if (s && s.status !== "pending" && s.status !== "rejected") {
       let animal = null;
       if (b.revealed) {
         const { data: a } = await db
@@ -41,6 +41,7 @@ serve(async (req) => {
         age: s.age,
         gender: s.gender,
         summary: s.summary,
+        body: s.body,
         stamp: s.stamp,
         voice: s.voice,
         category: s.category,
@@ -55,6 +56,7 @@ serve(async (req) => {
       site_name: st.site_name,
       hidden: !!b?.hidden,
       revealed: !!b?.revealed,
+      scroll: b?.scroll ?? 0,
       roulette: b?.roulette ?? null,
       updated_at: b?.updated_at,
       server_time: new Date().toISOString(),

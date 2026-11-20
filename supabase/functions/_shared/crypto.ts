@@ -55,7 +55,7 @@ const ITER = 150_000;
 
 async function pbkdf2(password: string, salt: Uint8Array, iter: number): Promise<string> {
   const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: iter }, key, 256);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: salt as BufferSource, iterations: iter }, key, 256);
   return toHex(bits);
 }
 

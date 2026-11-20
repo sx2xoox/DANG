@@ -1,13 +1,14 @@
 // =====================================================================
 // 관리자(다웅) / 매니저용 서버 함수
 // 모든 요청은 x-admin-token 헤더의 관리자 세션을 서버에서 확인한 뒤 처리합니다.
-// 매니저는 사연 보기, 별표, 뽑기(+OBS 카드 표시)만 할 수 있습니다.
+// 흐름: 검토 대기 → 승인(방송 대기열) / 반려 → 방송 중 OBS 로 열어서 읽기 → 읽음
+// 매니저는 사연 보기, 별표, 뽑기(+OBS 카드 조작)만 할 수 있습니다.
 // =====================================================================
 import { GOMIN } from "../_shared/boxes.ts";
 import { clientIp, corsHeaders, HttpError, int, json, readJson, serve, str } from "../_shared/http.ts";
 import { adminDb } from "../_shared/db.ts";
 import { hashPassword, randomCode, randomToken, safeEqual, sha256, verifyPassword } from "../_shared/crypto.ts";
-import { aiEnabled, createReplyDraft } from "../_shared/ai.ts";
+import { aiEnabled } from "../_shared/ai.ts";
 import { generateAnimalFor, previousAnimals } from "../_shared/animalJob.ts";
 
 type Role = "owner" | "manager";
@@ -18,7 +19,7 @@ const LOCK_MINUTES = 10;
 const GLOBAL_MAX_FAILS = 30;
 
 const MANAGER_ACTIONS = new Set([
-  "session", "logout", "list", "get", "waiting", "set_status", "pick", "today_picks", "broadcast", "broadcast_state",
+  "session", "logout", "list", "get", "queue", "toggle_star", "pick_next", "today_picks", "broadcast", "broadcast_state",
 ]);
 
 // ---------------------------------------------------------------------
@@ -137,8 +138,10 @@ async function sessionFrom(req: Request): Promise<{ role: Role; tokenHash: strin
 // 공통 도우미
 // ---------------------------------------------------------------------
 
+const KST = 9 * 3600_000;
+
 function kstStart(unit: "day" | "week" | "month"): string {
-  const now = new Date(Date.now() + 9 * 3600_000); // KST 기준 날짜 계산
+  const now = new Date(Date.now() + KST);
   const y = now.getUTCFullYear();
   const m = now.getUTCMonth();
   const d = now.getUTCDate();
@@ -149,7 +152,12 @@ function kstStart(unit: "day" | "week" | "month"): string {
     const dow = (now.getUTCDay() + 6) % 7; // 월요일 시작
     start = Date.UTC(y, m, d - dow);
   }
-  return new Date(start - 9 * 3600_000).toISOString();
+  return new Date(start - KST).toISOString();
+}
+
+/** 한국 날짜 (2026-11-20) */
+function kstDay(iso: string): string {
+  return new Date(new Date(iso).getTime() + KST).toISOString().slice(0, 10);
 }
 
 /** 방송/관리 화면에서 보여줄 이름 (공개 방식 반영) */
@@ -158,10 +166,9 @@ function broadcastName(s: { display_name: string; visibility: string }): string 
 }
 
 const LIST_FIELDS =
-  "id, receipt_no, display_name, name_mode, age, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, flags, animal_state, viewer_status, created_at, user_id, worry_animals(name, emoji, source), replies(sent_at, kind, draft), follow_ups(count)";
+  "id, receipt_no, display_name, name_mode, age, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, user_id, worry_animals(name, emoji, source), follow_ups(count)";
 
 function listRow(s: any) {
-  const reply = Array.isArray(s.replies) ? s.replies[0] : s.replies;
   const animal = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
   return {
     id: s.id,
@@ -180,14 +187,15 @@ function listRow(s: any) {
     visibility: s.visibility,
     badge: s.badge,
     status: s.status,
+    starred: s.starred,
     flags: s.flags,
     animal_state: s.animal_state,
     created_at: s.created_at,
+    created_day: kstDay(s.created_at),
+    reviewed_at: s.reviewed_at,
+    aired_at: s.aired_at,
     logged_in: !!s.user_id,
     animal: animal ? { name: animal.name, emoji: animal.emoji, source: animal.source } : null,
-    reply_sent_at: reply?.sent_at ?? null,
-    reply_kind: reply?.kind ?? null,
-    has_draft: !!reply?.draft,
     follow_up_count: s.follow_ups?.[0]?.count ?? 0,
   };
 }
@@ -195,6 +203,8 @@ function listRow(s: any) {
 function cleanSearch(q: string): string {
   return q.replace(/[,()%*\\]/g, " ").trim();
 }
+
+const STATUSES = ["pending", "approved", "on_air", "read", "rejected"];
 
 // ---------------------------------------------------------------------
 // 사연 목록 / 상세
@@ -221,8 +231,7 @@ async function list(body: Record<string, unknown>) {
   const ageMax = int(f.age_max);
   if (ageMin !== null) q = q.gte("age", ageMin);
   if (ageMax !== null) q = q.lte("age", ageMax);
-  if (f.replied === "yes") q = q.eq("viewer_status", "replied");
-  if (f.replied === "no") q = q.neq("viewer_status", "replied");
+  if (f.starred === true || f.starred === "yes") q = q.eq("starred", true);
   if (typeof f.flag === "string" && f.flag) q = q.contains("flags", [f.flag]);
   const search = cleanSearch(str(f.q, 50));
   if (search) q = q.or(`summary.ilike.%${search}%,body.ilike.%${search}%,display_name.ilike.%${search}%`);
@@ -233,47 +242,61 @@ async function list(body: Record<string, unknown>) {
 
   const { data, count, error } = await q.range(page * pageSize, page * pageSize + pageSize - 1);
   if (error) throw new HttpError(500, error.message);
-  return json({ items: (data ?? []).map(listRow), total: count ?? 0, page, page_size: pageSize });
+
+  // 검토 대기 수 (메뉴 배지용)
+  const { count: pending } = await adminDb().from("stories").select("id", { count: "exact", head: true }).eq("status", "pending");
+  return json({ items: (data ?? []).map(listRow), total: count ?? 0, page, page_size: pageSize, pending_count: pending ?? 0 });
 }
 
-async function getStory(body: Record<string, unknown>, role: Role) {
+async function getStory(body: Record<string, unknown>) {
   const id = str(body.id, 60);
   const db = adminDb();
   const { data: s } = await db.from("stories").select("*").eq("id", id).maybeSingle();
   if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
-  const [{ data: animal }, { data: reply }, { data: followUps }, { data: picks }] = await Promise.all([
+  const [{ data: animal }, { data: followUps }, { data: picks }] = await Promise.all([
     db.from("worry_animals").select("*").eq("story_id", id).maybeSingle(),
-    db.from("replies").select("*").eq("story_id", id).maybeSingle(),
     db.from("follow_ups").select("id, body, created_at").eq("story_id", id).order("created_at"),
     db.from("picks").select("picked_at").eq("story_id", id).order("picked_at", { ascending: false }).limit(5),
   ]);
   const { code_hash: _h, code_salt: _s, ...safe } = s;
   return json({
-    story: { ...safe, broadcast_name: broadcastName(s), logged_in: !!s.user_id },
+    story: { ...safe, broadcast_name: broadcastName(s), logged_in: !!s.user_id, created_day: kstDay(s.created_at) },
     animal,
-    reply: role === "owner" ? reply : reply ? { sent_at: reply.sent_at, kind: reply.kind } : null,
     follow_ups: followUps ?? [],
     picks: picks ?? [],
   });
 }
 
-const STATUSES = ["new", "starred", "scheduled", "on_air", "read", "hold"];
-
-async function setStatus(body: Record<string, unknown>, role: Role) {
-  const id = str(body.id, 60);
+/** 상태 바꾸기: 승인 / 반려 / 검토 대기로 되돌리기 / 방송 중 / 읽음 (방장만) */
+async function setStatus(body: Record<string, unknown>) {
+  const ids = Array.isArray(body.ids) ? (body.ids as unknown[]).map((x) => str(x, 60)).filter(Boolean) : [str(body.id, 60)];
   const status = str(body.status, 20);
   if (!STATUSES.includes(status)) throw new HttpError(400, "알 수 없는 상태예요.");
-  const db = adminDb();
-  const { data: s } = await db.from("stories").select("status").eq("id", id).maybeSingle();
-  if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
-  if (role === "manager") {
-    const ok = (s.status === "new" && status === "starred") || (s.status === "starred" && status === "new");
-    if (!ok) throw new HttpError(403, "매니저는 별표만 붙이거나 뗄 수 있어요.");
-  }
+  if (!ids.length || ids.length > 200) throw new HttpError(400, "사연을 골라주세요.");
+  const now = new Date().toISOString();
   const patch: Record<string, unknown> = { status };
-  if (status === "read") patch.aired_at = new Date().toISOString();
-  await db.from("stories").update(patch).eq("id", id);
+  if (status === "approved" || status === "rejected") patch.reviewed_at = now;
+  if (status === "pending") patch.reviewed_at = null;
+  if (status === "read") patch.aired_at = now;
+  const db = adminDb();
+  await db.from("stories").update(patch).in("id", ids);
+  // 읽음 처리하면 방송 카드도 내립니다.
+  if (status === "read") {
+    const { data: b } = await db.from("broadcast_state").select("story_id").eq("id", 1).single();
+    if (b?.story_id && ids.includes(b.story_id)) {
+      await db.from("broadcast_state").update({ hidden: true, roulette: null, updated_at: now }).eq("id", 1);
+    }
+  }
   return json({ ok: true });
+}
+
+async function toggleStar(body: Record<string, unknown>) {
+  const id = str(body.id, 60);
+  const db = adminDb();
+  const { data: s } = await db.from("stories").select("starred").eq("id", id).maybeSingle();
+  if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
+  await db.from("stories").update({ starred: !s.starred }).eq("id", id);
+  return json({ ok: true, starred: !s.starred });
 }
 
 async function toggleFlag(body: Record<string, unknown>) {
@@ -305,13 +328,8 @@ async function regenerateAnimal(body: Record<string, unknown>) {
   const { data: s } = await db.from("stories").select("*").eq("id", id).maybeSingle();
   if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
   const prev = s.user_id ? await previousAnimals(s.user_id, s.id) : [];
-  await db.from("stories").update({ animal_state: "pending" }).eq("id", id);
-  await generateAnimalFor(s, prev);
-  const [{ data: animal }, { data: st }] = await Promise.all([
-    db.from("worry_animals").select("*").eq("story_id", id).single(),
-    db.from("stories").select("animal_state").eq("id", id).single(),
-  ]);
-  return json({ animal, animal_state: st?.animal_state, ai_enabled: aiEnabled() });
+  const { animal, animalState } = await generateAnimalFor(s, prev);
+  return json({ animal, animal_state: animalState, ai_enabled: aiEnabled() });
 }
 
 async function updateAnimal(body: Record<string, unknown>) {
@@ -338,139 +356,68 @@ async function updateAnimal(body: Record<string, unknown>) {
 }
 
 // ---------------------------------------------------------------------
-// 답장
+// 방송 대기열 / 뽑기 / OBS
 // ---------------------------------------------------------------------
 
-async function draftReply(body: Record<string, unknown>) {
-  const id = str(body.id, 60);
-  const db = adminDb();
-  const { data: s } = await db.from("stories").select("*").eq("id", id).maybeSingle();
-  if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
-  const [{ data: followUps }, { data: animal }] = await Promise.all([
-    db.from("follow_ups").select("body").eq("story_id", id).order("created_at"),
-    db.from("worry_animals").select("name, emoji").eq("story_id", id).maybeSingle(),
-  ]);
-  let draft: string;
-  try {
-    draft = await createReplyDraft({
-      category: s.category,
-      temperature: s.temperature,
-      wish: s.wish,
-      stamp: s.stamp,
-      voice: s.voice,
-      summary: s.summary,
-      body: s.body,
-      care: (s.flags ?? []).includes("care"),
-      forbidden: [s.display_name],
-      followUps: (followUps ?? []).map((f) => f.body),
-      animal,
-    });
-  } catch (e) {
-    throw new HttpError(502, e instanceof Error ? e.message : "AI 초안을 만들지 못했어요.");
-  }
-  await db.from("replies").upsert({ story_id: id, draft, updated_at: new Date().toISOString() }, { onConflict: "story_id" });
-  return json({ draft });
-}
-
-function replyFields(body: Record<string, unknown>) {
-  const yes = int(body.verdict_yes);
-  const no = int(body.verdict_no);
-  const vod = str(body.vod_url, 500);
-  if (vod && !/^https?:\/\//i.test(vod)) throw new HttpError(400, "다시보기 링크는 http 로 시작해야 해요.");
-  const aired = str(body.aired_on, 10);
-  if (aired && !/^\d{4}-\d{2}-\d{2}$/.test(aired)) throw new HttpError(400, "방송 날짜 형식이 맞지 않아요.");
-  return {
-    body: str(body.body, 6000),
-    aired_on: aired || null,
-    vod_url: vod || null,
-    verdict_yes: yes === null ? null : Math.min(100, Math.max(0, yes)),
-    verdict_no: no === null ? null : Math.min(100, Math.max(0, no)),
-  };
-}
-
-async function saveReply(body: Record<string, unknown>, send: boolean) {
-  const id = str(body.id, 60);
-  const fields = replyFields(body);
-  if (send && fields.body.length < 2) throw new HttpError(400, "답장 내용을 써주세요.");
-  const now = new Date().toISOString();
-  const db = adminDb();
-  const { data: existing } = await db.from("replies").select("sent_at").eq("story_id", id).maybeSingle();
-  const row: Record<string, unknown> = { story_id: id, ...fields, updated_at: now };
-  if (send) {
-    row.kind = "manual";
-    row.sent_at = now;
-    row.draft = null;
-    row.opened_at = null;
-  } else if (!existing?.sent_at) {
-    row.draft = fields.body || null;
-  }
-  const { error } = await db.from("replies").upsert(row, { onConflict: "story_id" });
-  if (error) throw new HttpError(500, error.message);
-  return json({ ok: true, sent_at: send ? now : existing?.sent_at ?? null });
-}
-
-async function unsendReply(body: Record<string, unknown>) {
-  const id = str(body.id, 60);
-  await adminDb().from("replies").update({ sent_at: null, opened_at: null, updated_at: new Date().toISOString() }).eq("story_id", id);
-  return json({ ok: true });
-}
-
-async function waiting() {
+/** 방송 대기열: 승인된 사연을 오래된 순서로. 날짜별로 묶어서 돌려줍니다. */
+async function queue() {
   const { data } = await adminDb()
     .from("stories")
     .select(LIST_FIELDS)
-    .neq("viewer_status", "replied")
+    .in("status", ["approved", "on_air"])
     .order("created_at", { ascending: true })
-    .limit(300);
-  const rows = (data ?? []).map(listRow);
-  rows.sort((a, b) => {
-    const ca = a.flags.includes("care") ? 0 : 1;
-    const cb = b.flags.includes("care") ? 0 : 1;
-    if (ca !== cb) return ca - cb;
-    return a.created_at < b.created_at ? -1 : 1;
-  });
-  return json({ items: rows });
+    .limit(500);
+  const items = (data ?? []).map(listRow);
+  const { count: pending } = await adminDb().from("stories").select("id", { count: "exact", head: true }).eq("status", "pending");
+  return json({ items, pending_count: pending ?? 0 });
 }
 
-// ---------------------------------------------------------------------
-// 뽑기 / OBS
-// ---------------------------------------------------------------------
-
-async function pick(body: Record<string, unknown>) {
-  const f = (body.filters ?? {}) as Record<string, unknown>;
-  let q = adminDb()
+/**
+ * 다음 사연 뽑기
+ *  - 방송 대기열(승인됨)에서 가장 오래된 날짜의 사연이 우선
+ *  - 그 날짜에 사연이 하나면 바로 그 사연, 여러 개면 그날 사연들끼리 룰렛
+ */
+async function pickNext(body: Record<string, unknown>) {
+  const { data } = await adminDb()
     .from("stories")
-    .select("id, receipt_no, display_name, visibility, summary, stamp, category, status, age, gender, voice")
-    .neq("visibility", "private");
-  const statuses = Array.isArray(f.statuses) ? (f.statuses as string[]).filter((x) => STATUSES.includes(x)) : [];
-  if (statuses.length) q = q.in("status", statuses);
-  const cats = Array.isArray(f.categories) ? (f.categories as string[]) : [];
-  if (cats.length) q = q.in("category", cats);
-  if (f.exclude_read !== false) q = q.neq("status", "read");
-  if (f.exclude_hold !== false) q = q.neq("status", "hold");
-  const { data } = await q.order("created_at", { ascending: false }).limit(500);
+    .select("id, receipt_no, display_name, visibility, summary, stamp, category, created_at")
+    .eq("status", "approved")
+    .order("created_at", { ascending: true })
+    .limit(500);
   const pool = data ?? [];
-  if (!pool.length) throw new HttpError(404, "조건에 맞는 사연이 없어요. 조건을 바꿔보세요.");
+  if (!pool.length) throw new HttpError(404, "방송 대기열에 사연이 없어요. 검토 대기에서 사연을 승인해 주세요.");
 
-  const result = pool[Math.floor(Math.random() * pool.length)];
-  const others = pool.filter((s) => s.id !== result.id).sort(() => Math.random() - 0.5).slice(0, 11);
-  const candidates = [...others, result].sort(() => Math.random() - 0.5);
-  const roulette = {
-    id: randomToken(8),
-    started_at: new Date().toISOString(),
-    duration_ms: 5200,
-    result_index: candidates.findIndex((c) => c.id === result.id),
-    candidates: candidates.map((c) => ({ id: c.id, name: broadcastName(c), summary: c.summary, stamp: c.stamp })),
-  };
+  const day = kstDay(pool[0].created_at);
+  const sameDay = pool.filter((s) => kstDay(s.created_at) === day);
+  const result = sameDay[Math.floor(Math.random() * sameDay.length)];
+
+  let roulette = null;
+  if (sameDay.length > 1) {
+    const others = sameDay.filter((s) => s.id !== result.id).sort(() => Math.random() - 0.5).slice(0, 11);
+    const candidates = [...others, result].sort(() => Math.random() - 0.5);
+    roulette = {
+      id: randomToken(8),
+      started_at: new Date().toISOString(),
+      duration_ms: 5200,
+      day,
+      result_index: candidates.findIndex((c) => c.id === result.id),
+      candidates: candidates.map((c) => ({ id: c.id, name: broadcastName(c), summary: c.summary, stamp: c.stamp })),
+    };
+  }
+
   const db = adminDb();
+  const now = new Date().toISOString();
   await db.from("picks").insert({ story_id: result.id });
+  // 방송 중 표시 (이전에 방송 중이던 사연은 대기열로 되돌림)
+  await db.from("stories").update({ status: "approved" }).eq("status", "on_air").neq("id", result.id);
+  await db.from("stories").update({ status: "on_air" }).eq("id", result.id);
   if (body.show_on_obs !== false) {
     await db
       .from("broadcast_state")
-      .update({ story_id: result.id, hidden: false, revealed: false, roulette, updated_at: new Date().toISOString() })
+      .update({ story_id: result.id, hidden: false, revealed: false, scroll: 0, roulette, updated_at: now })
       .eq("id", 1);
   }
-  return json({ result, roulette, pool_size: pool.length });
+  return json({ result: { ...result, broadcast_name: broadcastName(result) }, roulette, day, same_day_count: sameDay.length, queue_count: pool.length });
 }
 
 async function todayPicks() {
@@ -492,14 +439,23 @@ async function broadcast(body: Record<string, unknown>) {
   const now = new Date().toISOString();
   if (op === "show") {
     const id = str(body.id, 60);
-    const { data: s } = await db.from("stories").select("visibility").eq("id", id).maybeSingle();
+    const { data: s } = await db.from("stories").select("status").eq("id", id).maybeSingle();
     if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
-    if (s.visibility === "private") throw new HttpError(400, "'방장만 보기' 사연은 방송 카드에 띄울 수 없어요.");
-    await db.from("broadcast_state").update({ story_id: id, hidden: false, revealed: false, roulette: null, updated_at: now }).eq("id", 1);
+    if (s.status === "pending" || s.status === "rejected") throw new HttpError(400, "승인된 사연만 방송에 띄울 수 있어요.");
+    await db.from("broadcast_state").update({ story_id: id, hidden: false, revealed: false, scroll: 0, roulette: null, updated_at: now }).eq("id", 1);
+    if (s.status === "approved") {
+      await db.from("stories").update({ status: "approved" }).eq("status", "on_air").neq("id", id);
+      await db.from("stories").update({ status: "on_air" }).eq("id", id);
+    }
   } else if (op === "hide") {
     await db.from("broadcast_state").update({ hidden: true, roulette: null, updated_at: now }).eq("id", 1);
   } else if (op === "reveal" || op === "unreveal") {
     await db.from("broadcast_state").update({ revealed: op === "reveal", updated_at: now }).eq("id", 1);
+  } else if (op === "scroll") {
+    const delta = int(body.delta) ?? 0;
+    const { data: b } = await db.from("broadcast_state").select("scroll").eq("id", 1).single();
+    const next = body.reset === true ? 0 : Math.max(0, Math.min(50, (b?.scroll ?? 0) + delta));
+    await db.from("broadcast_state").update({ scroll: next, updated_at: now }).eq("id", 1);
   } else {
     throw new HttpError(400, "알 수 없는 방송 동작이에요.");
   }
@@ -509,7 +465,7 @@ async function broadcast(body: Record<string, unknown>) {
 async function broadcastState() {
   const { data } = await adminDb()
     .from("broadcast_state")
-    .select("story_id, hidden, revealed, roulette, updated_at, stories(receipt_no, summary, display_name, visibility)")
+    .select("story_id, hidden, revealed, scroll, roulette, updated_at, stories(receipt_no, summary, display_name, visibility, status)")
     .eq("id", 1)
     .single();
   return json(data);
@@ -522,12 +478,16 @@ async function broadcastState() {
 async function stats() {
   const db = adminDb();
   const week = kstStart("week");
-  const [{ data: weekRows }, { count: total }, { count: replied }, { count: autoReplied }, { data: animals }, aiToday, aiMonth, aiFailToday] =
+  const countStatus = (st: string) => db.from("stories").select("id", { count: "exact", head: true }).eq("status", st);
+  const [{ data: weekRows }, { count: total }, pending, approved, onAir, read, rejected, { data: animals }, aiToday, aiMonth, aiFailToday] =
     await Promise.all([
-      db.from("stories").select("category, age, stamp, viewer_status").gte("created_at", week),
+      db.from("stories").select("category, age, stamp").gte("created_at", week),
       db.from("stories").select("id", { count: "exact", head: true }),
-      db.from("replies").select("story_id", { count: "exact", head: true }).not("sent_at", "is", null),
-      db.from("replies").select("story_id", { count: "exact", head: true }).not("sent_at", "is", null).eq("kind", "auto"),
+      countStatus("pending"),
+      countStatus("approved"),
+      countStatus("on_air"),
+      countStatus("read"),
+      countStatus("rejected"),
       db.from("worry_animals").select("name, emoji").order("created_at", { ascending: false }).limit(500),
       db.from("ai_usage").select("id", { count: "exact", head: true }).gte("created_at", kstStart("day")),
       db.from("ai_usage").select("id", { count: "exact", head: true }).gte("created_at", kstStart("month")),
@@ -554,6 +514,7 @@ async function stats() {
   };
   const animalCounts = count(animals ?? [], (a: any) => `${a.emoji} ${a.name}`);
   const topAnimals = Object.entries(animalCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const reviewed = (approved.count ?? 0) + (onAir.count ?? 0) + (read.count ?? 0) + (rejected.count ?? 0);
 
   return json({
     week_count: rows.length,
@@ -561,9 +522,13 @@ async function stats() {
     week_by_age: count(rows, (r: any) => ageBand(r.age)),
     week_by_stamp: count(rows, (r: any) => r.stamp),
     total: total ?? 0,
-    replied: replied ?? 0,
-    auto_replied: autoReplied ?? 0,
-    reply_rate: total ? Math.round(((replied ?? 0) / total) * 100) : 0,
+    by_status: {
+      pending: pending.count ?? 0,
+      approved: (approved.count ?? 0) + (onAir.count ?? 0),
+      read: read.count ?? 0,
+      rejected: rejected.count ?? 0,
+    },
+    approval_rate: reviewed ? Math.round((((approved.count ?? 0) + (onAir.count ?? 0) + (read.count ?? 0)) / reviewed) * 100) : 0,
     top_animals: topAnimals,
     ai: { today: aiToday.count ?? 0, month: aiMonth.count ?? 0, failed_today: aiFailToday.count ?? 0, enabled: aiEnabled(), model: Deno.env.get("AI_MODEL") || "claude-opus-5-5" },
   });
@@ -582,8 +547,6 @@ async function getSettings(role: Role) {
   if (role !== "owner") return json(base);
   return json({
     ...base,
-    auto_reply_enabled: data.auto_reply_enabled,
-    auto_reply_days: data.auto_reply_days,
     manager_enabled: data.manager_enabled,
     obs_key: data.obs_key,
     ai_enabled: aiEnabled(),
@@ -606,12 +569,6 @@ async function updateSettings(body: Record<string, unknown>) {
     patch.preset = s.preset;
   }
   if (typeof s.accepting === "boolean") patch.accepting = s.accepting;
-  if (typeof s.auto_reply_enabled === "boolean") patch.auto_reply_enabled = s.auto_reply_enabled;
-  if (s.auto_reply_days !== undefined) {
-    const d = int(s.auto_reply_days);
-    if (d === null || d < 1 || d > 60) throw new HttpError(400, "자동 답장 기간은 1~60일 사이로 정해주세요.");
-    patch.auto_reply_days = d;
-  }
   await adminDb().from("settings").update(patch).eq("id", 1);
   return getSettings("owner");
 }
@@ -667,18 +624,25 @@ async function attempts() {
   return json({ items: data ?? [] });
 }
 
+const STATUS_LABEL: Record<string, string> = {
+  pending: "검토 대기",
+  approved: "방송 대기",
+  on_air: "방송 중",
+  read: "방송에서 읽음",
+  rejected: "반려",
+};
+
 async function exportCsv() {
   const { data } = await adminDb()
     .from("stories")
-    .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, flags, viewer_status, worry_animals(name, emoji), replies(body, kind, sent_at)")
+    .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, starred, flags, aired_at, worry_animals(name, emoji)")
     .order("created_at", { ascending: true });
   const label = (list: { id: string; label: string }[], id: string) => list.find((o) => o.id === id)?.label ?? id;
-  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "나이", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "표시", "고민동물", "답장종류", "답장", "답장일"];
+  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "나이", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [head.map(esc).join(",")];
   for (const s of (data ?? []) as any[]) {
     const a = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
-    const r = Array.isArray(s.replies) ? s.replies[0] : s.replies;
     lines.push(
       [
         s.receipt_no,
@@ -695,12 +659,11 @@ async function exportCsv() {
         label(GOMIN.wishes, s.wish),
         label(GOMIN.stamps, s.stamp),
         label(GOMIN.voices, s.voice),
-        s.status,
+        STATUS_LABEL[s.status] ?? s.status,
+        s.starred ? "★" : "",
         (s.flags ?? []).join(" "),
         a ? `${a.emoji} ${a.name}` : "",
-        r?.sent_at ? (r.kind === "auto" ? "자동" : "직접") : "",
-        r?.sent_at ? r.body : "",
-        r?.sent_at ?? "",
+        s.aired_at ?? "",
       ].map(esc).join(","),
     );
   }
@@ -731,9 +694,11 @@ serve(async (req) => {
     case "list":
       return list(body);
     case "get":
-      return getStory(body, session.role);
+      return getStory(body);
     case "set_status":
-      return setStatus(body, session.role);
+      return setStatus(body);
+    case "toggle_star":
+      return toggleStar(body);
     case "toggle_flag":
       return toggleFlag(body);
     case "delete":
@@ -742,18 +707,10 @@ serve(async (req) => {
       return regenerateAnimal(body);
     case "animal_update":
       return updateAnimal(body);
-    case "reply_draft":
-      return draftReply(body);
-    case "reply_save":
-      return saveReply(body, false);
-    case "reply_send":
-      return saveReply(body, true);
-    case "reply_unsend":
-      return unsendReply(body);
-    case "waiting":
-      return waiting();
-    case "pick":
-      return pick(body);
+    case "queue":
+      return queue();
+    case "pick_next":
+      return pickNext(body);
     case "today_picks":
       return todayPicks();
     case "broadcast":
