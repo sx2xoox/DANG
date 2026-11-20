@@ -1,0 +1,611 @@
+/* =====================================================================
+   "다웅 우체국" 방향 (기본 프리셋)
+   남색 책상 위에 놓인 항공우편 봉투. 명조 제목 + 타자기 숫자, UI 이모지 없음.
+   ===================================================================== */
+
+:root {
+  --ink: #0b1220;
+  --ink-soft: #2a2f3a;
+  --ink-faint: #6b6352;
+  --paper-env: #f6f1e6;
+  --font-serif: "Nanum Myeongjo", "Gowun Batang", "AppleMyungjo", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+:root[data-preset="classic"] {
+  /* 점무늬 대신 책상 위 스탠드 불빛 정도만 */
+  --bg-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(255, 236, 170, 0.08), transparent 70%);
+  --bg-size: 100% 100%;
+}
+
+:root[data-preset="classic"] body {
+  background-attachment: fixed;
+}
+
+/* ---------------------------------------------------------------- 헤더 */
+:root[data-preset="classic"] .app-header {
+  background: rgba(11, 18, 32, 0.92);
+  border-bottom: 1px solid rgba(246, 241, 230, 0.12);
+}
+
+:root[data-preset="classic"] .brand {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+}
+
+:root[data-preset="classic"] .brand-mark {
+  width: 30px;
+  height: 34px;
+  border-radius: 0;
+  padding: 4px;
+  background: var(--yellow);
+  -webkit-mask: radial-gradient(circle, transparent 2px, #000 2.5px) -3px -3px / 6px 6px, linear-gradient(#000 0 0) content-box;
+  mask: radial-gradient(circle, transparent 2px, #000 2.5px) -3px -3px / 6px 6px, linear-gradient(#000 0 0) content-box;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+}
+
+:root[data-preset="classic"] .brand-mark svg {
+  width: 18px;
+  height: 18px;
+}
+
+:root[data-preset="classic"] .app-header .btn {
+  border-radius: 2px;
+  min-height: 40px;
+  font-weight: 600;
+}
+
+:root[data-preset="classic"] .app-header .btn:not(.btn-ghost) {
+  background: transparent;
+  border: 1.5px solid rgba(246, 241, 230, 0.4);
+}
+
+/* ---------------------------------------------------------------- 첫 화면 */
+.post-home {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 56px) 16px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(40px, 7vw, 72px);
+}
+
+/* 항공우편 봉투: 빨강·파랑 사선 테두리 */
+.envelope {
+  padding: clamp(10px, 1.4vw, 14px);
+  background: repeating-linear-gradient(135deg, var(--red) 0 22px, var(--paper-env) 22px 32px, var(--blue) 32px 54px, var(--paper-env) 54px 64px);
+  border-radius: 3px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 30px 60px -10px rgba(0, 0, 0, 0.6);
+  animation: envIn 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (min-width: 900px) {
+  .envelope {
+    transform: rotate(-0.8deg);
+  }
+}
+
+@keyframes envIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) rotate(-3deg);
+  }
+}
+
+.envelope-paper {
+  position: relative;
+  background-color: var(--paper-env);
+  /* 종이 결 */
+  background-image: radial-gradient(rgba(107, 99, 82, 0.07) 1px, transparent 1.2px),
+    radial-gradient(rgba(107, 99, 82, 0.05) 1px, transparent 1.2px);
+  background-size: 7px 7px, 11px 11px;
+  background-position: 0 0, 3px 5px;
+  color: var(--ink);
+  padding: clamp(22px, 4.5vw, 52px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 32px);
+  overflow: hidden;
+}
+
+.env-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.env-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+
+.env-hand {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--ink-soft);
+}
+
+/* 우표 + 소인 */
+.env-marks {
+  position: relative;
+  flex: none;
+  width: 250px;
+  height: 160px;
+}
+
+.stamp-big {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 124px;
+  height: 148px;
+  padding: 8px;
+  background: #fffaf0;
+  transform: rotate(3deg);
+  -webkit-mask: radial-gradient(circle, transparent 3.5px, #000 4px) -6px -6px / 12px 12px, linear-gradient(#000 0 0) content-box;
+  mask: radial-gradient(circle, transparent 3.5px, #000 4px) -6px -6px / 12px 12px, linear-gradient(#000 0 0) content-box;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
+  display: flex;
+}
+
+.stamp-big::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  background: var(--yellow);
+}
+
+.stamp-big > span {
+  position: relative;
+}
+
+.stamp-big {
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.stamp-big-k,
+.stamp-big-v {
+  padding: 6px 8px 0;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.stamp-big-v {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.stamp-big-v {
+  padding: 0 8px 6px;
+}
+
+.stamp-big-t {
+  padding: 0 8px;
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.15;
+  color: var(--ink);
+  word-break: keep-all;
+}
+
+.postmark {
+  position: absolute;
+  left: 0;
+  top: 18px;
+  width: 128px;
+  height: 128px;
+  transform: rotate(-14deg);
+  color: rgba(11, 18, 32, 0.62);
+  mix-blend-mode: multiply;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+}
+
+.postmark-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.postmark-ring text {
+  fill: currentColor;
+  stroke: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+}
+
+.postmark-num {
+  position: relative;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 34px;
+  line-height: 1;
+  margin-top: -6px;
+}
+
+.postmark-unit {
+  position: absolute;
+  bottom: 38px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 받는 사람 */
+.env-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(16px, 4vw, 56px);
+  align-items: end;
+}
+
+.airmail-tag {
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  border: 2px solid var(--blue);
+  color: var(--blue);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+  transform: rotate(-2deg);
+}
+
+.airmail-tag span:last-child {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.airmail-tag span:first-child {
+  background: var(--blue);
+  color: #fff;
+  margin: -8px -12px 4px;
+  padding: 4px 12px;
+}
+
+.env-to {
+  max-width: 600px;
+  justify-self: end;
+  width: 100%;
+}
+
+.env-name {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: clamp(38px, 6.2vw, 70px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin: 2px 0 14px;
+  color: var(--ink);
+}
+
+.env-addr {
+  margin: 0;
+  padding: 8px 0 6px;
+  border-bottom: 1.5px solid rgba(11, 18, 32, 0.22);
+  font-size: clamp(16px, 1.8vw, 18px);
+  color: var(--ink-soft);
+}
+
+.env-addr-2 {
+  font-size: 14px;
+  color: var(--ink-faint);
+}
+
+/* 버튼 */
+.env-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding-top: 8px;
+}
+
+.post-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 52px;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.post-btn-main {
+  padding: 16px 26px;
+  background: var(--ink);
+  color: var(--yellow);
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: clamp(19px, 2.2vw, 22px);
+  box-shadow: 5px 5px 0 var(--red);
+}
+
+.post-btn-main:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--red);
+}
+
+.post-btn-main:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 var(--red);
+}
+
+.post-btn-sub {
+  padding: 12px 22px;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.post-btn-sub:hover {
+  background: rgba(11, 18, 32, 0.06);
+}
+
+.post-link {
+  color: var(--ink-soft);
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+
+.envelope-paper :focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* 접수 중단 */
+.closed-note {
+  margin: 0;
+  max-width: 420px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.closed-stamp {
+  position: absolute;
+  right: 8%;
+  bottom: 22%;
+  padding: 6px 18px;
+  border: 5px double var(--red);
+  color: var(--red);
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: clamp(34px, 6vw, 60px);
+  letter-spacing: 0.08em;
+  transform: rotate(-14deg);
+  opacity: 0.82;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- 배송 조회 */
+.tracking {
+  color: var(--paper-env);
+}
+
+.tracking-title {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: clamp(22px, 3vw, 28px);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.tracking-title span {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 14px;
+  color: #8391b0;
+}
+
+.track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.track li {
+  position: relative;
+  padding: 0 20px 0 0;
+}
+
+.track li::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  right: 0;
+  top: 31px;
+  border-top: 2px dashed rgba(246, 241, 230, 0.25);
+}
+
+.track li:last-child::before {
+  display: none;
+}
+
+.track-code {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--yellow);
+  margin-bottom: 8px;
+}
+
+.track-dot {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--yellow);
+  margin-bottom: 14px;
+  z-index: 1;
+}
+
+.track li:last-child .track-dot {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.track strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.track p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #a9b5cf;
+}
+
+.tracking-foot {
+  margin: 28px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(246, 241, 230, 0.12);
+  font-size: 14px;
+  color: #a9b5cf;
+}
+
+.tracking-foot b {
+  font-family: var(--font-mono);
+  color: var(--yellow);
+  font-size: 16px;
+}
+
+/* ---------------------------------------------------------------- 좁은 화면 */
+@media (max-width: 720px) {
+  .env-top {
+    flex-direction: column-reverse;
+  }
+
+  .env-marks {
+    align-self: flex-end;
+    width: 196px;
+    height: 124px;
+    margin-bottom: -8px;
+  }
+
+  .stamp-big {
+    width: 98px;
+    height: 118px;
+  }
+
+  .stamp-big-t {
+    font-size: 16px;
+  }
+
+  .stamp-big-k,
+  .stamp-big-v {
+    font-size: 9px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .postmark {
+    width: 104px;
+    height: 104px;
+    top: 10px;
+  }
+
+  .postmark-num {
+    font-size: 28px;
+  }
+
+  .postmark-unit {
+    bottom: 30px;
+  }
+
+  .env-body {
+    grid-template-columns: 1fr;
+  }
+
+  .airmail-tag {
+    justify-self: start;
+    flex-direction: row;
+    gap: 10px;
+    padding: 0 10px 0 0;
+  }
+
+  .airmail-tag span:last-child {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.airmail-tag span:first-child {
+    margin: 0;
+  }
+
+  .airmail-tag span:last-child {
+    align-self: center;
+  }
+
+  .env-actions .post-btn-main {
+    width: 100%;
+  }
+
+  .track {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .track li {
+    padding: 0 0 0 36px;
+  }
+
+  .track li::before {
+    left: 7px;
+    right: auto;
+    top: 22px;
+    bottom: -22px;
+    border-top: none;
+    border-left: 2px dashed rgba(246, 241, 230, 0.25);
+  }
+
+  .track-dot {
+    position: absolute;
+    left: 0;
+    top: 2px;
+  }
+
+  .track-code {
+    margin-bottom: 2px;
+  }
+}

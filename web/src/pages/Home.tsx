@@ -1,117 +1,121 @@
 import { Link } from "react-router-dom";
 import { useSite } from "../lib/site";
-import { MailIcon } from "../components/ui";
+
+/** 오늘 날짜를 소인 형식으로 (2026.11.20) */
+function postmarkDate() {
+  const d = new Date(Date.now() + 9 * 3600_000);
+  return `${d.getUTCFullYear()}.${String(d.getUTCMonth() + 1).padStart(2, "0")}.${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+const TRACK = [
+  { code: "01", title: "접수", desc: "사연을 부치면 접수번호와 비밀 코드가 나와요" },
+  { code: "02", title: "다웅이 읽는 중", desc: "방송 전에 다웅이 한 통씩 열어봐요" },
+  { code: "03", title: "방송", desc: "방송에서 읽거나, 원하면 다웅만 봐요" },
+  { code: "04", title: "답장 발송", desc: "답장과 함께 나만의 고민 동물이 도착해요" },
+];
 
 export default function Home() {
   const { info, session } = useSite();
+  const count = info.week_count;
+
   return (
-    <div className="page home">
-      <section className="home-hero card pinned">
-        <div className="home-hero-text">
-          {info.week_theme && (
-            <p className="home-theme">
-              <span className="chip chip-red">이번 주 테마</span>
-              <strong>{info.week_theme}</strong>
-            </p>
-          )}
-          <h1 className="display home-title">{info.site_name}</h1>
-          <p className="home-tagline">{info.tagline}</p>
-
-          {info.accepting ? (
-            <Link to="/write" className="btn btn-primary btn-lg home-cta">
-              <MailIcon size={24} />
-              사연 보내기
-            </Link>
-          ) : (
-            <div className="notice notice-yellow home-closed" role="status">
-              <strong>지금은 사연을 받지 않아요.</strong>
-              <br />
-              다음 접수 때 다시 와주세요. 이미 보낸 사연의 답장은 언제든 확인할 수 있어요.
+    <div className="post-home">
+      <section className={`envelope ${info.accepting ? "" : "is-closed"}`} aria-labelledby="env-title">
+        <div className="envelope-paper">
+          <div className="env-top">
+            <div className="env-from">
+              <span className="env-label">보내는 사람</span>
+              <span className="env-hand">고민 많은 시청자 여러분</span>
             </div>
-          )}
 
-          <div className="home-sub-actions">
-            <Link to="/check" className="btn">
-              답장 확인하기
-            </Link>
-            {session ? (
-              <Link to="/me" className="btn btn-ghost">
-                내 사연함
+            <div className="env-marks" aria-hidden="true">
+              <div className="postmark">
+                <svg viewBox="0 0 120 120" className="postmark-ring">
+                  <defs>
+                    <path id="pm-arc" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" />
+                  </defs>
+                  <circle cx="60" cy="60" r="56" />
+                  <circle cx="60" cy="60" r="34" />
+                  <text>
+                    <textPath href="#pm-arc" startOffset="0">
+                      다웅 우체국 · 이번 주 도착 · {postmarkDate()} ·
+                    </textPath>
+                  </text>
+                </svg>
+                <span className="postmark-num">{count}</span>
+                <span className="postmark-unit">통</span>
+              </div>
+              <div className="stamp-big">
+                <span className="stamp-big-k">이번 주 테마</span>
+                <span className="stamp-big-t">{info.week_theme || "무엇이든"}</span>
+                <span className="stamp-big-v">KOREA · 다웅</span>
+              </div>
+              <div className="cancel-lines" />
+            </div>
+          </div>
+
+          <div className="env-body">
+            <div className="airmail-tag">
+              <span>PAR AVION</span>
+              <span>항공 사연</span>
+            </div>
+            <div className="env-to">
+              <span className="env-label">받는 사람</span>
+              <h1 id="env-title" className="env-name">
+                {info.site_name}
+              </h1>
+              <p className="env-addr">{info.tagline}</p>
+              <p className="env-addr env-addr-2">치지직 · 다웅 채널 내 상담소</p>
+            </div>
+          </div>
+
+          <div className="env-actions">
+            {info.accepting ? (
+              <Link to="/write" className="post-btn post-btn-main">
+                사연 부치기
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" />
+                </svg>
               </Link>
             ) : (
-              <Link to="/login" className="btn btn-ghost">
-                로그인하고 사연 모아보기
-              </Link>
+              <p className="closed-note" role="status">
+                지금은 사연을 받지 않아요. 이미 보낸 사연의 답장은 언제든 조회할 수 있어요.
+              </p>
             )}
+            <Link to="/check" className="post-btn post-btn-sub">
+              답장 조회
+            </Link>
+            <Link to={session ? "/me" : "/login"} className="post-link">
+              {session ? "내 사연함" : "로그인하고 사연 모아두기"}
+            </Link>
           </div>
-        </div>
 
-        <div className="home-art" aria-hidden="true">
-          <HomeArt count={info.week_count} />
+          {!info.accepting && (
+            <div className="closed-stamp" aria-hidden="true">
+              접수 중단
+            </div>
+          )}
         </div>
       </section>
 
-      <section className="home-stats" aria-label="대기 현황">
-        <div className="card stat">
-          <span className="faint">이번 주 들어온 사연</span>
-          <strong className="display">{info.week_count}개</strong>
-        </div>
-        <div className="card stat">
-          <span className="faint">지금까지 보낸 답장</span>
-          <strong className="display">{info.total_replied}통</strong>
-        </div>
-      </section>
-
-      <section className="home-how card">
-        <h2 className="display">이렇게 진행돼요</h2>
-        <ol className="how-steps">
-          <li>
-            <span className="how-n">1</span>
-            <div>
-              <strong>사연 보내기</strong>
-              <p className="muted">가입 없이도 1분이면 보낼 수 있어요.</p>
-            </div>
-          </li>
-          <li>
-            <span className="how-n">2</span>
-            <div>
-              <strong>방송에서 다웅이 읽어요</strong>
-              <p className="muted">원하면 방송에서 읽지 않고 답장만 받을 수도 있어요.</p>
-            </div>
-          </li>
-          <li>
-            <span className="how-n">3</span>
-            <div>
-              <strong>답장과 고민 동물 도착</strong>
-              <p className="muted">다웅의 답장과 함께 나만의 고민 동물 카드가 공개돼요.</p>
-            </div>
-          </li>
+      <section className="tracking" aria-labelledby="track-title">
+        <h2 id="track-title" className="tracking-title">
+          사연 배송 조회 <span>답장이 도착하기까지</span>
+        </h2>
+        <ol className="track">
+          {TRACK.map((t) => (
+            <li key={t.code}>
+              <span className="track-code">{t.code}</span>
+              <span className="track-dot" aria-hidden="true" />
+              <strong>{t.title}</strong>
+              <p>{t.desc}</p>
+            </li>
+          ))}
         </ol>
+        <p className="tracking-foot">
+          지금까지 <b>{info.total_replied}</b>통의 답장이 배달됐어요.
+        </p>
       </section>
-    </div>
-  );
-}
-
-/** 첫 화면 그림: 프리셋마다 모양이 바뀝니다 (봉투/포스트잇/캡슐) */
-function HomeArt({ count }: { count: number }) {
-  const shown = Math.min(Math.max(count, 3), 9);
-  return (
-    <div className="home-pile">
-      {Array.from({ length: shown }).map((_, i) => (
-        <span
-          key={i}
-          className="pile-item"
-          style={{
-            ["--i" as string]: i,
-            ["--r" as string]: `${((i * 47) % 13) - 6}deg`,
-            // 코르크/캡슐 프리셋에서 흩어 놓을 위치 (%)
-            ["--x" as string]: (i * 37) % 70,
-            ["--y" as string]: (i * 23) % 60,
-            ["--gx" as string]: (i * 29) % 64,
-            ["--gy" as string]: (i * 17) % 40,
-          }}
-        />
-      ))}
     </div>
   );
 }
