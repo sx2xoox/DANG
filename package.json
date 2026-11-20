@@ -1,0 +1,26 @@
+{
+  "name": "dawoong-gomin",
+  "version": "1.0.0",
+  "description": "다웅 고민 사연함 - 시청자 사연 접수/답장 사이트",
+  "scripts": {
+    "db:start": "supabase start",
+    "db:push": "supabase db push",
+    "functions:deploy": "supabase functions deploy public admin obs --no-verify-jwt",
+    "functions:dev": "deno run -A --watch --node-modules-dir=none --env-file=scripts/dev.env scripts/dev-functions.ts",
+    "web:dev": "npm --prefix web run dev",
+    "web:build": "npm --prefix web run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sx2xoox/DANG.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sx2xoox/DANG/issues"
+  },
+  "homepage": "https://github.com/sx2xoox/DANG#readme",
+  "devDependencies": {
+    "deno": "^2.9.6",
+    "supabase": "^2.122.1"
+  },
+  "private": true
+}

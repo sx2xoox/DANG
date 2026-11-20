@@ -1,0 +1,205 @@
+import { useEffect, useState } from "react";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { GOMIN, optionEmoji } from "@shared/boxes.ts";
+import { supabase } from "../lib/supabase";
+import { useSite } from "../lib/site";
+import { formatDate, shortDate, VIEWER_STATUS } from "../lib/format";
+import { AnimalCard, type Animal } from "../components/AnimalCard";
+import { Spinner, StampSticker } from "../components/ui";
+
+export type MyStoryRow = {
+  id: string;
+  receipt_no: number;
+  summary: string;
+  stamp: string;
+  category: string;
+  created_at: string;
+  viewer_status: string;
+  visibility: string;
+};
+
+type ReplyRow = { story_id: string; sent_at: string; opened_at: string | null; kind: string };
+type AnimalRow = Animal & { story_id: string; created_at: string };
+
+type Tab = "list" | "dex" | "history";
+
+export default function Me() {
+  const { session, authReady, info } = useSite();
+  const [params, setParams] = useSearchParams();
+  const tab = (params.get("tab") as Tab) || "list";
+  const [stories, setStories] = useState<MyStoryRow[] | null>(null);
+  const [replies, setReplies] = useState<Record<string, ReplyRow>>({});
+  const [animals, setAnimals] = useState<Record<string, AnimalRow>>({});
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!session) return;
+    (async () => {
+      const [s, r, a] = await Promise.all([
+        supabase
+          .from("stories")
+          .select("id, receipt_no, summary, stamp, category, created_at, viewer_status, visibility")
+          .order("created_at", { ascending: false }),
+        supabase.from("replies").select("story_id, sent_at, opened_at, kind"),
+        supabase.from("worry_animals").select("story_id, name, emoji, why, description, quote, hashtags, prev_name, prev_emoji, change_reason, created_at"),
+      ]);
+      if (s.error) {
+        setError("사연을 불러오지 못했어요.");
+        return;
+      }
+      setStories(s.data as MyStoryRow[]);
+      setReplies(Object.fromEntries(((r.data ?? []) as ReplyRow[]).map((x) => [x.story_id, x])));
+      setAnimals(Object.fromEntries(((a.data ?? []) as AnimalRow[]).map((x) => [x.story_id, x])));
+    })();
+  }, [session]);
+
+  if (authReady && !session) return <Navigate to="/login?next=/me" replace />;
+  if (!stories) return error ? <p className="page-narrow notice notice-danger">{error}</p> : <Spinner />;
+
+  const unread = stories.filter((s) => replies[s.id] && !replies[s.id].opened_at).length;
+  const collected = stories.filter((s) => animals[s.id]).sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+
+  const setTab = (t: Tab) => setParams(t === "list" ? {} : { tab: t }, { replace: true });
+
+  return (
+    <div className="page me">
+      <div className="me-head">
+        <div>
+          <h1 className="display" style={{ fontSize: 30 }}>
+            내 사연함
+          </h1>
+          <p className="muted" style={{ margin: 0 }}>
+            보낸 사연 {stories.length}개 · 모은 고민 동물 {collected.length}마리
+            {unread > 0 && (
+              <>
+                {" "}
+                · <span className="dot-red" aria-hidden="true" /> 새 답장 {unread}통
+              </>
+            )}
+          </p>
+        </div>
+        <div className="row">
+          <Link to="/write" className="btn btn-primary">
+            새 사연 쓰기
+          </Link>
+          <Link to="/me/account" className="btn btn-ghost">
+            계정
+          </Link>
+        </div>
+      </div>
+
+      <div className="tabs" role="tablist" aria-label="내 사연함 보기">
+        <button role="tab" aria-selected={tab === "list"} onClick={() => setTab("list")}>
+          내 사연 {unread > 0 && <span className="dot-red" aria-label="새 답장" />}
+        </button>
+        <button role="tab" aria-selected={tab === "dex"} onClick={() => setTab("dex")}>
+          고민 동물 도감
+        </button>
+        <button role="tab" aria-selected={tab === "history"} onClick={() => setTab("history")}>
+          변신 기록
+        </button>
+      </div>
+
+      {tab === "list" && (
+        <section role="tabpanel" aria-label="내 사연" className="my-list">
+          {stories.length === 0 && (
+            <div className="card center stack">
+              <p className="display" style={{ fontSize: 22 }}>
+                아직 보낸 사연이 없어요
+              </p>
+              <Link to="/write" className="btn btn-primary">
+                첫 사연 보내기
+              </Link>
+            </div>
+          )}
+          {stories.map((s) => {
+            const r = replies[s.id];
+            const st = VIEWER_STATUS[s.viewer_status] ?? VIEWER_STATUS.received;
+            const isNew = r && !r.opened_at;
+            return (
+              <Link key={s.id} to={`/me/story/${s.id}`} className="my-row card">
+                <StampSticker stamp={s.stamp} size="sm" />
+                <div className="my-row-main">
+                  <div className="my-row-top">
+                    <span className="faint">
+                      #{s.receipt_no} · {shortDate(s.created_at)} · {optionEmoji(GOMIN.categories, s.category)}
+                    </span>
+                  </div>
+                  <strong className="my-row-sum">{s.summary}</strong>
+                </div>
+                <div className="my-row-status">
+                  {isNew && <span className="dot-red" aria-label="새 답장" />}
+                  <span className={`chip status-${st.tone}`}>{st.label}</span>
+                  {animals[s.id] && (
+                    <span className="my-row-animal" title={animals[s.id].name} aria-label={`고민 동물 ${animals[s.id].name}`}>
+                      {animals[s.id].emoji}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </section>
+      )}
+
+      {tab === "dex" && (
+        <section role="tabpanel" aria-label="고민 동물 도감">
+          {collected.length === 0 ? (
+            <div className="card center stack">
+              <p className="display" style={{ fontSize: 22 }}>
+                아직 모은 고민 동물이 없어요
+              </p>
+              <p className="muted" style={{ margin: 0 }}>
+                답장이 오면 고민 동물 카드가 여기에 모여요.
+              </p>
+            </div>
+          ) : (
+            <div className="dex-grid">
+              {collected.map((s) => (
+                <Link key={s.id} to={`/me/story/${s.id}`} className="dex-item" aria-label={`${animals[s.id].name} 카드 보기`}>
+                  <AnimalCard animal={animals[s.id]} revealed compact serial={s.receipt_no} stamp={s.stamp} siteName={info.site_name} date={shortDate(s.created_at)} />
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === "history" && (
+        <section role="tabpanel" aria-label="변신 기록" className="card">
+          {collected.length === 0 ? (
+            <p className="muted">답장을 받으면 고민 동물이 어떻게 바뀌어 가는지 여기서 볼 수 있어요.</p>
+          ) : (
+            <ol className="timeline">
+              {collected.map((s, i) => {
+                const a = animals[s.id];
+                const prev = i > 0 ? animals[collected[i - 1].id] : null;
+                const changed = prev && prev.name !== a.name;
+                return (
+                  <li key={s.id}>
+                    <span className="tl-emoji" aria-hidden="true">
+                      {a.emoji}
+                    </span>
+                    <div>
+                      <div className="tl-name display">{a.name}</div>
+                      <div className="faint">
+                        {formatDate(s.created_at)} · “{s.summary}”
+                      </div>
+                      {changed && (
+                        <p className="tl-change">
+                          {prev.emoji} {prev.name} → {a.emoji} {a.name}(으)로 변신!
+                          {a.change_reason && <span className="muted"> {a.change_reason}</span>}
+                        </p>
+                      )}
+                      {!changed && i > 0 && <p className="faint" style={{ margin: "4px 0 0" }}>같은 동물로 한 번 더!</p>}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}

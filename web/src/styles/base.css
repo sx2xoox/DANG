@@ -1,0 +1,749 @@
+/* =====================================================================
+   다웅 고민 사연함 - 기본 스타일 + 디자인 프리셋
+   프리셋: html[data-preset="classic" | "cork" | "gacha"]
+   ===================================================================== */
+
+:root,
+:root[data-preset="classic"] {
+  --navy: #0b1220;
+  --yellow: #ffd400;
+  --red: #e11d2e;
+  --blue: #2563eb;
+
+  --bg: #0b1220;
+  --bg-image: radial-gradient(rgba(255, 212, 0, 0.18) 1px, transparent 1.6px),
+    radial-gradient(rgba(147, 178, 255, 0.12) 1px, transparent 1.6px);
+  --bg-size: 46px 46px, 73px 73px;
+  --surface: #131d33;
+  --surface-2: #1a2642;
+  --surface-3: #223052;
+  --border: #2a3a62;
+  --border-strong: #3b4f80;
+  --text: #f6f2e7;
+  --text-dim: #a9b5cf;
+  --text-faint: #8391b0;
+  --accent: #ffd400;
+  --accent-text: #0b1220;
+  --accent-soft: rgba(255, 212, 0, 0.14);
+  --link: #8fb4ff;
+  --danger: #ff5a68;
+  --danger-bg: rgba(225, 29, 46, 0.16);
+  --info-bg: rgba(37, 99, 235, 0.18);
+  --info-text: #b7ccff;
+  --paper: #fff8e1;
+  --paper-2: #fff1c2;
+  --paper-text: #1f1a12;
+  --paper-dim: #5c5240;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 6px 0 rgba(0, 0, 0, 0.35);
+  --outline: 0 0 0 1px var(--border);
+  --header-bg: rgba(11, 18, 32, 0.86);
+  --font-display: "Jua", "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  --font-body: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+:root[data-preset="cork"] {
+  --bg: #c69c6d;
+  --bg-image: radial-gradient(rgba(96, 58, 24, 0.35) 1px, transparent 1.7px),
+    radial-gradient(rgba(255, 240, 210, 0.26) 1px, transparent 1.7px);
+  --bg-size: 14px 14px, 22px 22px;
+  --surface: #fffdf5;
+  --surface-2: #fff3c4;
+  --surface-3: #f6e7b8;
+  --border: #dcc6a2;
+  --border-strong: #a9865c;
+  --text: #33241a;
+  --text-dim: #5e4a38;
+  --text-faint: #7a6550;
+  --accent: #ffd400;
+  --accent-text: #33241a;
+  --accent-soft: rgba(255, 212, 0, 0.3);
+  --link: #1d4ed8;
+  --danger: #b4151f;
+  --danger-bg: #ffe1e1;
+  --info-bg: #e3ecff;
+  --info-text: #1e3a8a;
+  --paper: #fffdf5;
+  --paper-2: #fff3c4;
+  --paper-text: #33241a;
+  --paper-dim: #6b5440;
+  --radius: 6px;
+  --radius-sm: 6px;
+  --shadow: 0 10px 18px rgba(60, 36, 14, 0.3);
+  --shadow-pop: 0 4px 0 rgba(60, 36, 14, 0.3);
+  --header-bg: #6b4428;
+  color-scheme: light;
+}
+
+:root[data-preset="gacha"] {
+  --bg: #f1eaff;
+  --bg-image: radial-gradient(rgba(91, 59, 224, 0.12) 2px, transparent 2.5px);
+  --bg-size: 28px 28px;
+  --surface: #ffffff;
+  --surface-2: #f7f2ff;
+  --surface-3: #ece2ff;
+  --border: #2b2340;
+  --border-strong: #2b2340;
+  --text: #2b2340;
+  --text-dim: #4f4566;
+  --text-faint: #6c6285;
+  --accent: #ffd400;
+  --accent-text: #2b2340;
+  --accent-soft: rgba(255, 212, 0, 0.35);
+  --link: #3b28c4;
+  --danger: #c0102a;
+  --danger-bg: #ffe2e7;
+  --info-bg: #e5edff;
+  --info-text: #1e3a8a;
+  --paper: #ffffff;
+  --paper-2: #fff6c7;
+  --paper-text: #2b2340;
+  --paper-dim: #4f4566;
+  --radius: 24px;
+  --radius-sm: 16px;
+  --shadow: 6px 6px 0 #2b2340;
+  --shadow-pop: 4px 4px 0 #2b2340;
+  --outline: 0 0 0 3px #2b2340;
+  --header-bg: rgba(241, 234, 255, 0.92);
+  color-scheme: light;
+}
+
+/* ---------------------------------------------------------------- 기본 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background-color: var(--bg);
+  background-image: var(--bg-image);
+  background-size: var(--bg-size);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
+}
+
+:root[data-preset="cork"] body {
+  box-shadow: inset 0 0 0 10px #6b4428;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.3;
+  margin: 0;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--link);
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+:root[data-preset="classic"] :focus-visible {
+  outline-color: var(--yellow);
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------- 레이아웃 */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  backdrop-filter: blur(10px);
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+:root[data-preset="gacha"] .app-header {
+  border-bottom: 3px solid var(--border);
+}
+
+:root[data-preset="cork"] .app-header {
+  color: #fff3df;
+  border-bottom: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.app-header-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 21px;
+  min-width: 0;
+}
+
+.brand span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-mark {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--yellow);
+  display: grid;
+  place-items: center;
+}
+
+.header-nav {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.page-narrow {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ---------------------------------------------------------------- 카드 */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--outline), var(--shadow);
+  padding: 20px;
+}
+
+:root[data-preset="gacha"] .card {
+  border: 3px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+:root[data-preset="cork"] .card {
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+:root[data-preset="cork"] .card.pinned::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  border-radius: 50%;
+  background: #d9483b;
+  box-shadow: inset -3px -3px 0 #a8322a, 0 3px 4px rgba(0, 0, 0, 0.35);
+}
+
+.card-soft {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.muted {
+  color: var(--text-dim);
+}
+
+.faint {
+  color: var(--text-faint);
+  font-size: 14px;
+}
+
+.notice {
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 15px;
+}
+
+.notice-danger {
+  background: var(--danger-bg);
+  color: var(--text);
+  border: 1px solid var(--danger);
+}
+
+.notice-yellow {
+  background: var(--accent-soft);
+  color: var(--text);
+  border: 1px solid var(--accent);
+}
+
+/* -------------------------------------------------------------- 버튼 */
+.btn {
+  appearance: none;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  min-height: 48px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: transparent;
+  box-shadow: var(--shadow-pop);
+}
+
+.btn-danger {
+  background: var(--red);
+  color: #fff;
+  border-color: transparent;
+}
+
+.btn-blue {
+  background: var(--blue);
+  color: #fff;
+  border-color: transparent;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--surface-2);
+}
+
+.btn-sm {
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+.btn-lg {
+  min-height: 60px;
+  padding: 14px 28px;
+  font-size: 19px;
+  border-radius: 18px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+:root[data-preset="gacha"] .btn {
+  border: 3px solid var(--border);
+  border-radius: 999px;
+}
+
+:root[data-preset="gacha"] .btn-ghost {
+  border-color: transparent;
+}
+
+:root[data-preset="cork"] .app-header .btn-ghost {
+  color: #fff3df;
+}
+
+:root[data-preset="cork"] .app-header .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* -------------------------------------------------------------- 입력 */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > label,
+.label {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 17px;
+}
+
+:root[data-preset="gacha"] .input,
+:root[data-preset="gacha"] .textarea,
+:root[data-preset="gacha"] .select {
+  border: 3px solid var(--border);
+  background: #fff;
+}
+
+:root[data-preset="cork"] .input,
+:root[data-preset="cork"] .textarea,
+:root[data-preset="cork"] .select {
+  background: #fff;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--text-faint);
+}
+
+.textarea {
+  min-height: 180px;
+  resize: vertical;
+  line-height: 1.7;
+}
+
+@media (min-width: 900px) {
+  .textarea-lg {
+    min-height: 320px;
+  }
+}
+
+.counter {
+  font-size: 13px;
+  color: var(--text-faint);
+  text-align: right;
+}
+
+.counter.over {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------- 선택 카드 */
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.choice-grid.wide {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+  font-weight: 600;
+}
+
+.choice input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.choice:hover {
+  transform: translateY(-1px);
+}
+
+.choice:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+:root[data-preset="cork"] .choice:has(input:checked),
+:root[data-preset="gacha"] .choice:has(input:checked) {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--text);
+}
+
+.choice:has(input:focus-visible) {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.choice .emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.choice .sub {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+:root[data-preset="gacha"] .choice {
+  border: 3px solid var(--border);
+  background: #fff;
+}
+
+.check {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.check input {
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: var(--yellow);
+  flex: none;
+}
+
+/* ------------------------------------------------------------- 칩/태그 */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--surface-3);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.chip-yellow {
+  background: var(--yellow);
+  color: #1d1600;
+}
+
+.chip-red {
+  background: var(--red);
+  color: #fff;
+}
+
+.chip-blue {
+  background: var(--blue);
+  color: #fff;
+}
+
+.dot-red {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.25);
+  display: inline-block;
+}
+
+/* ---------------------------------------------------------------- 탭 */
+.tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  overflow-x: auto;
+}
+
+.tabs button {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0 14px;
+  color: var(--text-dim);
+}
+
+.tabs button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--outline);
+}
+
+/* ---------------------------------------------------------- 토스트 */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 100;
+  background: #111827;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  font-weight: 600;
+  animation: toastIn 0.25s ease-out;
+  max-width: calc(100vw - 32px);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+/* ---------------------------------------------------------- 대화상자 */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 16, 0.6);
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.dialog {
+  width: min(480px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+
+/* ---------------------------------------------------------- 스피너 */
+.spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.center {
+  display: grid;
+  place-items: center;
+  min-height: 40vh;
+  text-align: center;
+}
