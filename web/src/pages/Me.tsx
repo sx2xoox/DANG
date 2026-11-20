@@ -4,7 +4,6 @@ import { GOMIN, optionEmoji } from "@shared/boxes.ts";
 import { supabase } from "../lib/supabase";
 import { useSite } from "../lib/site";
 import { formatDate, shortDate, VIEWER_STATUS } from "../lib/format";
-import { GOLDEN_RATE } from "@shared/results.ts";
 import { AnimalCard, type Animal } from "../components/AnimalCard";
 import { Spinner, StampSticker } from "../components/ui";
 
@@ -147,8 +146,7 @@ export default function Me() {
       {tab === "dex" && (
         <section role="tabpanel" aria-label="고민 동물 도감">
           <p className="dex-rule">
-            사연이 <b>방송에서 읽히면</b> 그 고민 동물이 도감에 모여요. 모을 때 {Math.round(GOLDEN_RATE * 100)}% 확률로 <b className="gold-text">황금 동물</b>이
-            나오고, 인증하면 다웅이 <b>치지직 구독권</b>을 드려요!
+            사연이 <b>방송에서 읽히면</b> 그 고민 동물이 도감에 모여요.
           </p>
           {collected.length === 0 ? (
             <div className="card center stack">
