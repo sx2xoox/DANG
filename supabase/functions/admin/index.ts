@@ -505,20 +505,52 @@ async function broadcastState() {
 // 방송 회차: 방송 시작 → 읽기 시작 → 오늘 방송 정리 → 결과 공개
 // ---------------------------------------------------------------------
 
-/** 지금 방송 회차: 결과를 아직 공개하지 않았고 16시간 안에 시작한 가장 최근 방송 */
-const CURRENT_HOURS = 16;
+/**
+ * 지금 방송 회차 (방송이 아직 이어지는 중인 회차)
+ *  - 가장 최근에 시작한 방송이
+ *  - 시작한 지 LIVE_START_HOURS 안이거나, 마지막 "읽기 시작"이 LIVE_IDLE_HOURS 안이면 "지금 방송"
+ * 다시보기는 방송이 끝나고 올라오므로 결과 공개(published_at)는 한참 뒤일 수 있어요.
+ * 그래서 공개 여부가 아니라 "최근에 움직임이 있었는지"로 판단해, 다음 방송이 지난 방송에 섞이지 않게 합니다.
+ */
+const LIVE_START_HOURS = 8;
+const LIVE_IDLE_HOURS = 3;
 
-async function currentBroadcastRow(): Promise<{ id: string; started_at: string; vod_url: string | null; published_at: string | null } | null> {
-  const since = new Date(Date.now() - CURRENT_HOURS * 3600_000).toISOString();
-  const { data } = await adminDb()
+type BroadcastRow = { id: string; started_at: string; vod_url: string | null; published_at: string | null };
+
+async function currentBroadcastRow(): Promise<BroadcastRow | null> {
+  const db = adminDb();
+  const { data: latest } = await db
     .from("broadcasts")
     .select("id, started_at, vod_url, published_at")
-    .gte("started_at", since)
-    .is("published_at", null)
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  return data ?? null;
+  if (!latest || latest.published_at) return null;
+  const now = Date.now();
+  if (now - new Date(latest.started_at).getTime() < LIVE_START_HOURS * 3600_000) return latest;
+  const { data: lastRead } = await db
+    .from("stories")
+    .select("read_started_at")
+    .eq("broadcast_id", latest.id)
+    .not("read_started_at", "is", null)
+    .order("read_started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (lastRead && now - new Date(lastRead.read_started_at).getTime() < LIVE_IDLE_HOURS * 3600_000) return latest;
+  return null;
+}
+
+/** 오늘 방송 정리에서 처음 보여줄 회차: 아직 공개 안 한 사연이 남은 가장 최근 방송 → 없으면 가장 최근 방송 */
+async function wrapupDefault(recent: BroadcastRow[]): Promise<BroadcastRow | null> {
+  if (!recent.length) return null;
+  const { data } = await adminDb()
+    .from("stories")
+    .select("broadcast_id")
+    .in("broadcast_id", recent.map((b) => b.id))
+    .eq("status", "read")
+    .is("result_published_at", null);
+  const pending = new Set((data ?? []).map((r) => r.broadcast_id));
+  return recent.find((b) => pending.has(b.id)) ?? recent[0];
 }
 
 async function vodParam(): Promise<string> {
@@ -614,7 +646,7 @@ async function wrapupGet(body: Record<string, unknown>) {
   const db = adminDb();
   const { data: recent } = await db.from("broadcasts").select("id, started_at, vod_url, published_at").order("started_at", { ascending: false }).limit(15);
   const wanted = str(body.broadcast_id, 60);
-  const bc = (recent ?? []).find((b) => b.id === wanted) ?? (await currentBroadcastRow()) ?? recent?.[0] ?? null;
+  const bc = (recent ?? []).find((b) => b.id === wanted) ?? (await wrapupDefault(recent ?? []));
   let items: unknown[] = [];
   if (bc) {
     const { data } = await db

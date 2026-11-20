@@ -18,7 +18,7 @@ export function AirResultCard({ result }: { result: AirResult }) {
             ▶ 다시보기{at ? ` · ${at}부터` : ""}
           </a>
         ) : (
-          <p className="air-novod">다시보기 링크는 아직 준비 중이에요.</p>
+          <p className="air-novod">다시보기가 올라오면 여기에 링크가 생겨요.</p>
         )}
         {result.vod_url && at && <p className="air-hint">링크가 처음부터 열리면 {at} 지점으로 옮겨서 보세요.</p>}
         {result.host_note && (

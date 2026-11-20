@@ -163,7 +163,9 @@ export default function Wrapup() {
       <header className="adm-head">
         <div>
           <h1 className="adm-title">오늘 방송 정리</h1>
-          <p className="adm-dim">다시보기 주소를 한 번만 붙여넣으면 사연마다 읽기 시작한 시간이 붙은 링크가 들어가요. 확인하고 "결과 공개"를 누르면 끝!</p>
+          <p className="adm-dim">
+            방송이 끝나고 치지직에 다시보기가 올라오면, 주소를 한 번만 붙여넣으세요. 사연마다 읽기 시작한 시간이 붙은 링크가 들어가요. 확인하고 "결과 공개"를 누르면 끝! (다음 날 해도 돼요)
+          </p>
         </div>
         {data.recent.length > 1 && (
           <div className="field">
@@ -227,7 +229,7 @@ export default function Wrapup() {
               <span className="adm-dim adm-small">시작 시각을 고치면 사연별 시간도 다시 계산돼요.</span>
             </div>
             <div className="field adm-wu-vod">
-              <label htmlFor="wu-vod">다시보기 주소 (한 번만 붙여넣기)</label>
+              <label htmlFor="wu-vod">다시보기 주소 (다시보기가 올라온 뒤 한 번만 붙여넣기)</label>
               <input
                 id="wu-vod"
                 className="input"
@@ -241,7 +243,7 @@ export default function Wrapup() {
               />
               {!vodOk && <span className="adm-error">https:// 로 시작하는 주소를 넣어주세요.</span>}
               <span className="adm-dim adm-small">
-                주소 끝에 {data.vod_time_param === "t" ? "t=초" : "currentTime=초"}가 붙어요. (유튜브 주소는 t=초) 형식은 설정에서 바꿀 수 있어요.
+                주소 끝에 {data.vod_time_param === "t" ? "t=초" : "currentTime=초"}가 붙어요. (유튜브 주소는 t=초) 형식은 설정에서 바꿀 수 있어요. 결과를 먼저 공개했어도, 나중에 주소를 넣고 저장하면 사연자 화면에 링크가 자동으로 붙어요.
               </span>
             </div>
           </section>
@@ -324,7 +326,7 @@ export default function Wrapup() {
 
           <div className="adm-wu-bar">
             <button className="btn" disabled={busy || !dirty} onClick={() => save()}>
-              {busy ? "저장 중…" : dirty ? "저장" : "저장됨"}
+              {busy ? "저장 중…" : dirty ? (unpublished === 0 && data.items.length ? "저장 (공개된 결과에도 반영)" : "저장") : "저장됨"}
             </button>
             <button className="btn btn-primary btn-lg" disabled={busy || unpublished === 0} onClick={() => setConfirm(true)}>
               결과 공개 {unpublished > 0 ? `(${unpublished}개)` : ""}
@@ -337,7 +339,7 @@ export default function Wrapup() {
         <Dialog title="결과를 공개할까요?" onClose={() => setConfirm(false)}>
           <p>
             이 방송에서 읽은 사연 {unpublished}개의 결과 카드가 사연자에게 열려요. 다시보기 링크와 한마디가 함께 보이고, 로그인한 사연자의 고민 동물은 도감에 모여요.
-            {!vod.trim() && <b> 다시보기 주소가 비어 있어요.</b>}
+            {!vod.trim() && <b> 다시보기 주소가 아직 비어 있어요. 지금 공개해도 되고, 다시보기가 올라온 뒤 주소를 넣고 저장하면 링크가 자동으로 붙어요.</b>}
           </p>
           <div className="row">
             <button className="btn" onClick={() => setConfirm(false)}>
