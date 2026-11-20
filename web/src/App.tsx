@@ -7,7 +7,7 @@ import Home from "./pages/Home";
 import Write from "./pages/Write";
 import Done from "./pages/Done";
 import Check from "./pages/Check";
-import ReplyView from "./pages/ReplyView";
+import StoryLookup from "./pages/StoryLookup";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import Me from "./pages/Me";
@@ -32,7 +32,7 @@ export default function App() {
               <Route path="/write" element={<Write />} />
               <Route path="/write/done" element={<Done />} />
               <Route path="/check" element={<Check />} />
-              <Route path="/reply/:no" element={<ReplyView />} />
+              <Route path="/story/:no" element={<StoryLookup />} />
               <Route path="/login" element={<Login />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/me" element={<Me />} />

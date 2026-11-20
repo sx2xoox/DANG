@@ -225,9 +225,10 @@ export default function Write() {
         consents: { broadcast: d.consent_broadcast, privacy: d.consent_privacy },
       });
       store.remove(DRAFT_KEY);
-      // 접수증은 이 탭에서만 다시 볼 수 있게 보관 (새로고침 대비)
-      store.set("dg.lastReceipt", res, true);
-      navigate("/write/done", { state: { receipt: res, fresh: true } });
+      const receipt = { ...res, category: d.category, wish: d.wish, temperature: d.temperature };
+      // 결과는 이 탭에서만 다시 볼 수 있게 보관 (새로고침 대비)
+      store.set("dg.lastReceipt", receipt, true);
+      navigate("/write/done", { state: { receipt, fresh: true } });
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "보내지 못했어요. 잠시 후 다시 시도해 주세요.");
     } finally {
@@ -256,6 +257,7 @@ export default function Write() {
 
   return (
     <div className="write">
+      {sending && <Analyzing />}
       {askResume && saved && (
         <Dialog title="쓰던 사연이 있어요" onClose={() => setAskResume(false)}>
           <p className="muted" style={{ margin: 0 }}>
@@ -331,8 +333,8 @@ export default function Write() {
               value={d.name_mode}
               onChange={(v) => set("name_mode", v as Draft["name_mode"])}
               options={[
-                { id: "chzzk", label: "치지직 닉네임으로 보내기", emoji: "💬" },
-                { id: "anon", label: "익명으로 보내기", emoji: "🎭", desc: "귀여운 랜덤 이름을 뽑아드려요" },
+                { id: "chzzk", label: "치지직 닉네임으로 보내기", desc: "방송에서 내 닉네임으로 불러줘요" },
+                { id: "anon", label: "익명으로 보내기", desc: "귀여운 랜덤 이름을 뽑아드려요" },
               ]}
             />
             {d.name_mode === "chzzk" && (
@@ -357,10 +359,10 @@ export default function Write() {
                   {d.anon_name}
                 </strong>
                 <button type="button" className="btn" onClick={() => set("anon_name", randomNickname())}>
-                  🎲 다시 뽑기
+                  다시 뽑기
                 </button>
                 <p className="nick-note">
-                  이 이름은 <b>방송에서 불릴 이름</b>이에요. <b>고민 동물</b>은 이것과 별개로, 사연을 읽고 따로 지어서 답장과 함께 공개돼요!
+                  이 이름은 <b>방송에서 불릴 이름</b>이에요. <b>고민 동물</b>은 이것과 별개로, 사연을 보내면 내용을 읽고 따로 지어드려요!
                 </p>
               </div>
             )}
@@ -417,7 +419,7 @@ export default function Write() {
         {d.step === 4 && (
           <Step title="고민을 들려주세요" headingRef={headingRef}>
             <div className="notice notice-danger privacy-notice">
-              <strong>🔒 실명, 연락처, 주소, 학교·회사 이름은 쓰지 마세요.</strong>
+              <strong>실명, 연락처, 주소, 학교·회사 이름은 쓰지 마세요.</strong>
               <br />
               방송에서 읽힐 수 있어요. “친구 A”, “우리 팀장님”처럼 써주세요.
             </div>
@@ -603,10 +605,7 @@ export default function Write() {
               <span className="label">필수 동의</span>
               <label className="check">
                 <input type="checkbox" checked={d.consent_broadcast} onChange={(e) => set("consent_broadcast", e.target.checked)} />
-                <span>
-                  방송에서 읽힐 수 있어요
-                  <span className="sub faint"> ('방장만 보기'를 고르면 방송에서 읽지 않아요)</span>
-                </span>
+                <span>방송에서 읽힐 수 있어요</span>
               </label>
               <label className="check">
                 <input type="checkbox" checked={d.consent_privacy} onChange={(e) => set("consent_privacy", e.target.checked)} />
@@ -676,13 +675,38 @@ export default function Write() {
           )}
           <span className="spacer" />
           <button type="submit" className="btn btn-primary btn-next" disabled={sending}>
-            {d.step === TOTAL ? (sending ? "보내는 중…" : "💌 사연 보내기") : "다음 →"}
+            {d.step === TOTAL ? (sending ? "보내는 중…" : "사연 부치기") : "다음 →"}
           </button>
         </div>
         <p className="faint kbd-hint hide-touch" style={{ textAlign: "right", margin: 0 }}>
           Enter 로 다음, Tab 으로 이동
         </p>
       </form>
+    </div>
+  );
+}
+
+const ANALYZE_STEPS = ["사연 읽는 중", "감정 우표 확인하는 중", "고민 온도 재는 중", "어울리는 동물 찾는 중"];
+
+/** 사연을 보내고 고민 동물을 찾는 동안 보여주는 화면 */
+function Analyzing() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setI((x) => (x + 1) % ANALYZE_STEPS.length), 1800);
+    return () => window.clearInterval(t);
+  }, []);
+  return (
+    <div className="analyzing" role="status" aria-live="polite">
+      <div className="analyzing-box">
+        <div className="analyzing-lens" aria-hidden="true">
+          <span className="analyzing-q">?</span>
+        </div>
+        <p className="analyzing-title">고민 동물을 찾고 있어요</p>
+        <p className="analyzing-step" key={i}>
+          {ANALYZE_STEPS[i]}…
+        </p>
+        <p className="analyzing-note">길면 30초쯤 걸려요. 창을 닫지 말아주세요.</p>
+      </div>
     </div>
   );
 }

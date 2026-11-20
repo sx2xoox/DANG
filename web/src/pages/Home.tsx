@@ -9,10 +9,10 @@ function postmarkDate() {
 }
 
 const TRACK = [
-  { code: "01", title: "접수", desc: "사연을 부치면 접수번호와 비밀 코드가 나와요" },
-  { code: "02", title: "다웅이 읽는 중", desc: "방송 전에 다웅이 한 통씩 열어봐요" },
-  { code: "03", title: "방송", desc: "방송에서 읽거나, 원하면 다웅만 봐요" },
-  { code: "04", title: "답장 발송", desc: "답장과 함께 나만의 고민 동물이 도착해요" },
+  { code: "01", title: "사연 부치기", desc: "가입 없이 1분이면 보낼 수 있어요" },
+  { code: "02", title: "고민 동물 결과", desc: "보내자마자 사연을 읽고 나만의 고민 동물을 알려줘요" },
+  { code: "03", title: "검토", desc: "방송 전에 다웅이 한 통씩 확인해요" },
+  { code: "04", title: "방송에서 개봉", desc: "도착한 순서대로 방송에서 열어 읽고 채팅과 이야기해요" },
 ];
 
 export default function Home() {
@@ -82,11 +82,11 @@ export default function Home() {
               </Link>
             ) : (
               <p className="closed-note" role="status">
-                지금은 사연을 받지 않아요. 이미 보낸 사연의 답장은 언제든 조회할 수 있어요.
+                지금은 사연을 받지 않아요. 이미 보낸 사연은 언제든 조회할 수 있어요.
               </p>
             )}
             <Link to="/check" className="post-btn post-btn-sub">
-              답장 조회
+              내 사연 조회
             </Link>
             <Link to={session ? "/me" : "/login"} className="post-link">
               {session ? "내 사연함" : "로그인하고 사연 모아두기"}
@@ -103,7 +103,7 @@ export default function Home() {
 
       <section className="tracking" aria-labelledby="track-title">
         <h2 id="track-title" className="tracking-title">
-          사연 배송 조회 <span>답장이 도착하기까지</span>
+          사연 배송 조회 <span>방송에서 열리기까지</span>
         </h2>
         <ol className="track">
           {TRACK.map((t) => (
@@ -116,7 +116,7 @@ export default function Home() {
           ))}
         </ol>
         <p className="tracking-foot">
-          지금까지 <b>{info.total_replied}</b>통의 답장이 배달됐어요.
+          지금 방송을 기다리는 사연 <b>{info.queue_count}</b>통 · 지금까지 방송에서 연 사연 <b>{info.total_aired}</b>통
         </p>
       </section>
     </div>

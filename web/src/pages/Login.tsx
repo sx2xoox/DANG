@@ -36,7 +36,7 @@ export default function Login() {
           로그인
         </h1>
         <p className="muted" style={{ margin: 0 }}>
-          로그인하면 내가 보낸 사연과 답장, 고민 동물 도감을 어디서든 볼 수 있어요. 휴대폰과 PC 어느 쪽에서 봐도 같은 내 사연함이 보여요.
+          로그인하면 내가 보낸 사연과 고민 동물 도감, 방송 진행 상황을 어디서든 볼 수 있어요. 휴대폰과 PC 어느 쪽에서 봐도 같은 내 사연함이 보여요.
         </p>
         {pending.length > 0 && (
           <p className="notice notice-yellow" style={{ margin: 0 }}>

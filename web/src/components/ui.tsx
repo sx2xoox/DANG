@@ -160,6 +160,7 @@ export function ChoiceGroup({
   onChange,
   wide = false,
   label,
+  showEmoji = false,
 }: {
   name: string;
   options: Option[];
@@ -167,13 +168,14 @@ export function ChoiceGroup({
   onChange: (v: string) => void;
   wide?: boolean;
   label: string;
+  showEmoji?: boolean;
 }) {
   return (
     <div role="radiogroup" aria-label={label} className={`choice-grid ${wide ? "wide" : ""}`}>
       {options.map((o) => (
         <label key={o.id} className="choice">
           <input type="radio" name={name} value={o.id} checked={value === o.id} onChange={() => onChange(o.id)} />
-          {o.emoji && (
+          {showEmoji && o.emoji && (
             <span className="emoji" aria-hidden="true">
               {o.emoji}
             </span>

@@ -2,19 +2,19 @@ import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { addPendingClaim, ApiError, callFn, store } from "../lib/supabase";
 import { useSite } from "../lib/site";
-import { ReplyCard, WaitingCard, type Reply, type ReplyStory } from "../components/ReplyCard";
+import { ResultView, StatusTrack, type ResultStory } from "../components/ResultCard";
 import type { Animal } from "../components/AnimalCard";
 import { Dialog, Spinner, useToast } from "../components/ui";
 import { CREDS_KEY, type Creds } from "./Check";
 
 type LookupData = {
-  story: ReplyStory & { claimed: boolean };
-  reply: Reply | null;
+  story: ResultStory & { viewer_status: string; claimed: boolean; body: string };
   animal: Animal | null;
   follow_ups: { id: string; body: string; created_at: string }[];
 };
 
-export default function ReplyView() {
+/** 접수번호 + 비밀 코드로 보는 내 사연 (고민 동물 결과 + 방송 진행 상황) */
+export default function StoryLookup() {
   const { no } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
@@ -26,7 +26,6 @@ export default function ReplyView() {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    // 새로고침/재방문 때도 항상 최신 상태로 불러옵니다.
     if (!valid) return;
     callFn<LookupData>("public", { action: "lookup", ...creds })
       .then(setData)
@@ -71,33 +70,32 @@ export default function ReplyView() {
   };
 
   return (
-    <div className="page-narrow">
-      <div className="stack">
-        {data.reply ? (
-          <ReplyCard story={data.story} reply={data.reply} animal={data.animal} siteName={info.site_name} />
-        ) : (
-          <WaitingCard story={data.story} siteName={info.site_name} />
-        )}
+    <div className="result-page">
+      {data.animal && <ResultView story={data.story} animal={data.animal} siteName={info.site_name} />}
+      <div className="result-after">
+        <StatusTrack status={data.story.viewer_status} createdAt={data.story.created_at} />
 
-        <section className="card stack" aria-label="이 사연 관리">
+        <details className="my-letter">
+          <summary>내가 보낸 사연 다시 보기</summary>
+          <p className="story-body">{data.story.body}</p>
+        </details>
+
+        <section className="lookup-manage" aria-label="이 사연 관리">
           {!data.story.claimed && (
-            <div className="row">
-              <div style={{ flex: "1 1 240px" }}>
+            <div className="lookup-row">
+              <p>
                 <strong>내 사연함에 모아두기</strong>
-                <p className="faint" style={{ margin: 0 }}>
-                  로그인하면 이 사연과 답장을 계정에 저장하고, 후속 보고도 쓸 수 있어요.
-                </p>
-              </div>
-              <button type="button" className="btn btn-blue" onClick={moveToAccount}>
+                <br />
+                로그인하면 코드 없이도 결과를 모아 보고, 후속 보고도 쓸 수 있어요.
+              </p>
+              <button type="button" className="post-btn post-btn-sub" onClick={moveToAccount}>
                 {session ? "내 사연함으로 옮기기" : "로그인하고 옮기기"}
               </button>
             </div>
           )}
-          <div className="row">
-            <span className="faint" style={{ flex: "1 1 200px" }}>
-              이 사연을 더 이상 남기고 싶지 않다면 지울 수 있어요.
-            </span>
-            <button type="button" className="btn btn-sm btn-ghost danger-text" onClick={() => setConfirmDelete(true)}>
+          <div className="lookup-row">
+            <p>이 사연을 더 이상 남기고 싶지 않다면 지울 수 있어요. 아직 방송 전이라면 방송에서도 빠져요.</p>
+            <button type="button" className="post-link danger-text" onClick={() => setConfirmDelete(true)}>
               사연 지우기
             </button>
           </div>
@@ -106,7 +104,7 @@ export default function ReplyView() {
 
       {confirmDelete && (
         <Dialog title="사연을 지울까요?" onClose={() => setConfirmDelete(false)}>
-          <p style={{ margin: 0 }}>사연, 답장, 고민 동물이 모두 지워지고 되돌릴 수 없어요.</p>
+          <p style={{ margin: 0 }}>사연과 고민 동물 결과가 모두 지워지고 되돌릴 수 없어요.</p>
           <div className="row">
             <button type="button" className="btn btn-danger" onClick={removeStory}>
               지우기

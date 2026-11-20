@@ -24,7 +24,7 @@ type Props = {
   date?: string;
   siteName?: string;
   compact?: boolean;
-  /** 접수증처럼 "답장과 함께 공개" 안내만 보여줄 때 */
+  /** 뒷면에 보여줄 안내 문구 */
   mysteryText?: string;
 };
 
@@ -47,7 +47,7 @@ export const AnimalCard = forwardRef<HTMLDivElement, Props>(function AnimalCard(
         </svg>
       </div>
       <div className="tc-back-title display">고민 동물</div>
-      <div className="tc-back-sub">{mysteryText ?? (canFlip ? "눌러서 공개하기" : "답장과 함께 공개돼요")}</div>
+      <div className="tc-back-sub">{mysteryText ?? (canFlip ? "눌러서 공개하기" : "두근두근…")}</div>
     </div>
   );
 

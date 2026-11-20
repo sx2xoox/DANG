@@ -19,7 +19,7 @@ export function Layout() {
           </Link>
           <nav className="header-nav" aria-label="주요 메뉴">
             <NavLink to="/check" className="btn btn-ghost btn-sm hide-xs">
-              답장 확인
+              내 사연 조회
             </NavLink>
             {session ? (
               <NavLink to="/me" className="btn btn-sm">

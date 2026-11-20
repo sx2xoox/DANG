@@ -2,9 +2,11 @@ import { forwardRef, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { addPendingClaim, store } from "../lib/supabase";
 import { useSite, type Preset } from "../lib/site";
-import { copyText, saveNodeAsImage, shareNodeAsImage } from "../lib/image";
+import { copyText, saveNodeAsImage } from "../lib/image";
 import { formatDate } from "../lib/format";
 import { HelpLines, StampSticker, useToast } from "../components/ui";
+import { ResultView, StatusTrack } from "../components/ResultCard";
+import type { Animal } from "../components/AnimalCard";
 
 export type Receipt = {
   story_id: string;
@@ -18,6 +20,11 @@ export type Receipt = {
   created_at: string;
   care: boolean;
   logged_in: boolean;
+  animal: Animal;
+  // 결과 화면용 (제출할 때 고른 값)
+  category: string;
+  wish: string;
+  temperature: number;
 };
 
 export default function Done() {
@@ -28,49 +35,30 @@ export default function Done() {
   const receipt: Receipt | null = (loc.state as { receipt?: Receipt } | null)?.receipt ?? store.get<Receipt | null>("dg.lastReceipt", null, true);
   const fresh = !!(loc.state as { fresh?: boolean } | null)?.fresh;
   const [phase, setPhase] = useState<"sending" | "done">(fresh ? "sending" : "done");
-  const [hideSecret, setHideSecret] = useState(false);
   const [busy, setBusy] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (phase !== "sending") return;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const t = window.setTimeout(() => setPhase("done"), reduce ? 200 : 2300);
+    const t = window.setTimeout(() => setPhase("done"), reduce ? 200 : 2000);
     // 새로고침 시 애니메이션이 다시 나오지 않도록
     navigate(loc.pathname, { replace: true, state: { receipt } });
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!receipt) return <Navigate to="/check" replace />;
+  if (!receipt || !receipt.animal) return <Navigate to="/check" replace />;
 
-  const fileBase = `사연접수증-${receipt.receipt_no}`;
-
-  const saveForMe = async () => {
-    if (!cardRef.current) return;
+  const saveReceipt = async () => {
+    if (!receiptRef.current) return;
     setBusy(true);
     try {
-      await saveNodeAsImage(cardRef.current, `${fileBase}-보관용.png`);
+      await saveNodeAsImage(receiptRef.current, `사연접수증-${receipt.receipt_no}.png`);
       toast("접수증을 저장했어요. 비밀 코드가 들어 있으니 남에게 보여주지 마세요!");
     } catch {
       toast("이미지를 만들지 못했어요. 코드를 복사해 두세요.");
     } finally {
-      setBusy(false);
-    }
-  };
-
-  const share = async () => {
-    if (!cardRef.current) return;
-    setBusy(true);
-    setHideSecret(true);
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    try {
-      const r = await shareNodeAsImage(cardRef.current, `${fileBase}.png`, `${info.site_name}에 사연을 보냈어요! 내 고민 동물은 뭘까?`);
-      if (r === "saved") toast("공유용 이미지를 저장했어요. (비밀 코드는 빠져 있어요)");
-    } catch {
-      toast("이미지를 만들지 못했어요.");
-    } finally {
-      setHideSecret(false);
       setBusy(false);
     }
   };
@@ -94,127 +82,128 @@ export default function Done() {
   }
 
   return (
-    <div className="page-narrow done">
-      <div className="stack">
-        <h1 className="display done-title">사연이 잘 도착했어요!</h1>
+    <div className="result-page">
+      {receipt.care && (
+        <div className="result-help">
+          <HelpLines />
+        </div>
+      )}
 
-        {receipt.care && <HelpLines />}
+      <ResultView
+        story={{
+          id: receipt.story_id,
+          receipt_no: receipt.receipt_no,
+          summary: receipt.summary,
+          display_name: receipt.display_name,
+          stamp: receipt.stamp,
+          wish: receipt.wish,
+          category: receipt.category,
+          temperature: receipt.temperature,
+          created_at: receipt.created_at,
+        }}
+        animal={receipt.animal}
+        siteName={info.site_name}
+      />
 
-        <ReceiptCard ref={cardRef} receipt={receipt} siteName={info.site_name} hideSecret={hideSecret} />
+      <div className="result-after">
+        <StatusTrack status="reviewing" createdAt={receipt.created_at} />
 
-        <section className="card code-box" aria-labelledby="code-title">
-          <h2 id="code-title" className="display">
-            🔑 이 코드가 있어야 답장을 볼 수 있어요
-          </h2>
-          <div className="code-pair">
+        <section className="code-slip" aria-labelledby="code-title">
+          <div className="code-slip-head">
+            <h2 id="code-title">사연 조회 코드</h2>
+            <p>이 코드로 내 결과와 방송 여부를 다시 보고, 사연을 지울 수도 있어요. 잃어버리면 다시 찾을 수 없어요.</p>
+          </div>
+          <div className="code-slip-pair">
             <div>
-              <span className="faint">접수번호</span>
-              <strong className="code-big">#{receipt.receipt_no}</strong>
+              <span>접수번호</span>
+              <strong>#{receipt.receipt_no}</strong>
             </div>
             <div>
-              <span className="faint">비밀 코드</span>
-              <strong className="code-big code-mono">{receipt.code}</strong>
+              <span>비밀 코드</span>
+              <strong className="code-mono">{receipt.code}</strong>
             </div>
           </div>
-          <p className="muted" style={{ margin: 0 }}>
-            {session
-              ? "로그인되어 있어서 내 사연함에도 저장됐어요. 그래도 코드를 보관해 두면 로그인 없이도 확인할 수 있어요."
-              : "코드를 잃어버리면 답장을 볼 수 없어요. 꼭 복사하거나 접수증을 저장해 두세요."}
-          </p>
-          <div className="row">
-            <button type="button" className="btn btn-primary" onClick={copy}>
-              📋 코드 복사
+          <div className="code-slip-actions">
+            <button type="button" className="post-btn post-btn-main" onClick={copy}>
+              코드 복사
             </button>
-            <button type="button" className="btn" onClick={saveForMe} disabled={busy}>
-              🧾 접수증 저장 (코드 포함)
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={share} disabled={busy}>
-              공유하기 (코드 빼고)
+            <button type="button" className="post-btn post-btn-sub" onClick={saveReceipt} disabled={busy}>
+              접수증 이미지로 저장
             </button>
           </div>
+          {session ? (
+            <p className="code-slip-note">
+              로그인되어 있어서 <Link to="/me">내 사연함</Link>에도 담겼어요.
+            </p>
+          ) : (
+            <div className="code-slip-login">
+              <p>로그인하면 코드 없이도 내 사연함에서 결과를 모아 보고, 고민 동물 도감을 채울 수 있어요. 방금 낸 사연도 옮겨드려요.</p>
+              <button type="button" className="post-btn post-btn-sub" onClick={goLogin}>
+                로그인하고 모아두기
+              </button>
+            </div>
+          )}
         </section>
 
-        {session ? (
-          <div className="notice notice-yellow">
-            내 사연함에 담았어요. 답장이 오면 빨간 점으로 알려드릴게요.{" "}
-            <Link to="/me">내 사연함 보기 →</Link>
-          </div>
-        ) : (
-          <section className="card login-nudge">
-            <div>
-              <h2 className="display">로그인하면 더 편해요</h2>
-              <p className="muted" style={{ margin: "4px 0 0" }}>
-                답장 알림을 받고 내 사연함에 모아둘 수 있어요. 방금 낸 사연도 계정으로 옮겨드려요.
-              </p>
-            </div>
-            <button type="button" className="btn btn-blue" onClick={goLogin}>
-              로그인하고 모아두기
-            </button>
-          </section>
-        )}
-
-        <div className="row" style={{ justifyContent: "center" }}>
-          <Link to="/" className="btn btn-ghost">
-            첫 화면으로
-          </Link>
-          <Link to={`/check?no=${receipt.receipt_no}`} className="btn btn-ghost">
-            답장 확인 화면
-          </Link>
+        {/* 저장용 접수증 (화면 밖에서 이미지로만 씀) */}
+        <div className="receipt-offscreen" aria-hidden="true">
+          <ReceiptCard ref={receiptRef} receipt={receipt} siteName={info.site_name} />
         </div>
+
+        <p className="result-links">
+          <Link to="/">첫 화면으로</Link>
+          <Link to="/write">사연 하나 더 쓰기</Link>
+        </p>
       </div>
     </div>
   );
 }
 
-export const ReceiptCard = forwardRef<HTMLDivElement, { receipt: Receipt; siteName: string; hideSecret?: boolean }>(
-  function ReceiptCard({ receipt, siteName, hideSecret }, ref) {
-    return (
-      <div ref={ref} className="receipt">
-        <div className="receipt-head">
-          <span className="receipt-site">{siteName}</span>
-          <span className="receipt-kind">사연 접수증</span>
-        </div>
-        <div className="receipt-no">#{receipt.receipt_no}</div>
-        <div className="receipt-grid">
-          <div className="receipt-info">
-            <dl>
-              <div>
-                <dt>보낸 사람</dt>
-                <dd>{receipt.display_name}</dd>
-              </div>
-              <div>
-                <dt>접수일</dt>
-                <dd>{formatDate(receipt.created_at)}</dd>
-              </div>
-              <div>
-                <dt>한 줄 요약</dt>
-                <dd className="receipt-summary">“{receipt.summary}”</dd>
-              </div>
-            </dl>
-            <span className="receipt-badge">🏅 {receipt.badge}</span>
-          </div>
-          <StampSticker stamp={receipt.stamp} size="lg" />
-        </div>
-        <div className="receipt-mystery">
-          <div className="mystery-silhouette" aria-hidden="true">
-            ?
-          </div>
-          <div>
-            <strong>당신의 고민 동물은?</strong>
-            <p>답장과 함께 공개돼요</p>
-          </div>
-        </div>
-        {!hideSecret && (
-          <div className="receipt-secret">
-            <span>비밀 코드</span>
-            <strong>{receipt.code}</strong>
-          </div>
-        )}
-        <div className="receipt-tear" aria-hidden="true" />
+export const ReceiptCard = forwardRef<HTMLDivElement, { receipt: Receipt; siteName: string }>(function ReceiptCard({ receipt, siteName }, ref) {
+  return (
+    <div ref={ref} className="receipt">
+      <div className="receipt-head">
+        <span className="receipt-site">{siteName}</span>
+        <span className="receipt-kind">사연 접수증</span>
       </div>
-    );
-  },
-);
+      <div className="receipt-no">#{receipt.receipt_no}</div>
+      <div className="receipt-grid">
+        <div className="receipt-info">
+          <dl>
+            <div>
+              <dt>보낸 사람</dt>
+              <dd>{receipt.display_name}</dd>
+            </div>
+            <div>
+              <dt>접수일</dt>
+              <dd>{formatDate(receipt.created_at)}</dd>
+            </div>
+            <div>
+              <dt>한 줄 요약</dt>
+              <dd className="receipt-summary">“{receipt.summary}”</dd>
+            </div>
+          </dl>
+          <span className="receipt-badge">{receipt.badge}</span>
+        </div>
+        <StampSticker stamp={receipt.stamp} size="lg" />
+      </div>
+      <div className="receipt-mystery">
+        <div className="mystery-silhouette" aria-hidden="true">
+          {receipt.animal.emoji}
+        </div>
+        <div>
+          <strong>{receipt.animal.name}</strong>
+          <p>나의 고민 동물</p>
+        </div>
+      </div>
+      <div className="receipt-secret">
+        <span>비밀 코드</span>
+        <strong>{receipt.code}</strong>
+      </div>
+      <div className="receipt-tear" aria-hidden="true" />
+    </div>
+  );
+});
 
 /** 편지가 접혀 들어가는 짧은 연출 (프리셋마다 다름) */
 function SendingAnimation({ preset }: { preset: Preset }) {

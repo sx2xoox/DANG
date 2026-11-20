@@ -25,7 +25,7 @@ export default function Check() {
     try {
       await callFn("public", { action: "lookup", receipt_no: receipt, code });
       store.set(CREDS_KEY, { receipt_no: receipt, code }, true);
-      navigate(`/reply/${receipt}`);
+      navigate(`/story/${receipt}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "확인하지 못했어요.");
     } finally {
@@ -37,10 +37,10 @@ export default function Check() {
     <div className="page-narrow">
       <form className="card pinned stack check-form" onSubmit={submit} noValidate>
         <h1 className="display" style={{ fontSize: 30 }}>
-          답장 확인하기
+          내 사연 조회
         </h1>
         <p className="muted" style={{ margin: 0 }}>
-          사연을 보낼 때 받은 접수번호와 비밀 코드를 넣어주세요.
+          사연을 보낼 때 받은 접수번호와 비밀 코드를 넣으면 내 고민 동물 결과와 방송 여부를 볼 수 있어요.
         </p>
         <div className="field">
           <label htmlFor="no">접수번호</label>
@@ -75,7 +75,7 @@ export default function Check() {
           </p>
         )}
         <button type="submit" className="btn btn-primary btn-lg" disabled={busy}>
-          {busy ? "확인하는 중…" : "답장 확인"}
+          {busy ? "확인하는 중…" : "조회하기"}
         </button>
         <p className="faint" style={{ margin: 0 }}>
           로그인해서 보낸 사연은 <a href="/me">내 사연함</a>에서 바로 볼 수 있어요.

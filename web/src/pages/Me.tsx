@@ -18,7 +18,6 @@ export type MyStoryRow = {
   visibility: string;
 };
 
-type ReplyRow = { story_id: string; sent_at: string; opened_at: string | null; kind: string };
 type AnimalRow = Animal & { story_id: string; created_at: string };
 
 type Tab = "list" | "dex" | "history";
@@ -28,19 +27,17 @@ export default function Me() {
   const [params, setParams] = useSearchParams();
   const tab = (params.get("tab") as Tab) || "list";
   const [stories, setStories] = useState<MyStoryRow[] | null>(null);
-  const [replies, setReplies] = useState<Record<string, ReplyRow>>({});
   const [animals, setAnimals] = useState<Record<string, AnimalRow>>({});
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!session) return;
     (async () => {
-      const [s, r, a] = await Promise.all([
+      const [s, a] = await Promise.all([
         supabase
           .from("stories")
           .select("id, receipt_no, summary, stamp, category, created_at, viewer_status, visibility")
           .order("created_at", { ascending: false }),
-        supabase.from("replies").select("story_id, sent_at, opened_at, kind"),
         supabase.from("worry_animals").select("story_id, name, emoji, why, description, quote, hashtags, prev_name, prev_emoji, change_reason, created_at"),
       ]);
       if (s.error) {
@@ -48,7 +45,6 @@ export default function Me() {
         return;
       }
       setStories(s.data as MyStoryRow[]);
-      setReplies(Object.fromEntries(((r.data ?? []) as ReplyRow[]).map((x) => [x.story_id, x])));
       setAnimals(Object.fromEntries(((a.data ?? []) as AnimalRow[]).map((x) => [x.story_id, x])));
     })();
   }, [session]);
@@ -56,7 +52,7 @@ export default function Me() {
   if (authReady && !session) return <Navigate to="/login?next=/me" replace />;
   if (!stories) return error ? <p className="page-narrow notice notice-danger">{error}</p> : <Spinner />;
 
-  const unread = stories.filter((s) => replies[s.id] && !replies[s.id].opened_at).length;
+  const queued = stories.filter((s) => s.viewer_status === "approved").length;
   const collected = stories.filter((s) => animals[s.id]).sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
 
   const setTab = (t: Tab) => setParams(t === "list" ? {} : { tab: t }, { replace: true });
@@ -70,12 +66,7 @@ export default function Me() {
           </h1>
           <p className="muted" style={{ margin: 0 }}>
             보낸 사연 {stories.length}개 · 모은 고민 동물 {collected.length}마리
-            {unread > 0 && (
-              <>
-                {" "}
-                · <span className="dot-red" aria-hidden="true" /> 새 답장 {unread}통
-              </>
-            )}
+            {queued > 0 && <> · 방송 대기 {queued}개</>}
           </p>
         </div>
         <div className="row">
@@ -90,7 +81,7 @@ export default function Me() {
 
       <div className="tabs" role="tablist" aria-label="내 사연함 보기">
         <button role="tab" aria-selected={tab === "list"} onClick={() => setTab("list")}>
-          내 사연 {unread > 0 && <span className="dot-red" aria-label="새 답장" />}
+          내 사연
         </button>
         <button role="tab" aria-selected={tab === "dex"} onClick={() => setTab("dex")}>
           고민 동물 도감
@@ -113,9 +104,7 @@ export default function Me() {
             </div>
           )}
           {stories.map((s) => {
-            const r = replies[s.id];
-            const st = VIEWER_STATUS[s.viewer_status] ?? VIEWER_STATUS.received;
-            const isNew = r && !r.opened_at;
+            const st = VIEWER_STATUS[s.viewer_status] ?? VIEWER_STATUS.reviewing;
             return (
               <Link key={s.id} to={`/me/story/${s.id}`} className="my-row card">
                 <StampSticker stamp={s.stamp} size="sm" />
@@ -128,7 +117,6 @@ export default function Me() {
                   <strong className="my-row-sum">{s.summary}</strong>
                 </div>
                 <div className="my-row-status">
-                  {isNew && <span className="dot-red" aria-label="새 답장" />}
                   <span className={`chip status-${st.tone}`}>{st.label}</span>
                   {animals[s.id] && (
                     <span className="my-row-animal" title={animals[s.id].name} aria-label={`고민 동물 ${animals[s.id].name}`}>
@@ -150,7 +138,7 @@ export default function Me() {
                 아직 모은 고민 동물이 없어요
               </p>
               <p className="muted" style={{ margin: 0 }}>
-                답장이 오면 고민 동물 카드가 여기에 모여요.
+                사연을 보내면 고민 동물 카드가 여기에 모여요.
               </p>
             </div>
           ) : (
@@ -168,7 +156,7 @@ export default function Me() {
       {tab === "history" && (
         <section role="tabpanel" aria-label="변신 기록" className="card">
           {collected.length === 0 ? (
-            <p className="muted">답장을 받으면 고민 동물이 어떻게 바뀌어 가는지 여기서 볼 수 있어요.</p>
+            <p className="muted">사연을 보낼 때마다 고민 동물이 어떻게 바뀌어 가는지 여기서 볼 수 있어요.</p>
           ) : (
             <ol className="timeline">
               {collected.map((s, i) => {

@@ -23,21 +23,19 @@ export function ageGender(age: number | null | undefined, gender: string | null 
   return [a, g].filter(Boolean).join(" · ");
 }
 
-export const VIEWER_STATUS: Record<string, { label: string; tone: string }> = {
-  received: { label: "접수됨", tone: "neutral" },
-  scheduled: { label: "방송 예정", tone: "blue" },
-  aired: { label: "방송에서 읽음", tone: "yellow" },
-  private: { label: "방장만 봄", tone: "neutral" },
-  replied: { label: "답장 도착", tone: "red" },
+export const VIEWER_STATUS: Record<string, { label: string; tone: string; desc: string }> = {
+  reviewing: { label: "검토 중", tone: "neutral", desc: "다웅이 방송 전에 사연을 확인하고 있어요." },
+  approved: { label: "방송 대기", tone: "blue", desc: "승인됐어요! 방송에서 도착한 순서대로 읽어요." },
+  aired: { label: "방송에서 읽음", tone: "yellow", desc: "방송에서 다웅이 이 사연을 읽었어요." },
+  not_selected: { label: "이번엔 소개 안 됨", tone: "neutral", desc: "이번엔 방송에 소개되지 않아요. 고민 동물 결과는 그대로 간직할 수 있어요." },
 };
 
 export const ADMIN_STATUS: Record<string, string> = {
-  new: "새 사연",
-  starred: "별표",
-  scheduled: "방송 예정",
+  pending: "검토 대기",
+  approved: "방송 대기",
   on_air: "방송 중",
-  read: "읽음",
-  hold: "보류",
+  read: "방송에서 읽음",
+  rejected: "반려",
 };
 
 export const FLAG_LABEL: Record<string, string> = {

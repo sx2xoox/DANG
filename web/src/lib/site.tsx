@@ -11,17 +11,19 @@ export type HomeInfo = {
   preset: Preset;
   accepting: boolean;
   week_count: number;
-  total_replied: number;
+  queue_count: number;
+  total_aired: number;
 };
 
 const DEFAULT_INFO: HomeInfo = {
   site_name: "다웅 고민 사연함",
-  tagline: "다웅이 직접 읽고 답해주는 고민 상담 코너",
+  tagline: "다웅이 방송에서 직접 읽어주는 고민 상담 코너",
   week_theme: "",
   preset: "classic",
   accepting: true,
   week_count: 0,
-  total_replied: 0,
+  queue_count: 0,
+  total_aired: 0,
 };
 
 type SiteCtx = {

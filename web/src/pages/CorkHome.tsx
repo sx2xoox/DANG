@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import type { HomeInfo } from "../lib/site";
 
 const STEPS = [
-  { n: "1", title: "사연 붙이기", desc: "접수번호와 비밀 코드를 받아요" },
-  { n: "2", title: "다웅이 읽는 중", desc: "방송 전에 한 장씩 떼어 봐요" },
-  { n: "3", title: "방송", desc: "방송에서 읽거나, 다웅만 봐요" },
-  { n: "4", title: "답장 도착", desc: "고민 동물 카드와 함께 와요" },
+  { n: "1", title: "사연 붙이기", desc: "가입 없이 1분이면 끝" },
+  { n: "2", title: "고민 동물 결과", desc: "붙이자마자 나만의 고민 동물이 나와요" },
+  { n: "3", title: "검토", desc: "방송 전에 다웅이 한 장씩 확인해요" },
+  { n: "4", title: "방송에서 개봉", desc: "붙은 순서대로 떼어 읽고 채팅과 얘기해요" },
 ];
 
 const NOTE_COLORS = ["#ffe58a", "#ffc2d1", "#bfe3f5", "#cdedb4", "#dccbf3"];
@@ -31,7 +31,7 @@ export default function CorkHome({ info, loggedIn }: { info: HomeInfo; loggedIn:
             <p className="flyer-tagline">{info.tagline}</p>
             <ul className="flyer-points">
               <li>방송에서 다웅이 직접 읽어드려요</li>
-              <li>답장과 함께 나만의 고민 동물 카드가 와요</li>
+              <li>보내자마자 나만의 고민 동물 결과가 나와요</li>
               <li>가입 없이 1분이면 끝</li>
             </ul>
             {info.accepting ? (
@@ -43,19 +43,19 @@ export default function CorkHome({ info, loggedIn }: { info: HomeInfo; loggedIn:
               </Link>
             ) : (
               <p className="flyer-closed-note" role="status">
-                지금은 사연을 받지 않아요. 보낸 사연의 답장은 아래에서 조회할 수 있어요.
+                지금은 사연을 받지 않아요. 보낸 사연은 아래에서 조회할 수 있어요.
               </p>
             )}
           </div>
 
           {/* 뜯어 가는 쪽지 */}
-          <nav className="tabs-tear" aria-label="답장 조회">
+          <nav className="tabs-tear" aria-label="내 사연 조회">
             {Array.from({ length: 7 }).map((_, i) =>
               i === 2 ? (
                 <span key={i} className="tear torn" aria-hidden="true" />
               ) : (
-                <Link key={i} to="/check" className="tear" aria-label={i === 0 ? "답장 조회하기" : undefined} tabIndex={i === 0 ? 0 : -1} aria-hidden={i === 0 ? undefined : true}>
-                  <span>답장 조회</span>
+                <Link key={i} to="/check" className="tear" aria-label={i === 0 ? "내 사연 조회하기" : undefined} tabIndex={i === 0 ? 0 : -1} aria-hidden={i === 0 ? undefined : true}>
+                  <span>사연 조회</span>
                   <small>접수번호+코드</small>
                 </Link>
               ),
@@ -110,7 +110,7 @@ export default function CorkHome({ info, loggedIn }: { info: HomeInfo; loggedIn:
       {/* 빨간 실로 이은 진행 순서 */}
       <section className="string-board" aria-labelledby="sb-title">
         <h2 id="sb-title" className="sb-title">
-          사연이 답장이 되기까지
+          사연이 방송에 나가기까지
         </h2>
         <ol className="sb-cards">
           <svg className="sb-yarn" viewBox="0 0 1000 50" preserveAspectRatio="none" aria-hidden="true">
@@ -126,7 +126,7 @@ export default function CorkHome({ info, loggedIn }: { info: HomeInfo; loggedIn:
           ))}
         </ol>
         <p className="sb-foot">
-          지금까지 <b>{info.total_replied}</b>통의 답장을 붙였어요.
+          방송을 기다리는 사연 <b>{info.queue_count}</b>장 · 방송에서 뗀 사연 <b>{info.total_aired}</b>장
         </p>
       </section>
     </div>

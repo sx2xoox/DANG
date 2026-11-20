@@ -116,7 +116,7 @@ export default function Account() {
           <p style={{ margin: 0 }}>계정이 지워지고 되돌릴 수 없어요.</p>
           <label className="check">
             <input type="checkbox" checked={alsoStories} onChange={(e) => setAlsoStories(e.target.checked)} />
-            <span>내가 보낸 사연과 답장도 모두 지우기</span>
+            <span>내가 보낸 사연과 고민 동물 결과도 모두 지우기</span>
           </label>
           {!alsoStories && (
             <p className="faint" style={{ margin: 0 }}>
