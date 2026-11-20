@@ -3,6 +3,7 @@ import { useSite } from "../lib/site";
 import CorkHome from "./CorkHome";
 import LoungeHome from "./LoungeHome";
 import { ReviewWall } from "../components/ReviewWall";
+import { ChannelButtons } from "../components/Channels";
 
 /** 오늘 날짜를 소인 형식으로 (2026.11.20) */
 function postmarkDate() {
@@ -123,6 +124,7 @@ export default function Home() {
         </p>
       </section>
 
+      <ChannelButtons className="post-channels" lead="사연은 방송에서 열어요" />
       <ReviewWall />
     </div>
   );

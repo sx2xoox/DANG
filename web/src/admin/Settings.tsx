@@ -14,6 +14,9 @@ type SettingsData = {
   auto_notice_enabled: boolean;
   auto_notice_days: number;
   vod_time_param: "currentTime" | "t";
+  chzzk_url: string;
+  youtube_url: string;
+  schedule_text: string;
   manager_enabled: boolean;
   obs_key: string | null;
   ai_enabled: boolean;
@@ -72,6 +75,9 @@ export default function Settings() {
           auto_notice_enabled: s.auto_notice_enabled,
           auto_notice_days: s.auto_notice_days,
           vod_time_param: s.vod_time_param,
+          chzzk_url: s.chzzk_url,
+          youtube_url: s.youtube_url,
+          schedule_text: s.schedule_text,
         },
       });
       setS(next);
@@ -113,6 +119,23 @@ export default function Settings() {
             <small>{s.accepting ? "지금 사연을 받고 있어요." : "멈춤: 첫 화면에 \"지금은 사연을 받지 않아요\"가 보여요."}</small>
           </span>
         </label>
+
+        <h2 className="adm-h3">내 채널</h2>
+        <p className="adm-dim adm-small">
+          넣으면 사이트 곳곳(첫 화면, 사연 보낸 직후, 방송 대기 중, 방송 결과, 맨 아래)에 치지직·유튜브 버튼이 생겨요. "방송 시작"을 누르면 모든 화면 위에 "지금 방송 중!" 띠가 떠요.
+        </p>
+        <div className="field">
+          <label htmlFor="st-chzzk">치지직 채널 주소</label>
+          <input id="st-chzzk" className="input" inputMode="url" placeholder="https://chzzk.naver.com/..." value={s.chzzk_url} onChange={(e) => set("chzzk_url", e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="st-yt">유튜브 채널 주소</label>
+          <input id="st-yt" className="input" inputMode="url" placeholder="https://www.youtube.com/@..." value={s.youtube_url} onChange={(e) => set("youtube_url", e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="st-sched">방송 시간 안내 (40자)</label>
+          <input id="st-sched" className="input" maxLength={40} placeholder="예) 매주 금 밤 9시 라이브" value={s.schedule_text} onChange={(e) => set("schedule_text", e.target.value)} />
+        </div>
 
         <h2 className="adm-h3">방송 결과</h2>
         <label className="adm-switch">

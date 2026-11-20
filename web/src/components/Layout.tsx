@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useSite } from "../lib/site";
 import { MailIcon } from "./ui";
+import { LiveBanner, SiteFooter } from "./Channels";
 
 export function Layout() {
   const { info, session } = useSite();
@@ -33,9 +34,11 @@ export function Layout() {
           </nav>
         </div>
       </header>
+      <LiveBanner />
       <main id="main">
         <Outlet />
       </main>
+      <SiteFooter />
     </>
   );
 }

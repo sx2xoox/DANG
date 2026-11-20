@@ -9,6 +9,7 @@ import { AirResultCard, PrivateMessage } from "./AirResult";
 import { ReviewBox } from "./ReviewBox";
 import { FollowUpBox } from "./FollowUpBox";
 import { GoldenBox } from "./GoldenBox";
+import { ChannelButtons } from "./Channels";
 
 /**
  * 내 사연 화면 (접수번호+코드 조회 / 내 사연함 상세 공통)
@@ -52,6 +53,9 @@ export function MyStoryView({
           ))}
 
         <StatusTrack status={s.viewer_status} createdAt={s.created_at} waitingNotice={data.waiting_notice} />
+        {(s.viewer_status === "approved" || s.viewer_status === "scheduled") && (
+          <ChannelButtons className="ch-card" lead={s.viewer_status === "scheduled" ? "내 사연이 나오는 순간, 놓치지 마세요" : "읽히는 순간을 놓치지 않게"} />
+        )}
 
         {aired && <ReviewBox auth={auth} review={data.review} onChange={(review) => set({ review })} />}
 

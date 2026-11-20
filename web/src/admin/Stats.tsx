@@ -179,9 +179,11 @@ function RefStats() {
         </p>
       </div>
 
+      <ChannelFlow rows={rows} />
+
       {!rows ? (
         <p className="adm-dim adm-small">불러오는 중…</p>
-      ) : rows.length === 0 ? (
+      ) : rows.filter((r) => !r.ref.startsWith("go-")).length === 0 ? (
         <p className="adm-dim">아직 영상 링크로 들어온 방문이 없어요.</p>
       ) : (
         <div className="adm-table-wrap">
@@ -196,7 +198,9 @@ function RefStats() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {rows
+                .filter((r) => !r.ref.startsWith("go-"))
+                .map((r) => (
                 <tr key={r.ref}>
                   <th scope="row" className="adm-mono">
                     {r.ref}
@@ -212,5 +216,41 @@ function RefStats() {
         </div>
       )}
     </section>
+  );
+}
+
+/** 내 채널 ↔ 사이트: 프로필에 넣을 주소, 채널에서 온 사람, 사이트에서 채널로 간 사람 */
+function ChannelFlow({ rows }: { rows: RefRow[] | null }) {
+  const toast = useToast();
+  const get = (ref: string) => rows?.find((r) => r.ref === ref);
+  const links = [
+    { ref: "chzzk", label: "치지직 채널 소개·프로필" },
+    { ref: "youtube", label: "유튜브 채널 정보·설명란" },
+  ];
+  return (
+    <div className="adm-flow">
+      <h3 className="adm-h3">내 채널 ↔ 사이트</h3>
+      <p className="adm-dim adm-small">치지직·유튜브의 링크 칸에는 아래 주소를 넣으세요. 어느 채널에서 사람이 왔는지 따로 세어져요.</p>
+      <ul className="adm-flow-list">
+        {links.map((l) => {
+          const url = videoLink(l.ref);
+          const inRow = get(l.ref);
+          const outRow = get(`go-${l.ref}`);
+          return (
+            <li key={l.ref}>
+              <span className="adm-flow-k">{l.label}</span>
+              <code>{url}</code>
+              <button className="btn btn-sm" onClick={async () => toast((await copyText(url)) ? "주소를 복사했어요" : "복사하지 못했어요")}>
+                복사
+              </button>
+              <span className="adm-flow-n">
+                채널 → 사이트 <b className="adm-mono">{inRow?.people ?? 0}</b>명 · 사연 <b className="adm-mono">{inRow?.stories ?? 0}</b> · 사이트 → 채널{" "}
+                <b className="adm-mono">{outRow?.people ?? 0}</b>명
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import { formatDate } from "../lib/format";
 import { HelpLines, StampSticker, useToast } from "../components/ui";
 import { ResultView, StatusTrack } from "../components/ResultCard";
 import type { Animal } from "../components/AnimalCard";
+import { ChannelButtons } from "../components/Channels";
 
 export type Receipt = {
   story_id: string;
@@ -150,6 +151,8 @@ export default function Done() {
             </div>
           )}
         </section>
+
+        <ChannelButtons className="ch-card" lead="내 사연이 읽히는 순간, 방송에서 같이 봐요" />
 
         {/* 저장용 접수증 (화면 밖에서 이미지로만 씀) */}
         <div className="receipt-offscreen" aria-hidden="true">

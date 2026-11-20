@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { HomeInfo } from "../lib/site";
 import { AnimalCard } from "../components/AnimalCard";
 import { ReviewWall } from "../components/ReviewWall";
+import { ChannelButtons } from "../components/Channels";
 
 /** 누구나 부담 없이 붙일 수 있다는 걸 보여주는 예시 쪽지 (실제 사연 아님) */
 const NOTES = [
@@ -65,6 +66,7 @@ export default function CorkHome({ info, loggedIn }: { info: HomeInfo; loggedIn:
               <span aria-hidden="true">→</span>
             </Link>
           </div>
+          <ChannelButtons className="cb-channels" lead={info.on_air ? "지금 방송에서 쪽지 읽는 중!" : "쪽지는 방송에서 읽어요"} />
           <p className="cb-login">
             <Link to={loggedIn ? "/me" : "/login"}>{loggedIn ? "내 사연함 보기" : "만 14세 이상은 로그인하면 붙인 쪽지를 한곳에 모아둘 수 있어요"}</Link>
           </p>

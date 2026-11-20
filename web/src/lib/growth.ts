@@ -62,3 +62,11 @@ export function currentRef(): string | null {
 export function videoLink(ref: string): string {
   return `${siteUrl()}/v/${ref}`;
 }
+
+/** 사이트 → 내 채널 이동 기록 (go-chzzk, go-youtube). 같은 기기는 하루 한 번만 세요. */
+export function trackOut(target: "chzzk" | "youtube") {
+  supabase.rpc("log_visit", { p_ref: `go-${target}`, p_device: deviceId() }).then(
+    () => {},
+    () => {},
+  );
+}

@@ -31,6 +31,7 @@ export function BroadcastSessionBar() {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   const [confirmNew, setConfirmNew] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -60,6 +61,17 @@ export function BroadcastSessionBar() {
     setConfirmNew(false);
   };
 
+  const end = async () => {
+    setConfirmEnd(false);
+    try {
+      await call("broadcast_end");
+      setCurrent(null);
+      toast("방송을 끝냈어요. 사이트의 '지금 방송 중' 표시가 내려가요");
+    } catch (e) {
+      toast(errMsg(e));
+    }
+  };
+
   const saveTime = async () => {
     if (!current || !value) return;
     try {
@@ -79,7 +91,9 @@ export function BroadcastSessionBar() {
       <section className="adm-session is-off" aria-label="방송 시작">
         <div>
           <p className="adm-session-title">아직 방송 시작을 기록하지 않았어요</p>
-          <p className="adm-dim adm-small">방송을 켤 때 눌러두면, 사연마다 "읽기 시작"을 누를 때 다시보기 시간(예: 1시간 12분)이 자동으로 계산돼요.</p>
+          <p className="adm-dim adm-small">
+            방송을 켤 때 눌러두면, 사이트에 "지금 방송 중!" 띠가 뜨고 사연마다 "읽기 시작"을 누를 때 다시보기 시간(예: 1시간 12분)이 자동으로 계산돼요.
+          </p>
         </div>
         <button className="btn btn-primary btn-lg" onClick={() => start(false)}>
           ● 방송 시작
@@ -132,12 +146,28 @@ export function BroadcastSessionBar() {
           <button className="btn btn-sm btn-ghost" onClick={() => setConfirmNew(true)}>
             새 방송으로 시작
           </button>
+          <button className="btn btn-sm btn-reject" onClick={() => setConfirmEnd(true)}>
+            ■ 방송 끝
+          </button>
           {isOwner && (
             <Link className="btn btn-sm" to="/admin/wrapup">
               오늘 방송 정리 →
             </Link>
           )}
         </div>
+      )}
+      {confirmEnd && (
+        <Dialog title="방송을 끝낼까요?" onClose={() => setConfirmEnd(false)}>
+          <p>사이트의 "지금 방송 중!" 표시가 내려가요. 다시보기 정리와 결과 공개는 나중에 "오늘 방송 정리"에서 하면 돼요.</p>
+          <div className="row">
+            <button className="btn" onClick={() => setConfirmEnd(false)}>
+              취소
+            </button>
+            <button className="btn btn-primary" onClick={end}>
+              방송 끝
+            </button>
+          </div>
+        </Dialog>
       )}
       {confirmNew && (
         <Dialog title="새 방송으로 시작할까요?" onClose={() => setConfirmNew(false)}>

@@ -24,7 +24,7 @@ const GLOBAL_MAX_FAILS = 30;
 
 const MANAGER_ACTIONS = new Set([
   "session", "logout", "list", "get", "queue", "toggle_star", "pick_next", "today_picks", "broadcast", "broadcast_state",
-  "alerts", "broadcast_current", "broadcast_start", "broadcast_update", "read_start", "reviews_list", "after_list",
+  "alerts", "broadcast_current", "broadcast_start", "broadcast_update", "broadcast_end", "read_start", "reviews_list", "after_list",
 ]);
 
 // ---------------------------------------------------------------------
@@ -527,11 +527,11 @@ async function currentBroadcastRow(): Promise<BroadcastRow | null> {
   const db = adminDb();
   const { data: latest } = await db
     .from("broadcasts")
-    .select("id, started_at, vod_url, published_at")
+    .select("id, started_at, vod_url, published_at, ended_at")
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (!latest || latest.published_at) return null;
+  if (!latest || latest.published_at || latest.ended_at) return null;
   const now = Date.now();
   if (now - new Date(latest.started_at).getTime() < LIVE_START_HOURS * 3600_000) return latest;
   const { data: lastRead } = await db
@@ -596,6 +596,14 @@ async function broadcastStart(body: Record<string, unknown>) {
   const { data, error } = await db.from("broadcasts").insert({ started_at: startedAt }).select("id, started_at, vod_url, published_at").single();
   if (error || !data) throw new HttpError(500, "방송 시작을 기록하지 못했어요.");
   return json({ broadcast: data, created: true });
+}
+
+/** 방송 끝: 사이트의 "지금 방송 중" 표시를 내려요. (다시보기 정리·결과 공개는 그대로 나중에) */
+async function broadcastEnd() {
+  const current = await currentBroadcastRow();
+  if (!current) return json({ ok: true, ended: false });
+  await adminDb().from("broadcasts").update({ ended_at: new Date().toISOString() }).eq("id", current.id);
+  return json({ ok: true, ended: true });
 }
 
 /** 방송 시작 시각 고치기 → 그 회차 사연들의 다시보기 시간도 다시 계산 */
@@ -1050,6 +1058,9 @@ async function getSettings(role: Role) {
     auto_notice_enabled: data.auto_notice_enabled,
     auto_notice_days: data.auto_notice_days,
     vod_time_param: data.vod_time_param,
+    chzzk_url: data.chzzk_url ?? "",
+    youtube_url: data.youtube_url ?? "",
+    schedule_text: data.schedule_text ?? "",
   };
   if (role !== "owner") return json(base);
   return json({
@@ -1087,6 +1098,22 @@ async function updateSettings(body: Record<string, unknown>) {
     patch.auto_notice_days = d;
     noticeChanged = true;
   }
+  const channel = (v: unknown, hosts: string[], label: string) => {
+    const t = str(v, 300);
+    if (!t) return null;
+    let u: URL;
+    try {
+      u = new URL(t);
+    } catch {
+      throw new HttpError(400, `${label} 주소를 https:// 로 시작하는 전체 주소로 넣어주세요.`);
+    }
+    const host = u.hostname.replace(/^(www|m)\./, "");
+    if (u.protocol !== "https:" || !hosts.includes(host)) throw new HttpError(400, `${label} 주소가 맞는지 확인해 주세요. (${hosts.join(", ")})`);
+    return u.toString();
+  };
+  if (s.chzzk_url !== undefined) patch.chzzk_url = channel(s.chzzk_url, ["chzzk.naver.com"], "치지직");
+  if (s.youtube_url !== undefined) patch.youtube_url = channel(s.youtube_url, ["youtube.com", "youtu.be"], "유튜브");
+  if (typeof s.schedule_text === "string") patch.schedule_text = str(s.schedule_text, 40);
   if (typeof s.vod_time_param === "string") {
     if (!["currentTime", "t"].includes(s.vod_time_param)) throw new HttpError(400, "알 수 없는 다시보기 시간 형식이에요.");
     patch.vod_time_param = s.vod_time_param;
@@ -1280,6 +1307,8 @@ serve(async (req) => {
       return broadcastStart(body);
     case "broadcast_update":
       return broadcastUpdate(body);
+    case "broadcast_end":
+      return broadcastEnd();
     case "read_start":
       return readStart(body);
     case "wrapup_get":

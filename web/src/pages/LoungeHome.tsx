@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { HomeInfo } from "../lib/site";
 import { AnimalCard } from "../components/AnimalCard";
 import { ReviewWall } from "../components/ReviewWall";
+import { ChannelButtons } from "../components/Channels";
 
 const STEPS = [
   { n: "01", title: "1분이면 사연 접수", desc: "이름 없이 보내도 괜찮아요" },
@@ -62,6 +63,7 @@ export default function LoungeHome({ info, loggedIn }: { info: HomeInfo; loggedI
               <span aria-hidden="true">→</span>
             </Link>
           </div>
+          <ChannelButtons className="lg-channels" lead={info.on_air ? "지금 방송에서 사연 읽는 중!" : "사연은 방송에서 읽어요"} />
           <p className="lg-login">
             <Link to={loggedIn ? "/me" : "/login"}>{loggedIn ? "내 사연함 보기" : "로그인하면 보낸 사연을 한곳에 모아둘 수 있어요"}</Link>
           </p>

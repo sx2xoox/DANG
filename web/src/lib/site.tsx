@@ -13,6 +13,13 @@ export type HomeInfo = {
   week_count: number;
   queue_count: number;
   total_aired: number;
+  /** 내 채널 (관리자 설정) */
+  chzzk_url: string | null;
+  youtube_url: string | null;
+  /** 방송 시간 안내 (예: 매주 금 밤 9시) */
+  schedule_text: string;
+  /** 관리자가 "방송 시작"을 누르고 아직 끝나지 않았으면 true */
+  on_air: boolean;
 };
 
 const DEFAULT_INFO: HomeInfo = {
@@ -24,6 +31,10 @@ const DEFAULT_INFO: HomeInfo = {
   week_count: 0,
   queue_count: 0,
   total_aired: 0,
+  chzzk_url: null,
+  youtube_url: null,
+  schedule_text: "",
+  on_air: false,
 };
 
 type SiteCtx = {
@@ -80,6 +91,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refresh();
+    // "지금 방송 중" 표시가 늦지 않게 1분마다 (화면을 보고 있을 때만)
+    const t = window.setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, 60_000);
+    return () => window.clearInterval(t);
   }, [refresh]);
 
   useEffect(() => {
