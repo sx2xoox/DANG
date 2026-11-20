@@ -139,15 +139,20 @@ export function HelpLines({ compact = false }: { compact?: boolean }) {
     <section className={`help-lines ${compact ? "compact" : ""}`} aria-label="도움받을 수 있는 곳">
       <h2 className="display">혼자 견디지 마세요</h2>
       {!compact && <p>지금 많이 힘들다면, 아래 번호로 바로 이야기할 수 있어요. 무료이고, 이름을 말하지 않아도 돼요.</p>}
-      <ul>
-        {HELP_LINES.map((h) => (
-          <li key={h.tel}>
-            <a href={`tel:${h.tel.replace(/-/g, "")}`} className="btn btn-sm">
-              {h.name} <b>{h.tel}</b>
-            </a>
-          </li>
-        ))}
-      </ul>
+      {(["teen", "all"] as const).map((who) => (
+        <div key={who} className="help-group">
+          <p className="help-who">{who === "teen" ? "청소년" : "성인·누구나 (24시간)"}</p>
+          <ul>
+            {HELP_LINES.filter((h) => h.who === who).map((h) => (
+              <li key={h.tel}>
+                <a href={`tel:${h.tel.replace(/-/g, "")}`} className="btn btn-sm">
+                  {h.name} <b>{h.tel}</b>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
       {!compact && (
         <>
           <p className="help-text-k">전화가 어렵다면 문자·카톡으로도 돼요</p>

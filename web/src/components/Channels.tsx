@@ -74,7 +74,10 @@ export function LiveBanner() {
 export function SiteFooter() {
   return (
     <footer className="site-footer">
-      <p className="site-footer-help">힘든 일이 있다면 청소년상담 1388 (문자 #1388) · 학교폭력 117</p>
+      <p className="site-footer-help">
+        힘든 일이 있다면 <span className="nb">청소년 <a href="tel:1388">1388</a> (문자 #1388) · 학교폭력 <a href="tel:117">117</a></span>{" "}
+        <span className="nb">성인·누구나 <a href="tel:109">109</a> · 정신건강 <a href="tel:15770199">1577-0199</a> (24시간)</span>
+      </p>
     </footer>
   );
 }

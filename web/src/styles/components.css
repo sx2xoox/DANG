@@ -153,6 +153,22 @@
   padding: 12px;
 }
 
+.help-lines .help-group + .help-group {
+  margin-top: 10px;
+}
+
+.help-lines .help-text-k {
+  margin: 14px 0 6px;
+  font-weight: 700;
+}
+
+.help-lines .help-who {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
 /* ================================================================ 트레이딩 카드 */
 .tc {
   --tc-accent: #ffd400;
@@ -1429,7 +1445,19 @@
 .site-footer-help {
   margin: 0;
   font-size: 13px;
+  line-height: 1.7;
   color: var(--text-faint);
+}
+
+.site-footer-help .nb {
+  display: inline-block;
+}
+
+.site-footer-help a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 :root[data-preset="cork"] .site-footer-help {
