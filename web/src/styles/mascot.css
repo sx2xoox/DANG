@@ -1,0 +1,231 @@
+/* ================================================================ 고민 동물 캐릭터 */
+.mascot {
+  --m-size: 120px;
+  position: relative;
+  display: inline-block;
+  width: var(--m-size);
+  height: var(--m-size);
+  flex: none;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+.mascot-body {
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  top: 12%;
+  bottom: 2%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transform-origin: 50% 100%;
+}
+
+.mascot-body img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 2px rgba(60, 35, 15, 0.18));
+  user-select: none;
+}
+
+.mascot-marks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* 그림이 없는 동물: 같은 자리에 이모지 */
+.mascot-emoji {
+  display: inline-grid;
+  place-items: center;
+}
+
+.mascot-emoji-char {
+  font-size: calc(var(--m-size) * 0.62);
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
+/* 황금 */
+.mascot.is-golden .mascot-body img {
+  filter: sepia(1) saturate(2.4) hue-rotate(-12deg) brightness(1.08) contrast(1.05) drop-shadow(0 0 6px rgba(255, 196, 0, 0.75));
+}
+
+/* 아직 못 모은 칸 */
+.mascot.is-silhouette .mascot-body img,
+.mascot.is-silhouette .mascot-emoji-char {
+  filter: brightness(0);
+  opacity: 0.22;
+}
+
+/* ---------------------------------------------------------------- 표정별 움직임 */
+.mood-basic .mascot-body {
+  animation: m-idle 3.2s ease-in-out infinite;
+}
+.mood-cheer .mascot-body {
+  animation: m-hop 0.9s ease-in-out infinite;
+}
+.mood-sad .mascot-body {
+  animation: m-droop 3.4s ease-in-out infinite;
+}
+.mood-love .mascot-body {
+  animation: m-sway 2.4s ease-in-out infinite;
+}
+.mood-worry .mascot-body {
+  animation: m-fidget 1.8s ease-in-out infinite;
+}
+.mood-surprise .mascot-body {
+  animation: m-jump 1.6s ease-out infinite;
+}
+.mood-angry .mascot-body {
+  animation: m-shake 1.4s ease-in-out infinite;
+}
+.mood-dazed .mascot-body {
+  animation: m-tilt 4s ease-in-out infinite;
+}
+.mood-sleepy .mascot-body {
+  animation: m-breathe 3.6s ease-in-out infinite;
+}
+
+@keyframes m-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5%); }
+}
+@keyframes m-hop {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  15% { transform: translateY(0) scale(1.06, 0.94); }
+  45% { transform: translateY(-9%) scale(0.97, 1.04); }
+  75% { transform: translateY(0) scale(1.03, 0.97); }
+}
+@keyframes m-droop {
+  0%, 100% { transform: rotate(-2deg) scale(1, 0.98); }
+  50% { transform: rotate(-4deg) scale(1.01, 0.96); }
+}
+@keyframes m-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes m-fidget {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2%) rotate(-1.5deg); }
+  75% { transform: translateX(2%) rotate(1.5deg); }
+}
+@keyframes m-jump {
+  0%, 60%, 100% { transform: translateY(0) scale(1, 1); }
+  8% { transform: translateY(-12%) scale(0.96, 1.05); }
+  18% { transform: translateY(0) scale(1.06, 0.94); }
+  26% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes m-shake {
+  0%, 40%, 100% { transform: translateX(0); }
+  5%, 15%, 25% { transform: translateX(-2.5%); }
+  10%, 20%, 30% { transform: translateX(2.5%); }
+}
+@keyframes m-tilt {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-7deg) translateY(1%); }
+}
+@keyframes m-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.03, 0.97); }
+}
+
+/* 기호 움직임 */
+.mk-twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mk-twinkle 1.6s ease-in-out infinite;
+}
+.mk-float {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mk-float 2.2s ease-in-out infinite;
+}
+.mk-drip {
+  transform-box: fill-box;
+  animation: mk-drip 2.4s ease-in infinite;
+}
+.mk-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mk-pulse 1s ease-in-out infinite;
+}
+.mk-pop {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: mk-pop 1.6s ease-out infinite;
+}
+.mk-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mk-spin 3s linear infinite;
+}
+.mk-dots circle {
+  animation: mk-dot 1.5s ease-in-out infinite;
+}
+.mk-dots circle:nth-child(2) { animation-delay: 0.2s; }
+.mk-dots circle:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes mk-twinkle {
+  0%, 100% { transform: scale(0.75) rotate(0); opacity: 0.7; }
+  50% { transform: scale(1.1) rotate(20deg); opacity: 1; }
+}
+@keyframes mk-float {
+  0% { transform: translateY(2px); opacity: 0.6; }
+  50% { transform: translateY(-3px); opacity: 1; }
+  100% { transform: translateY(2px); opacity: 0.6; }
+}
+@keyframes mk-drip {
+  0% { transform: translateY(-2px); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(8px); opacity: 0; }
+}
+@keyframes mk-pulse {
+  0%, 100% { transform: scale(0.9); }
+  50% { transform: scale(1.12); }
+}
+@keyframes mk-pop {
+  0%, 60%, 100% { transform: scale(1); }
+  8% { transform: scale(1.25) translateY(-2px); }
+  18% { transform: scale(0.95); }
+}
+@keyframes mk-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes mk-dot {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-body,
+  .mascot-marks * {
+    animation: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------- 카드 안 */
+.tc-window .mascot {
+  --m-size: clamp(96px, 40cqw, 150px);
+}
+.tc-compact .tc-window .mascot {
+  --m-size: 84px;
+}
+.result-name .mascot {
+  --m-size: 1.6em;
+  margin-right: 0.15em;
+  vertical-align: -0.35em;
+}
+
+/* 방송 화면: 예전 이모지용 흑백 필터는 캐릭터에 쓰지 않아요 */
+.obs-root[class] .obs-animal-emoji.mascot {
+  --m-size: 180px;
+  filter: none;
+  font-size: inherit;
+}

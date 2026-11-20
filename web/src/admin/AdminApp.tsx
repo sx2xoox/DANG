@@ -12,6 +12,7 @@ import Wrapup from "./Wrapup";
 import Reviews from "./Reviews";
 import After from "./After";
 import Golden from "./Golden";
+import Mascots from "./Mascots";
 import { formatDate } from "../lib/format";
 import { HELP_LINES } from "@shared/boxes.ts";
 
@@ -99,6 +100,7 @@ const NAV: NavItem[] = [
   { to: "/admin/reviews", label: "상담 후기", badge: "reviews" },
   { to: "/admin/after", label: "그 후 이야기" },
   { to: "/admin/golden", label: "황금 동물", owner: true, badge: "golden" },
+  { to: "/admin/mascots", label: "캐릭터" },
   { to: "/admin/stats", label: "통계", owner: true },
   { to: "/admin/settings", label: "설정", owner: true },
 ];
@@ -204,6 +206,7 @@ function AdminLayout() {
           <Route path="reviews" element={<Reviews />} />
           <Route path="after" element={<After />} />
           <Route path="golden" element={isOwner ? <Golden /> : <OwnerOnly />} />
+          <Route path="mascots" element={<Mascots />} />
           <Route path="stats" element={isOwner ? <Stats /> : <OwnerOnly />} />
           <Route path="settings" element={isOwner ? <Settings /> : <OwnerOnly />} />
           <Route path="*" element={<OwnerOnly text="없는 메뉴예요." />} />

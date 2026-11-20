@@ -1,7 +1,6 @@
 import { formatOffset } from "@shared/results.ts";
 import { formatDate } from "../lib/format";
 import type { AirResult } from "../lib/mystory";
-import { ChannelButtons } from "./Channels";
 
 /** 방송 결과: "방송에서 읽었어요!" + 방송 날짜 + 다시보기 링크(읽기 시작한 시간부터) + 다웅의 한마디(선택) */
 export function AirResultCard({ result }: { result: AirResult }) {
@@ -22,7 +21,6 @@ export function AirResultCard({ result }: { result: AirResult }) {
           <p className="air-novod">다시보기가 올라오면 여기에 링크가 생겨요.</p>
         )}
         {result.vod_url && at && <p className="air-hint">링크가 처음부터 열리면 {at} 지점으로 옮겨서 보세요.</p>}
-        <ChannelButtons compact lead="다음 방송도 같이 봐요" />
         {result.host_note && (
           <blockquote className="air-note">
             <span className="air-note-who">방송에서 남긴 한마디</span>

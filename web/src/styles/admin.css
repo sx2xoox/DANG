@@ -2548,3 +2548,66 @@
   font-size: 13px;
   color: var(--text-dim);
 }
+
+/* ---------------------------------------------------------------- 캐릭터 도안 */
+.adm-ms-test label {
+  font-weight: 700;
+}
+.adm-ms-test-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.adm-ms-test-row .input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.adm-ms-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+}
+.adm-chip {
+  border: 1px solid var(--line);
+  background: var(--paper-w);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.adm-chip small {
+  color: var(--ink-3, #7a6a5a);
+  font-size: 12px;
+}
+.adm-chip.is-on {
+  background: var(--ink);
+  color: var(--paper-w);
+  border-color: var(--ink);
+}
+.adm-chip.is-on small {
+  color: inherit;
+  opacity: 0.75;
+}
+.adm-ms-grid {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+}
+.adm-ms-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px 12px;
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  text-align: center;
+}

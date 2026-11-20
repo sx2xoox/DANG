@@ -332,12 +332,13 @@ export function temperatureLabel(t: number): string {
   return "인생 걸림";
 }
 
+/** 도움 연락처: who 는 누가 거는 번호인지 (청소년 / 누구나·성인) */
 export const HELP_LINES = [
-  { name: "청소년상담", tel: "1388" },
-  { name: "학교폭력 상담·신고", tel: "117" },
-  { name: "자살예방상담", tel: "109" },
-  { name: "정신건강위기상담", tel: "1577-0199" },
-];
+  { name: "청소년상담", tel: "1388", who: "teen" },
+  { name: "학교폭력 상담·신고", tel: "117", who: "teen" },
+  { name: "자살예방상담", tel: "109", who: "all" },
+  { name: "정신건강위기상담", tel: "1577-0199", who: "all" },
+] as const;
 
 /** 전화가 어려울 때 (학생들은 문자·카톡을 더 편해해요) */
 export const HELP_TEXT_LINES = [
