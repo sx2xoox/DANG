@@ -314,13 +314,16 @@ function usePaging(scroll: number, deps: unknown[]) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
-  // 한 번에 보이는 높이의 약 85%씩, 줄 단위로 맞춰 넘깁니다.
-  const step = Math.max(m.line, Math.floor((m.vh * 0.85) / m.line) * m.line);
-  const overflow = Math.max(0, m.ch - m.vh);
-  const pages = m.vh ? 1 + Math.ceil(overflow / step) : 1;
+  // 보이는 높이를 줄 단위로 잘라 반쯤 잘린 줄이 보이지 않게 하고,
+  // 한 번에 보이는 높이의 약 85%씩 줄 단위로 맞춰 넘깁니다.
+  const pad = 8;
+  const clipH = m.vh ? Math.max(m.line, Math.floor((m.vh - pad) / m.line) * m.line + pad) : 0;
+  const step = Math.max(m.line, Math.floor(((clipH - pad) * 0.85) / m.line) * m.line);
+  const overflow = Math.max(0, m.ch - clipH);
+  const pages = clipH ? 1 + Math.ceil(overflow / step) : 1;
   const page = Math.min(Math.max(0, scroll), pages - 1);
-  const offset = Math.min(page * step, overflow);
-  return { viewportRef, contentRef, pages, page, offset, more: offset < overflow - 2 };
+  const offset = Math.min(page * step, Math.ceil(overflow / m.line) * m.line);
+  return { viewportRef, contentRef, pages, page, offset, clipH, more: offset < overflow - 2 };
 }
 
 function ObsLetter({
@@ -343,7 +346,7 @@ function ObsLetter({
   const voiceLabel = optionLabel(GOMIN.voices, card.voice);
   const catLabel = optionLabel(GOMIN.categories, card.category);
   const who = ageGender(card.age, card.gender);
-  const { viewportRef, contentRef, pages, page, offset, more } = usePaging(scroll, [card.id, card.body, preset]);
+  const { viewportRef, contentRef, pages, page, offset, clipH, more } = usePaging(scroll, [card.id, card.body, preset]);
   const no = String(card.receipt_no).padStart(4, "0");
 
   return (
@@ -390,9 +393,11 @@ function ObsLetter({
             <span className="obs-voice-v">{voiceLabel}</span>
           </div>
 
-          <div className={`obs-body-viewport ${more ? "has-more" : ""}`} ref={viewportRef}>
-            <div className="obs-body" ref={contentRef} style={{ transform: `translateY(${-offset}px)` }}>
-              {card.body}
+          <div className="obs-body-viewport" ref={viewportRef}>
+            <div className={`obs-body-clip ${more ? "has-more" : ""}`} style={clipH ? { height: clipH } : undefined}>
+              <div className="obs-body" ref={contentRef} style={{ transform: `translateY(${-offset}px)` }}>
+                {card.body}
+              </div>
             </div>
           </div>
 

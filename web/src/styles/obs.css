@@ -283,6 +283,11 @@ html.obs-mode body {
   border-top: 2px dashed rgba(11, 18, 32, 0.25);
 }
 
+.obs-body-clip {
+  position: relative;
+  overflow: hidden;
+}
+
 .obs-body {
   padding-top: 8px;
   font-size: 36px;
@@ -297,7 +302,7 @@ html.obs-mode body {
   transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.obs-body-viewport.has-more::after {
+.obs-body-clip.has-more::after {
   content: "";
   position: absolute;
   left: 0;
@@ -550,7 +555,7 @@ html.obs-mode body {
   padding-top: 46px;
 }
 
-.obs-cork .obs-body-viewport.has-more::after {
+.obs-cork .obs-body-clip.has-more::after {
   background: linear-gradient(rgba(255, 253, 247, 0), #fffdf7);
 }
 
@@ -727,7 +732,7 @@ html.obs-mode body {
   border-top: 3px dashed rgba(43, 35, 64, 0.3);
 }
 
-.obs-gacha .obs-body-viewport.has-more::after {
+.obs-gacha .obs-body-clip.has-more::after {
   background: linear-gradient(rgba(255, 255, 255, 0), #fff);
 }
 
