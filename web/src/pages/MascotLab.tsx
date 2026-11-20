@@ -1,59 +1,21 @@
-import { Mascot, SPECIES, type Mood } from "../components/Mascot";
+import { CRITTERS, CritterArt } from "../components/Critters";
 
-const MOODS: Mood[] = ["calm", "worry", "teary", "angry", "dizzy", "happy", "blank", "sleepy"];
-const MOOD_LABEL: Record<Mood, string> = { calm: "평온", worry: "걱정", teary: "슬픔·억울", angry: "분노", dizzy: "멘붕", happy: "설렘", blank: "현타", sleepy: "졸림" };
-const SAMPLE: [string, Mood][] = [
-  ["곱씹는 라쿤", "worry"],
-  ["새벽 3시 부엉이", "sleepy"],
-  ["갈팡질팡 문어", "dizzy"],
-  ["삐진 고양이", "angry"],
-  ["볼 빵빵 햄스터", "calm"],
-  ["꼬리 내린 강아지", "teary"],
-  ["두근두근 토끼", "happy"],
-  ["현타 온 펭귄", "blank"],
-  ["갈림길 거북이", "worry"],
-  ["눈치 보는 여우", "calm"],
-  ["현타 온 코알라", "blank"],
-  ["웅크린 고슴도치", "teary"],
-];
-
-/** 마스코트 그림체 시안 모아보기 (/lab/mascot) */
+/** 고민 동물 캐릭터 시안 모아보기 (/lab/mascot) */
 export default function MascotLab() {
-  const rest = Object.keys(SPECIES).filter((s) => !SAMPLE.some(([n]) => n.endsWith(s)));
+  const ids = Object.keys(CRITTERS);
   return (
     <div style={{ background: "#f4ead8", minHeight: "100vh", padding: 40, color: "#2b2118" }}>
-      <h1 style={{ margin: "0 0 24px", fontSize: 34 }}>고민 동물 그림체 시안</h1>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 20 }}>
-        {SAMPLE.map(([name, mood]) => (
-          <figure key={name} style={{ margin: 0, background: "#fffaf0", padding: "18px 10px 14px", textAlign: "center", borderRadius: 18 }}>
+      <h1 style={{ margin: "0 0 24px", fontSize: 34 }}>고민 동물 캐릭터 시안</h1>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 22 }}>
+        {ids.map((id) => (
+          <figure key={id} style={{ margin: 0, background: "#fffaf0", padding: "26px 12px 18px", textAlign: "center", borderRadius: 20 }}>
             <div style={{ display: "grid", placeItems: "center" }}>
-              <Mascot name={name} mood={mood} size={190} />
+              <CritterArt id={id} size={300} />
             </div>
-            <figcaption style={{ fontSize: 22, marginTop: 6 }}>{name}</figcaption>
-          </figure>
-        ))}
-      </div>
-
-      <h2 style={{ margin: "40px 0 16px", fontSize: 26 }}>같은 동물, 다른 고민 (표정 8종)</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 14 }}>
-        {MOODS.map((m) => (
-          <figure key={m} style={{ margin: 0, background: "#fffaf0", padding: "12px 6px", textAlign: "center", borderRadius: 14 }}>
-            <div style={{ display: "grid", placeItems: "center" }}>
-              <Mascot name="라쿤" mood={m} size={140} />
-            </div>
-            <figcaption style={{ fontSize: 20 }}>{MOOD_LABEL[m]}</figcaption>
-          </figure>
-        ))}
-      </div>
-
-      <h2 style={{ margin: "40px 0 16px", fontSize: 26 }}>그 밖의 동물들</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 14 }}>
-        {rest.map((s, i) => (
-          <figure key={s} style={{ margin: 0, background: "#fffaf0", padding: "12px 6px", textAlign: "center", borderRadius: 14 }}>
-            <div style={{ display: "grid", placeItems: "center" }}>
-              <Mascot name={s} mood={MOODS[i % MOODS.length]} size={140} />
-            </div>
-            <figcaption style={{ fontSize: 20 }}>{s}</figcaption>
+            <figcaption style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 26 }}>{CRITTERS[id].title}</div>
+              <div style={{ fontSize: 18, opacity: 0.65, marginTop: 4 }}>{CRITTERS[id].concept}</div>
+            </figcaption>
           </figure>
         ))}
       </div>
