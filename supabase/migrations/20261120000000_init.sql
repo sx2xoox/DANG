@@ -352,3 +352,18 @@ select cron.schedule('dawoong-cleanup', '0 19 * * *', $$
   delete from public.submit_log where created_at < now() - interval '3 days';
   delete from public.auth_attempts where created_at < now() - interval '30 days';
 $$);
+
+-- 방송 중 사연 바꾸기 (한 번에 하나만 방송 중이 되도록 한 문장으로 처리, service_role 전용)
+create or replace function public.set_on_air(p_story uuid)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  update public.stories
+     set status = case when id = p_story then 'on_air' else 'approved' end
+   where (status = 'on_air' or id = p_story)
+     and status <> 'read';
+$$;
+
+revoke all on function public.set_on_air(uuid) from public, anon, authenticated;

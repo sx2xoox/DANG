@@ -408,9 +408,8 @@ async function pickNext(body: Record<string, unknown>) {
   const db = adminDb();
   const now = new Date().toISOString();
   await db.from("picks").insert({ story_id: result.id });
-  // 방송 중 표시 (이전에 방송 중이던 사연은 대기열로 되돌림)
-  await db.from("stories").update({ status: "approved" }).eq("status", "on_air").neq("id", result.id);
-  await db.from("stories").update({ status: "on_air" }).eq("id", result.id);
+  // 방송 중 표시 (이전에 방송 중이던 사연은 대기열로 되돌림, 한 번에 처리)
+  await db.rpc("set_on_air", { p_story: result.id });
   if (body.show_on_obs !== false) {
     await db
       .from("broadcast_state")
@@ -443,9 +442,8 @@ async function broadcast(body: Record<string, unknown>) {
     if (!s) throw new HttpError(404, "사연을 찾을 수 없어요.");
     if (s.status === "pending" || s.status === "rejected") throw new HttpError(400, "승인된 사연만 방송에 띄울 수 있어요.");
     await db.from("broadcast_state").update({ story_id: id, hidden: false, revealed: false, scroll: 0, roulette: null, updated_at: now }).eq("id", 1);
-    if (s.status === "approved") {
-      await db.from("stories").update({ status: "approved" }).eq("status", "on_air").neq("id", id);
-      await db.from("stories").update({ status: "on_air" }).eq("id", id);
+    if (s.status === "approved" || s.status === "on_air") {
+      await db.rpc("set_on_air", { p_story: id });
     }
   } else if (op === "hide") {
     await db.from("broadcast_state").update({ hidden: true, roulette: null, updated_at: now }).eq("id", 1);
