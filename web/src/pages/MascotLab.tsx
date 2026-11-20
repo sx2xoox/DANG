@@ -21,11 +21,11 @@ const SAMPLE: [string, Mood][] = [
 export default function MascotLab() {
   const rest = Object.keys(SPECIES).filter((s) => !SAMPLE.some(([n]) => n.endsWith(s)));
   return (
-    <div style={{ background: "#e2c49b", minHeight: "100vh", padding: 40, color: "#2b2118" }}>
+    <div style={{ background: "#f4ead8", minHeight: "100vh", padding: 40, color: "#2b2118" }}>
       <h1 style={{ margin: "0 0 24px", fontSize: 34 }}>고민 동물 그림체 시안</h1>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 20 }}>
         {SAMPLE.map(([name, mood]) => (
-          <figure key={name} style={{ margin: 0, background: "#fffdf6", padding: "18px 10px 14px", textAlign: "center", boxShadow: "0 10px 16px -8px rgba(60,36,14,.45)" }}>
+          <figure key={name} style={{ margin: 0, background: "#fffaf0", padding: "18px 10px 14px", textAlign: "center", borderRadius: 18 }}>
             <div style={{ display: "grid", placeItems: "center" }}>
               <Mascot name={name} mood={mood} size={190} />
             </div>
@@ -37,7 +37,7 @@ export default function MascotLab() {
       <h2 style={{ margin: "40px 0 16px", fontSize: 26 }}>같은 동물, 다른 고민 (표정 8종)</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 14 }}>
         {MOODS.map((m) => (
-          <figure key={m} style={{ margin: 0, background: "#fff1a8", padding: "12px 6px", textAlign: "center" }}>
+          <figure key={m} style={{ margin: 0, background: "#fffaf0", padding: "12px 6px", textAlign: "center", borderRadius: 14 }}>
             <div style={{ display: "grid", placeItems: "center" }}>
               <Mascot name="라쿤" mood={m} size={140} />
             </div>
@@ -49,7 +49,7 @@ export default function MascotLab() {
       <h2 style={{ margin: "40px 0 16px", fontSize: 26 }}>그 밖의 동물들</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 14 }}>
         {rest.map((s, i) => (
-          <figure key={s} style={{ margin: 0, background: "#fffdf6", padding: "12px 6px", textAlign: "center" }}>
+          <figure key={s} style={{ margin: 0, background: "#fffaf0", padding: "12px 6px", textAlign: "center", borderRadius: 14 }}>
             <div style={{ display: "grid", placeItems: "center" }}>
               <Mascot name={s} mood={MOODS[i % MOODS.length]} size={140} />
             </div>
