@@ -21,7 +21,6 @@ type PickRes = {
   queue_count: number;
   from_scheduled: boolean;
 };
-type Pick = { picked_at: string; id: string; receipt_no: number; summary: string; broadcast_name: string; status: string; host_note?: string | null };
 
 /** 방송 콘솔: 대기열 → 다음 사연 뽑기 → OBS 로 열어서 읽기 → 읽음 처리 */
 export default function Broadcast() {
@@ -31,7 +30,8 @@ export default function Broadcast() {
   const [queue, setQueue] = useState<ListItem[] | null>(null);
   const [bs, setBs] = useState<BroadcastState | null>(null);
   const [story, setStory] = useState<StoryBundle | null>(null);
-  const [picks, setPicks] = useState<Pick[]>([]);
+  const [done, setDone] = useState<ListItem[]>([]);
+  const [tab, setTab] = useState<"wait" | "done">("wait");
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
   const [font, setFont] = useState<number>(() => store.get("dg.admin.consoleFont", 24));
@@ -41,9 +41,12 @@ export default function Broadcast() {
 
   const loadQueue = useCallback(async () => {
     try {
-      const [q, p] = await Promise.all([call<{ items: ListItem[] }>("queue"), call<{ items: Pick[] }>("today_picks")]);
+      const [q, d] = await Promise.all([
+        call<{ items: ListItem[] }>("queue"),
+        call<{ items: ListItem[] }>("list", { filters: { status: "read" }, sort: "newest", page: 0 }),
+      ]);
       setQueue(q.items);
-      setPicks(p.items);
+      setDone([...d.items].sort((a, b) => (b.read_started_at ?? "").localeCompare(a.read_started_at ?? "")));
     } catch (e) {
       setError(errMsg(e));
     }
@@ -131,6 +134,25 @@ export default function Broadcast() {
       toast(readStartMessage(res));
       storyIdRef.current = null;
       setSessionTick((t) => t + 1);
+      await refresh();
+    } catch (e) {
+      toast(errMsg(e));
+    }
+  };
+
+  // 다 읽었어요: (아직이면 읽음 기록) → 방송 화면 카드 내리기 → 사연 처리 완료 탭으로
+  const finish = async () => {
+    if (!story) return;
+    const st = story.story;
+    try {
+      if (st.status !== "read") {
+        await call("read_start", { id: st.id });
+        setSessionTick((t) => t + 1);
+      }
+      setBs(await call<BroadcastState>("broadcast", { op: "clear" }));
+      storyIdRef.current = null;
+      setStory(null);
+      toast(`#${st.receipt_no} 사연을 처리 완료로 옮겼어요`);
       await refresh();
     } catch (e) {
       toast(errMsg(e));
@@ -254,7 +276,7 @@ export default function Broadcast() {
           <div className="adm-console-text" style={{ fontSize: font }}>
             {s.body}
           </div>
-          <NoteBox id={story.story.id} initial={story.story.host_note} compact onSaved={(note) => setPicks((ps) => ps.map((x) => (x.id === story.story.id ? { ...x, host_note: note } : x)))} />
+          <NoteBox id={story.story.id} initial={story.story.host_note} compact onSaved={(note) => setDone((ds) => ds.map((x) => (x.id === story.story.id ? { ...x, host_note: note } : x)))} />
           {story.follow_ups.length > 0 && (
             <div className="adm-console-follow">
               <p className="adm-label">상담 그 후 이야기</p>
@@ -309,6 +331,9 @@ export default function Broadcast() {
             ) : (
               <span className="adm-tag ok">읽음</span>
             )}
+            <button className="btn btn-primary" onClick={finish} title="방송 화면 카드를 내리고 이 사연을 '사연 처리 완료'로 옮겨요.">
+              ✓ 다 읽었어요
+            </button>
           </div>
         </div>
       )}
@@ -317,9 +342,42 @@ export default function Broadcast() {
 
   const queuePanel = (
     <section className="adm-queue" aria-label="방송 대기 목록">
-      <h2 className="adm-h2">
-        방송 대기 목록 <span className="adm-mono adm-dim">{queue.length}</span>
-      </h2>
+      <div className="adm-tabs" role="tablist" aria-label="사연 목록">
+        <button type="button" role="tab" aria-selected={tab === "wait"} className={`adm-tab ${tab === "wait" ? "is-on" : ""}`} onClick={() => setTab("wait")}>
+          방송 대기 <span className="adm-mono">{queue.length}</span>
+        </button>
+        <button type="button" role="tab" aria-selected={tab === "done"} className={`adm-tab ${tab === "done" ? "is-on" : ""}`} onClick={() => setTab("done")}>
+          사연 처리 완료 <span className="adm-mono">{done.length}</span>
+        </button>
+      </div>
+      {tab === "done" && (
+        <div className="adm-donelist">
+          {done.length === 0 ? (
+            <p className="adm-dim">아직 처리한 사연이 없어요. 방송에서 다 읽고 "✓ 다 읽었어요"를 누르면 여기로 와요.</p>
+          ) : (
+            <ul>
+              {done.map((r) => (
+                <li key={r.id}>
+                  <span className="adm-mono adm-dim">
+                    {r.read_started_at ? new Date(r.read_started_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                  </span>
+                  <Link to={`/admin/stories/${r.id}`} className="adm-no">
+                    #{r.receipt_no}
+                  </Link>
+                  <span className="adm-q-sum">
+                    <b>{r.summary}</b>
+                    <span className="adm-dim">{r.broadcast_name}</span>
+                  </span>
+                  {r.host_note ? <span className="adm-tag ok">한마디 완료</span> : <span className="adm-tag">한마디 없음</span>}
+                  {r.result_published_at ? <span className="adm-tag blue">결과 공개됨</span> : <span className="adm-tag warn">결과 미공개</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {tab === "wait" && (
+        <>
       <p className="adm-dim adm-small">오래 기다린 순서예요. 같은 날짜 사연이 여럿이면 그중에서 룰렛을 돌려요. "방송 예정" 사연은 먼저 뽑아요.</p>
       {groups.length === 0 && <p className="adm-dim">방송 대기 목록이 비어 있어요.</p>}
       {groups.map(([day, rows], gi) => (
@@ -354,21 +412,7 @@ export default function Broadcast() {
           </ul>
         </div>
       ))}
-      {picks.length > 0 && (
-        <div className="adm-picks">
-          <h3 className="adm-h3">오늘 뽑은 사연</h3>
-          <ul>
-            {picks.map((p, i) => (
-              <li key={i}>
-                <span className="adm-mono adm-dim">{new Date(p.picked_at).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })}</span>
-                <span className="adm-no">#{p.receipt_no}</span>
-                <span className="adm-q-sum">{p.summary}</span>
-                {p.host_note && <span className="adm-tag ok">완료</span>}
-                <StatusChip status={p.status as ListItem["status"]} />
-              </li>
-            ))}
-          </ul>
-        </div>
+        </>
       )}
     </section>
   );

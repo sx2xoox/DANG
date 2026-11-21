@@ -2653,3 +2653,57 @@
   flex: none;
   align-self: flex-end;
 }
+
+/* ---------------------------------------------------------------- 방송: 방송 대기 / 사연 처리 완료 탭 */
+.adm-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 10px;
+}
+.adm-tab {
+  border: 0;
+  background: transparent;
+  color: var(--ink-3, #7a6a5a);
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 8px 12px;
+  margin-bottom: -2px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.adm-tab.is-on {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.adm-tab .adm-mono {
+  font-size: 13px;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+.adm-donelist ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.adm-donelist li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper-w);
+}
+.adm-donelist .adm-q-sum {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.adm-flag.is-reason {
+  font-weight: 400;
+}

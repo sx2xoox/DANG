@@ -273,8 +273,9 @@ async function submit(req: Request, body: Record<string, unknown>) {
       wish,
       stamp,
       voice,
-      // 위험 표시(자해·욕설·저격·연락처·학교/실명)가 없으면 바로 방송 대기로, 있으면 검토 대기로
-      status: flags.length ? "pending" : "approved",
+      // 처음에는 검토 대기로 저장하고, 고민 동물을 지으며 AI 가 위험한지 본 뒤에 방송 대기로 옮겨요.
+      // (AI 판단이 끝나기 전에 방송에서 뽑히지 않게)
+      status: "pending",
       visibility,
       badge,
       flags,
@@ -299,14 +300,26 @@ async function submit(req: Request, body: Record<string, unknown>) {
   // AI 가 늦거나 실패해도 기본 동물로 항상 결과가 나와요. (제출은 이미 저장됨)
   const prev = user ? await previousAnimals(user.id, story.id) : [];
   let animal: Record<string, unknown>;
+  let aiReview: { needed: boolean; reason: string } = { needed: false, reason: "" };
   try {
-    animal = (await generateAnimalFor(story, prev, 40_000)).animal;
+    const gen = await generateAnimalFor(story, prev, 40_000);
+    animal = gen.animal;
+    aiReview = gen.review;
   } catch (e) {
     console.error("animal generation failed", e);
     const fb = fallbackAnimal({ category, temperature, wish, stamp, care });
     animal = { story_id: story.id, ...fb, source: "fallback", ...transformation(prev[0], fb.name, "") };
     await db.from("worry_animals").upsert(animal, { onConflict: "story_id" });
     await db.from("stories").update({ animal_state: "failed" }).eq("id", story.id);
+  }
+
+  // 위험 단어 표시도 없고 AI 도 괜찮다고 보면 바로 방송 대기, 아니면 검토 대기에 남겨요.
+  if (aiReview.needed) {
+    // 이유는 "ai:..." 로 같은 표시 목록에 남겨요 (관리자 화면에 그대로 보여요)
+    const extra = ["ai_review", ...(aiReview.reason ? [`ai:${aiReview.reason}`] : [])];
+    await db.from("stories").update({ flags: [...new Set([...flags, ...extra])] }).eq("id", story.id);
+  } else if (flags.length === 0) {
+    await db.from("stories").update({ status: "approved" }).eq("id", story.id).eq("status", "pending");
   }
 
   return json({

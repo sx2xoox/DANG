@@ -490,6 +490,9 @@ async function broadcast(body: Record<string, unknown>) {
     }
   } else if (op === "hide") {
     await db.from("broadcast_state").update({ hidden: true, roulette: null, updated_at: now }).eq("id", 1);
+  } else if (op === "clear") {
+    // 다 읽었어요: 방송 화면 카드를 내리고 지금 사연 자리를 비워요 (사연은 처리 완료로)
+    await db.from("broadcast_state").update({ story_id: null, hidden: true, revealed: false, scroll: 0, roulette: null, updated_at: now }).eq("id", 1);
   } else if (op === "reveal" || op === "unreveal") {
     await db.from("broadcast_state").update({ revealed: op === "reveal", updated_at: now }).eq("id", 1);
   } else if (op === "scroll") {

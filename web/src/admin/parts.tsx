@@ -13,8 +13,8 @@ export function FlagChips({ flags }: { flags: string[] }) {
   return (
     <>
       {flags.map((f) => (
-        <span key={f} className={`adm-flag ${f === "care" ? "is-care" : ""}`}>
-          {FLAG_LABEL[f] ?? f}
+        <span key={f} className={`adm-flag ${f === "care" || f === "ai_review" ? "is-care" : ""} ${f.startsWith("ai:") ? "is-reason" : ""}`}>
+          {f.startsWith("ai:") ? `AI: ${f.slice(3)}` : FLAG_LABEL[f] ?? f}
         </span>
       ))}
     </>

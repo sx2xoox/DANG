@@ -69,5 +69,5 @@ export async function generateAnimalFor(story: any, prev: Prev[], deadlineMs?: n
   await db.from("worry_animals").upsert(row, { onConflict: "story_id" });
   const animalState = result.source === "ai" ? "ready" : error ? "failed" : "fallback";
   await db.from("stories").update({ animal_state: animalState }).eq("id", story.id);
-  return { animal: row, animalState };
+  return { animal: row, animalState, review: { needed: result.review_needed, reason: result.review_reason } };
 }

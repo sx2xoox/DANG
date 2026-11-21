@@ -23,6 +23,9 @@ http.createServer((req, res) => {
         ...a,
         description: "지금은 마음이 한쪽으로 기울었다가 다시 돌아오기를 반복하는 상태예요. 그만큼 이 관계를 소중하게 여긴다는 뜻이에요. 이 유형은 상대의 마음을 오래 헤아리는 다정함이 장점이에요. \"네 마음도 충분히 중요해\"라는 말이 힘이 돼요.",
         change_reason: hasPrev ? "기다림이 길어지면서 마음이 밤으로 옮겨갔어요." : "",
+        // 시험용: 본문에 "광고"가 있으면 방송 전 확인이 필요하다고 판단
+        review_needed: JSON.stringify(parsed.messages).includes("광고"),
+        review_reason: JSON.stringify(parsed.messages).includes("광고") ? "광고성 글 의심" : "",
       });
     } else {
       text = "안녕하세요, 다웅이에요. 사연 정말 잘 읽었어요. 많이 서운했겠다는 마음이 먼저 들었어요. 그래도 먼저 연락해 보는 용기를 내보면 어떨까요? 응원할게요!";

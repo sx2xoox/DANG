@@ -97,6 +97,10 @@ const ANIMAL_SYSTEM = `당신은 치지직 스트리머 "다웅"의 고민 상�
 - quote: 그 동물이 할 법한 짧은 한마디. 예) "1 사라졌는데요…?"
 - hashtags: 해시태그 정확히 3개. 각각 #으로 시작하고 띄어쓰기 없이. 예) #관계고민 #활활 #판결파
 - change_reason: 이전 고민 동물이 주어졌고 이번 동물이 달라졌다면, 왜 바뀌었는지 한 줄. 이전 동물이 없거나 같다면 빈 문자열.
+- review_needed: 이 사연을 방송에서 읽기 전에 운영자가 먼저 확인해야 하면 true, 평범한 고민이면 false.
+  true 인 경우: 자해·자살을 암시함, 학대·폭력·범죄 피해나 가해, 성적인 내용, 특정인을 저격하거나 실명·연락처·학교·직장 같은 신상이 드러남, 혐오 표현이나 심한 욕설, 장난·도배·광고처럼 고민 사연이 아님, 방송에서 읽으면 사연자가 위험해질 수 있음.
+  애매하면 true 로 해요. 그냥 슬프거나 화나거나 고민이 큰 것만으로는 true 가 아니에요.
+- review_reason: review_needed 가 true 면 운영자에게 보여줄 이유 한 줄(20자 안팎), false 면 빈 문자열.
 
 ${ANIMAL_RULES}`;
 
@@ -110,8 +114,10 @@ const ANIMAL_SCHEMA = {
     quote: { type: "string" },
     hashtags: { type: "array", items: { type: "string" } },
     change_reason: { type: "string" },
+    review_needed: { type: "boolean" },
+    review_reason: { type: "string" },
   },
-  required: ["name", "emoji", "why", "description", "quote", "hashtags", "change_reason"],
+  required: ["name", "emoji", "why", "description", "quote", "hashtags", "change_reason", "review_needed", "review_reason"],
   additionalProperties: false,
 };
 
@@ -131,7 +137,13 @@ export type AnimalRequest = {
   recentNames: string[];
 };
 
-export type AnimalResult = AnimalCard & { change_reason: string; source: "ai" | "fallback" };
+export type AnimalResult = AnimalCard & {
+  change_reason: string;
+  source: "ai" | "fallback";
+  /** AI 가 방송 전 확인이 필요하다고 본 사연 (기본 동물일 때는 판단 없음 = false) */
+  review_needed: boolean;
+  review_reason: string;
+};
 
 const EMOJI_RE = /^\p{Extended_Pictographic}(️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*$/u;
 
@@ -179,6 +191,8 @@ function normalizeAnimal(a: any, req: AnimalRequest): AnimalResult {
     hashtags: a.hashtags.map((t: string) => t.trim()),
     change_reason: String(a.change_reason ?? "").trim(),
     source: "ai",
+    review_needed: a.review_needed === true,
+    review_reason: String(a.review_reason ?? "").trim().slice(0, 60),
   };
 }
 
@@ -222,6 +236,8 @@ export async function createAnimal(req: AnimalRequest, deadlineMs = 40_000): Pro
     ...fallbackAnimal({ ...req, care: req.care }),
     change_reason: "",
     source: "fallback",
+    review_needed: false,
+    review_reason: "",
   });
   if (!aiEnabled()) return { result: fb(), error: "AI 키가 설정되지 않음" };
 

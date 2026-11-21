@@ -257,7 +257,7 @@ export const STATUS_LABEL: Record<Status, string> = {
   pending: "검토 대기",
   approved: "방송 대기",
   on_air: "방송 중",
-  read: "방송에서 읽음",
+  read: "처리 완료",
   rejected: "반려",
 };
 

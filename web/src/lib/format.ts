@@ -71,4 +71,5 @@ export const FLAG_LABEL: Record<string, string> = {
   targeting: "저격 의심",
   pii: "개인정보 의심",
   school: "학교·실명 의심",
+  ai_review: "AI 확인 필요",
 };

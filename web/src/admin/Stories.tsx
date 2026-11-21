@@ -92,6 +92,28 @@ export default function Stories() {
 
   const list = (
     <section className="adm-list" aria-label="사연 목록">
+      <div className="adm-tabs" role="tablist" aria-label="상태별 보기">
+        {(
+          [
+            ["", "전체"],
+            ["pending", "검토 대기"],
+            ["approved", "방송 대기"],
+            ["read", "사연 처리 완료"],
+            ["rejected", "반려"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id || "all"}
+            type="button"
+            role="tab"
+            aria-selected={filters.status === id}
+            className={`adm-tab ${filters.status === id ? "is-on" : ""}`}
+            onClick={() => set("status")(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="adm-list-head">
         <div className="adm-search">
           <label htmlFor="adm-q" className="sr-only">
