@@ -24,7 +24,7 @@ export function FollowUpBox({ auth, items, onChange }: { auth: StoryAuth; items:
       onChange([...items, res.follow_up]);
       setText("");
       setCare(res.care);
-      toast("후속 보고를 남겼어요!");
+      toast("상담 그 후 이야기를 남겼어요!");
     } catch (err) {
       toast(err instanceof ApiError ? err.message : "저장하지 못했어요");
     } finally {
@@ -34,7 +34,7 @@ export function FollowUpBox({ auth, items, onChange }: { auth: StoryAuth; items:
 
   return (
     <section className="followup" aria-labelledby="fu-title">
-      <h2 id="fu-title">후속 보고</h2>
+      <h2 id="fu-title">상담 그 후 이야기</h2>
       <p>그 뒤로 어떻게 됐는지 이어서 들려주세요. 여러 번 쓸 수 있고, 방송의 "지난 사연자분들 근황" 코너에서 소개될 수도 있어요.</p>
       {care && <HelpLines />}
       {items.length > 0 && (
@@ -49,7 +49,7 @@ export function FollowUpBox({ auth, items, onChange }: { auth: StoryAuth; items:
       )}
       <form className="stack" onSubmit={add}>
         <label htmlFor="fu" className="sr-only">
-          후속 보고 쓰기
+          그 후 이야기 쓰기
         </label>
         <textarea
           id="fu"
@@ -69,7 +69,7 @@ export function FollowUpBox({ auth, items, onChange }: { auth: StoryAuth; items:
         )}
         {typingCare && !care && <HelpLines compact />}
         <button type="submit" className="post-btn post-btn-main" disabled={saving || !text.trim()} style={{ alignSelf: "flex-end" }}>
-          {saving ? "남기는 중…" : "후속 보고 남기기"}
+          {saving ? "남기는 중…" : "그 후 이야기 남기기"}
         </button>
       </form>
     </section>

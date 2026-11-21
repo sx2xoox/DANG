@@ -273,6 +273,8 @@ async function submit(req: Request, body: Record<string, unknown>) {
       wish,
       stamp,
       voice,
+      // 위험 표시(자해·욕설·저격·연락처·학교/실명)가 없으면 바로 방송 대기로, 있으면 검토 대기로
+      status: flags.length ? "pending" : "approved",
       visibility,
       badge,
       flags,
@@ -351,7 +353,7 @@ async function myStory(req: Request, body: Record<string, unknown>) {
 async function followUpAdd(req: Request, body: Record<string, unknown>) {
   const story = await storyForRequest(req, body);
   const text = str(body.body, 3000);
-  if (!text) throw new HttpError(400, "후속 보고를 써주세요.");
+  if (!text) throw new HttpError(400, "그 후 이야기를 써주세요.");
   const db = adminDb();
   const since = new Date(Date.now() - 10 * 60_000).toISOString();
   const { count } = await db.from("follow_ups").select("id", { count: "exact", head: true }).eq("story_id", story.id).gte("created_at", since);
@@ -362,7 +364,7 @@ async function followUpAdd(req: Request, body: Record<string, unknown>) {
     .insert({ story_id: story.id, body: text, flags })
     .select("id, body, created_at")
     .single();
-  if (error || !data) throw new HttpError(500, "후속 보고를 저장하지 못했어요.");
+  if (error || !data) throw new HttpError(500, "그 후 이야기를 저장하지 못했어요.");
   return json({ follow_up: data, care: flags.includes("care") });
 }
 

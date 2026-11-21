@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { StampSticker } from "./ui";
 import type { Preset } from "../lib/site";
 
@@ -81,30 +81,7 @@ export function Roulette({ candidates, resultIndex, startedAt, durationMs, prese
   const announce = done ? <p className="sr-only">뽑힌 사연: {winner.summary}</p> : null;
 
   if (preset === "cork") {
-    return (
-      <div className={cls} aria-live="polite">
-        <div className="rl-board">
-          <div className="rl-board-title display" aria-hidden="true">
-            오늘의 사연 뽑기
-          </div>
-          <div className="rl-board-grid">
-            {candidates.map((c, i) => (
-              <div
-                key={c.id + i}
-                className={`rl-note ${i === idx ? "is-on" : ""} ${done && i === safeResult ? "is-win" : ""} ${done && i !== safeResult ? "is-dim" : ""}`}
-                style={{ ["--r" as string]: `${((i * 37) % 9) - 4}deg` }}
-              >
-                <span className="rl-pin" aria-hidden="true" />
-                <StampSticker stamp={c.stamp} size="sm" />
-                <span className="rl-sum">{c.summary}</span>
-                <span className="rl-name">{c.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        {announce}
-      </div>
-    );
+    return <CorkDraw candidates={candidates} idx={idx} done={done} result={safeResult} cls={cls} announce={announce} />;
   }
 
   if (preset === "gacha") {
@@ -197,6 +174,91 @@ export function Roulette({ candidates, resultIndex, startedAt, durationMs, prese
           {bulbs.map((_, i) => (
             <span key={i} style={{ ["--i" as string]: i }} />
           ))}
+        </div>
+      </div>
+      {announce}
+    </div>
+  );
+}
+
+/**
+ * 코르크 보드 뽑기: 내용을 가린 "?" 쪽지가 붙어 있고, 불빛이 쪽지 사이를 옮겨 다니다 멈추면
+ * 그 쪽지가 압정에서 떨어져 가운데로 나와 뒤집히며 사연이 보여요.
+ */
+function CorkDraw({
+  candidates,
+  idx,
+  done,
+  result,
+  cls,
+  announce,
+}: {
+  candidates: RouletteCandidate[];
+  idx: number;
+  done: boolean;
+  result: number;
+  cls: string;
+  announce: ReactNode;
+}) {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const winRef = useRef<HTMLDivElement>(null);
+  const [move, setMove] = useState<{ dx: number; dy: number } | null>(null);
+
+  // 뽑힌 쪽지가 보드 가운데로 오도록 거리를 재요 (화면 배율과 상관없는 레이아웃 값으로)
+  useLayoutEffect(() => {
+    if (!done) {
+      setMove(null);
+      return;
+    }
+    const grid = gridRef.current;
+    const el = winRef.current;
+    if (!grid || !el) return;
+    setMove({
+      dx: grid.clientWidth / 2 - (el.offsetLeft + el.offsetWidth / 2),
+      dy: grid.clientHeight / 2 - (el.offsetTop + el.offsetHeight / 2),
+    });
+  }, [done]);
+
+  const winner = candidates[result];
+  return (
+    <div className={`${cls} rl-draw`} aria-live="polite">
+      <div className="rl-board">
+        <div className="rl-board-title display" aria-hidden="true">
+          오늘의 고민 쪽지 뽑기
+        </div>
+        <div className="rl-board-grid" ref={gridRef}>
+          {candidates.map((c, i) => {
+            const isWin = done && i === result;
+            return (
+              <div
+                key={c.id + i}
+                ref={i === result ? winRef : undefined}
+                className={`rl-note ${!done && i === idx ? "is-on" : ""} ${isWin && move ? "is-pulled" : ""} ${done && !isWin ? "is-dim" : ""}`}
+                style={{
+                  ["--r" as string]: `${((i * 37) % 9) - 4}deg`,
+                  ["--dx" as string]: `${move?.dx ?? 0}px`,
+                  ["--dy" as string]: `${move?.dy ?? 0}px`,
+                }}
+                aria-hidden={!isWin}
+              >
+                <span className="rl-pin" aria-hidden="true" />
+                <div className="rl-note-inner">
+                  <div className="rl-face rl-front" aria-hidden="true">
+                    ?
+                  </div>
+                  <div className="rl-face rl-back">
+                    {isWin && (
+                      <>
+                        <StampSticker stamp={winner.stamp} size="sm" />
+                        <span className="rl-sum">{winner.summary}</span>
+                        <span className="rl-name">{winner.name}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
       {announce}

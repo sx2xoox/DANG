@@ -181,6 +181,7 @@ export type ListItem = {
   logged_in: boolean;
   animal: { name: string; emoji: string; source: string } | null;
   follow_up_count: number;
+  host_note?: string | null;
   review_reaction: string | null;
 };
 

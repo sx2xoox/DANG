@@ -3,16 +3,16 @@ import { Link } from "react-router-dom";
 import { GOMIN, optionEmoji, optionLabel } from "@shared/boxes.ts";
 import { dayLabel, errMsg, useAdmin, useWide, type BroadcastState, type ListItem, type StoryBundle } from "./api";
 import { AnimalMini, CareNote, FlagChips, StatusChip } from "./parts";
-import { Roulette, type RouletteCandidate } from "../components/Roulette";
+import type { RouletteCandidate } from "../components/Roulette";
 import { Dialog, StampSticker, Spinner, useToast } from "../components/ui";
 import { personLabel } from "../lib/format";
-import { useSite } from "../lib/site";
 import { copyText } from "../lib/image";
 import { store } from "../lib/supabase";
 import ReadMode from "./ReadMode";
+import { NoteBox } from "./NoteBox";
 import { BroadcastSessionBar, readStartMessage } from "./BroadcastSession";
 
-type RouletteData = { id: string; duration_ms: number; result_index: number; candidates: RouletteCandidate[]; day?: string };
+type RouletteData = { id: string; duration_ms: number; result_index: number; candidates: RouletteCandidate[]; day?: string; same_day_count?: number; pool_count?: number };
 type PickRes = {
   result: { id: string; receipt_no: number; summary: string; broadcast_name: string };
   roulette: RouletteData | null;
@@ -21,19 +21,17 @@ type PickRes = {
   queue_count: number;
   from_scheduled: boolean;
 };
-type Pick = { picked_at: string; id: string; receipt_no: number; summary: string; broadcast_name: string; status: string };
+type Pick = { picked_at: string; id: string; receipt_no: number; summary: string; broadcast_name: string; status: string; host_note?: string | null };
 
 /** 방송 콘솔: 대기열 → 다음 사연 뽑기 → OBS 로 열어서 읽기 → 읽음 처리 */
 export default function Broadcast() {
   const { call, isOwner } = useAdmin();
-  const { info } = useSite();
   const toast = useToast();
   const wide = useWide(1100);
   const [queue, setQueue] = useState<ListItem[] | null>(null);
   const [bs, setBs] = useState<BroadcastState | null>(null);
   const [story, setStory] = useState<StoryBundle | null>(null);
   const [picks, setPicks] = useState<Pick[]>([]);
-  const [spin, setSpin] = useState<(RouletteData & { startedAt: number; resultNo: number }) | null>(null);
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
   const [font, setFont] = useState<number>(() => store.get("dg.admin.consoleFont", 24));
@@ -101,12 +99,10 @@ export default function Broadcast() {
     setBusy(true);
     try {
       const res = await call<PickRes>("pick_next");
-      if (res.roulette) {
-        setSpin({ ...res.roulette, startedAt: Date.now(), resultNo: res.result.receipt_no });
-      } else {
-        toast(`#${res.result.receipt_no} 사연을 띄웠어요`);
-        await refresh();
-      }
+      // 쪽지 뽑기 연출은 방송 화면(OBS)에만 나와요. 관리자 화면에는 바로 결과가 떠요.
+      toast(`#${res.result.receipt_no} 사연을 뽑았어요 · 방송 화면에서 쪽지 뽑기가 나와요`);
+      storyIdRef.current = null;
+      await refresh();
     } catch (e) {
       toast(errMsg(e));
     } finally {
@@ -161,7 +157,7 @@ export default function Broadcast() {
 
   const pickBar = (
     <section className="adm-pickbar" aria-label="다음 사연 뽑기">
-      <button className="btn btn-primary btn-xl" onClick={pickNext} disabled={busy || !!spin || waiting.length === 0}>
+      <button className="btn btn-primary btn-xl" onClick={pickNext} disabled={busy || waiting.length === 0}>
         {busy ? "뽑는 중…" : "다음 사연 뽑기"}
       </button>
       <p className="adm-pickbar-info">
@@ -182,11 +178,12 @@ export default function Broadcast() {
             {nextDayCount > 1 ? (
               <>
                 {" "}
-                <b className="adm-mono">{nextDayCount}</b>개 중 룰렛으로 하나를 골라요
+                <b className="adm-mono">{nextDayCount}</b>개 중에서 하나를 뽑아요
               </>
             ) : (
-              " 1개라 바로 띄워요"
+              " 1개"
             )}
+            {" "}· 방송 화면에 쪽지 뽑기가 나와요
           </>
         )}
       </p>
@@ -212,35 +209,14 @@ export default function Broadcast() {
         )}
       </div>
 
-      {spin && (
-        <div className="adm-spin">
-          <p className="adm-label">{spin.day ? `${dayLabel(spin.day)} 사연 ${spin.candidates.length}개 중에서` : "룰렛"}</p>
-          <Roulette
-            candidates={spin.candidates}
-            resultIndex={spin.result_index}
-            startedAt={spin.startedAt}
-            durationMs={spin.duration_ms}
-            preset={info.preset}
-            onDone={() => {
-              window.setTimeout(async () => {
-                toast(`#${spin.resultNo} 사연이 뽑혔어요`);
-                setSpin(null);
-                storyIdRef.current = null;
-                await refresh();
-              }, 1400);
-            }}
-          />
-        </div>
-      )}
-
-      {!spin && !s && (
+      {!s && (
         <div className="adm-empty">
           <p className="adm-title-sm">방송 화면에 띄운 사연이 없어요</p>
           <p className="adm-dim">"다음 사연 뽑기"를 누르거나 대기열에서 사연을 골라 띄우세요.</p>
         </div>
       )}
 
-      {!spin && s && story && (
+      {s && story && (
         <>
           {s.flags.includes("care") && <CareNote />}
           <div className="adm-cues">
@@ -278,9 +254,10 @@ export default function Broadcast() {
           <div className="adm-console-text" style={{ fontSize: font }}>
             {s.body}
           </div>
+          <NoteBox id={story.story.id} initial={story.story.host_note} compact onSaved={(note) => setPicks((ps) => ps.map((x) => (x.id === story.story.id ? { ...x, host_note: note } : x)))} />
           {story.follow_ups.length > 0 && (
             <div className="adm-console-follow">
-              <p className="adm-label">후속 보고</p>
+              <p className="adm-label">상담 그 후 이야기</p>
               {story.follow_ups.map((f) => (
                 <p key={f.id}>{f.body}</p>
               ))}
@@ -293,7 +270,7 @@ export default function Broadcast() {
         </>
       )}
 
-      {!spin && s && (
+      {s && (
         <div className="adm-controls" role="group" aria-label="방송 화면 조작">
           <div className="adm-controls-row">
             {bs.hidden || !live ? (
@@ -386,6 +363,7 @@ export default function Broadcast() {
                 <span className="adm-mono adm-dim">{new Date(p.picked_at).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })}</span>
                 <span className="adm-no">#{p.receipt_no}</span>
                 <span className="adm-q-sum">{p.summary}</span>
+                {p.host_note && <span className="adm-tag ok">완료</span>}
                 <StatusChip status={p.status as ListItem["status"]} />
               </li>
             ))}

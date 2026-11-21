@@ -172,7 +172,7 @@ function broadcastName(s: { display_name: string; visibility: string }): string 
 }
 
 const LIST_FIELDS =
-  "id, receipt_no, display_name, name_mode, age, age_group, age_public, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, scheduled, consent_shorts, ref, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, read_started_at, result_published_at, waiting_notice_at, user_id, worry_animals(name, emoji, source), follow_ups(count), reviews(reaction)";
+  "id, receipt_no, display_name, name_mode, age, age_group, age_public, gender, category, summary, temperature, wish, stamp, voice, visibility, badge, status, starred, scheduled, consent_shorts, ref, flags, animal_state, viewer_status, created_at, reviewed_at, aired_at, read_started_at, result_published_at, waiting_notice_at, user_id, host_note, worry_animals(name, emoji, source), follow_ups(count), reviews(reaction)";
 
 function listRow(s: any) {
   const animal = Array.isArray(s.worry_animals) ? s.worry_animals[0] : s.worry_animals;
@@ -212,6 +212,7 @@ function listRow(s: any) {
     logged_in: !!s.user_id,
     animal: animal ? { name: animal.name, emoji: animal.emoji, source: animal.source } : null,
     follow_up_count: s.follow_ups?.[0]?.count ?? 0,
+    host_note: s.host_note ?? null,
     review_reaction: (Array.isArray(s.reviews) ? s.reviews[0] : s.reviews)?.reaction ?? null,
   };
 }
@@ -432,19 +433,20 @@ async function pickNext(body: Record<string, unknown>) {
   const sameDay = pool.filter((s) => kstDay(s.created_at) === day);
   const result = sameDay[Math.floor(Math.random() * sameDay.length)];
 
-  let roulette = null;
-  if (sameDay.length > 1) {
-    const others = sameDay.filter((s) => s.id !== result.id).sort(() => Math.random() - 0.5).slice(0, 11);
-    const candidates = [...others, result].sort(() => Math.random() - 0.5);
-    roulette = {
-      id: randomToken(8),
-      started_at: new Date().toISOString(),
-      duration_ms: 5200,
-      day,
-      result_index: candidates.findIndex((c) => c.id === result.id),
-      candidates: candidates.map((c) => ({ id: c.id, name: broadcastName(c), summary: c.summary, stamp: c.stamp })),
-    };
-  }
+  // 뽑기 연출은 사연이 하나여도 항상 보여줘요. 보드에는 기다리는 쪽지를 최대 12장 붙여요.
+  // (뽑히는 사연은 위 규칙대로 가장 오래 기다린 날의 사연 중에서 골라요)
+  const others = pool.filter((s) => s.id !== result.id).sort(() => Math.random() - 0.5).slice(0, 11);
+  const candidates = [...others, result].sort(() => Math.random() - 0.5);
+  const roulette = {
+    id: randomToken(8),
+    started_at: new Date().toISOString(),
+    duration_ms: 5200,
+    day,
+    same_day_count: sameDay.length,
+    pool_count: pool.length,
+    result_index: candidates.findIndex((c) => c.id === result.id),
+    candidates: candidates.map((c) => ({ id: c.id, name: broadcastName(c), summary: c.summary, stamp: c.stamp })),
+  };
 
   const db = adminDb();
   const now = new Date().toISOString();
@@ -463,7 +465,7 @@ async function pickNext(body: Record<string, unknown>) {
 async function todayPicks() {
   const { data } = await adminDb()
     .from("picks")
-    .select("picked_at, stories(id, receipt_no, display_name, visibility, summary, stamp, status)")
+    .select("picked_at, stories(id, receipt_no, display_name, visibility, summary, stamp, status, host_note)")
     .gte("picked_at", kstStart("day"))
     .order("picked_at", { ascending: false });
   return json({
@@ -569,6 +571,17 @@ async function vodParam(): Promise<string> {
 
 function offsetSec(readAt: string, startedAt: string): number {
   return Math.max(0, Math.round((new Date(readAt).getTime() - new Date(startedAt).getTime()) / 1000));
+}
+
+/** 사연 한마디(코멘트) 저장: 결과를 공개하면 사연자 화면에 "방송에서 남긴 한마디"로 보여요 */
+async function saveNote(body: Record<string, unknown>) {
+  const id = str(body.id, 60);
+  const note = str(body.host_note, 2000).trim();
+  if ([...note].length > HOST_NOTE_MAX) throw new HttpError(400, `한마디는 ${HOST_NOTE_MAX}자 이내로 써주세요.`);
+  const { data, error } = await adminDb().from("stories").update({ host_note: note || null }).eq("id", id).select("id, host_note").maybeSingle();
+  if (error) throw error;
+  if (!data) throw new HttpError(404, "사연을 찾을 수 없어요.");
+  return json({ id: data.id, host_note: data.host_note });
 }
 
 async function broadcastCurrent() {
@@ -1304,6 +1317,8 @@ serve(async (req) => {
       return alerts(session.role);
     case "ref_stats":
       return refStats(body);
+    case "note_save":
+      return saveNote(body);
     case "broadcast_current":
       return broadcastCurrent();
     case "broadcast_start":

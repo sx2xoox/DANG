@@ -2611,3 +2611,45 @@
   border-radius: 6px;
   text-align: center;
 }
+
+/* ---------------------------------------------------------------- 사연 한마디 (코멘트) */
+.adm-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper-w);
+}
+.adm-note.is-done {
+  border-color: #8fc79a;
+  background: #f3faf3;
+}
+.adm-note-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+.adm-note-head .adm-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.adm-note-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.adm-note-row .input {
+  flex: 1 1 auto;
+  min-width: 0;
+  resize: vertical;
+}
+.adm-note-row .btn {
+  flex: none;
+  align-self: flex-end;
+}

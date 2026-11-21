@@ -89,7 +89,7 @@ export default function StoryLookup() {
 
       {confirmDelete && (
         <Dialog title="사연을 지울까요?" onClose={() => setConfirmDelete(false)}>
-          <p style={{ margin: 0 }}>사연, 고민 동물 결과, 후기, 후속 보고가 모두 지워지고 되돌릴 수 없어요.</p>
+          <p style={{ margin: 0 }}>사연, 고민 동물 결과, 후기, 상담 그 후 이야기가 모두 지워지고 되돌릴 수 없어요.</p>
           <div className="row">
             <button type="button" className="btn btn-danger" onClick={removeStory}>
               지우기

@@ -187,6 +187,7 @@ export default function Stories() {
                       <span aria-hidden="true">{s.animal.emoji}</span> {s.animal.name}
                     </span>
                   )}
+                  {s.host_note && <span className="adm-tag ok">완료</span>}
                   {s.scheduled && <span className="adm-tag blue">방송 예정</span>}
                   {s.consent_shorts && <span className="adm-tag ok">쇼츠 OK</span>}
                   {s.status === "read" && !s.result_published_at && <span className="adm-tag warn">결과 미공개</span>}

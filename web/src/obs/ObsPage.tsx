@@ -40,6 +40,8 @@ type ObsRoulette = {
   duration_ms: number;
   result_index: number;
   day?: string;
+  same_day_count?: number;
+  pool_count?: number;
   candidates: RouletteCandidate[];
 };
 
@@ -61,7 +63,7 @@ const STAGE_H = 1080;
 /** 룰렛이 끝난 뒤 이 시간 안에 처음 열렸다면 아직 보여줍니다 */
 const ROULETTE_GRACE_MS = 8000;
 /** 룰렛이 멈춘 뒤 결과를 잠깐 보여주고 편지로 넘어가는 시간 */
-const ROULETTE_HOLD_MS = 1600;
+const ROULETTE_HOLD_MS = 2800;
 const LEAVE_MS = 650;
 
 const PLAYED_KEY = "dg.obs.playedRoulettes";
@@ -176,9 +178,10 @@ export default function ObsPage() {
     if (state?.preset) applyPreset(state.preset);
   }, [state?.preset]);
 
-  // ------------------------------------------------------------ 룰렛 (같은 날 사연이 여럿일 때만)
+  // ------------------------------------------------------------ 사연 뽑기 연출 (사연을 뽑을 때마다)
   const playedRef = useRef<Set<string>>(loadPlayed());
   const [activeRoulette, setActiveRoulette] = useState<(ObsRoulette & { localStart: number }) | null>(null);
+  const [, bumpPlayed] = useState(0);
 
   useEffect(() => {
     const r = state?.roulette;
@@ -189,6 +192,7 @@ export default function ObsPage() {
       // 너무 오래된 룰렛은 건너뜁니다 (페이지를 새로 열었을 때 다시 돌지 않게)
       playedRef.current.add(r.id);
       savePlayed(playedRef.current);
+      bumpPlayed((n) => n + 1);
       return;
     }
     setActiveRoulette({ ...r, localStart: serverStart - offsetRef.current });
@@ -215,7 +219,9 @@ export default function ObsPage() {
   }, [state, activeRoulette]);
 
   // ------------------------------------------------------------ 편지 등장/퇴장
-  const wantCard = state && !state.hidden && !activeRoulette ? state.card : null;
+  // 뽑기 연출이 시작되기 전에 결과 카드가 먼저 보이지 않게, 아직 안 본 연출이 있으면 카드를 기다려요.
+  const pendingRoulette = !!state?.roulette && !playedRef.current.has(state.roulette.id);
+  const wantCard = state && !state.hidden && !activeRoulette && !pendingRoulette ? state.card : null;
   const [shown, setShown] = useState<{ card: ObsCard; leaving: boolean } | null>(null);
   const lastAnimal = useRef<Record<string, ObsAnimal>>({});
   if (wantCard?.animal) lastAnimal.current[wantCard.id] = wantCard.animal;
@@ -257,10 +263,14 @@ export default function ObsPage() {
 
         {activeRoulette && (
           <div className="obs-roulette" key={activeRoulette.id}>
-            <p className="obs-roulette-banner">
-              {activeRoulette.day && <span className="obs-roulette-day">{dayLabel(activeRoulette.day)} 도착</span>}
-              같은 날 도착한 사연 {activeRoulette.candidates.length}통 중에서 뽑는 중
-            </p>
+            {preset === "cork" ? (
+              <p className="obs-roulette-banner">기다리는 고민 쪽지 {activeRoulette.pool_count ?? activeRoulette.candidates.length}장 중에서 뽑는 중…</p>
+            ) : (
+              <p className="obs-roulette-banner">
+                {activeRoulette.day && <span className="obs-roulette-day">{dayLabel(activeRoulette.day)} 도착</span>}
+                같은 날 도착한 사연 {activeRoulette.same_day_count ?? activeRoulette.candidates.length}통 중에서 뽑는 중
+              </p>
+            )}
             <Roulette
               candidates={activeRoulette.candidates}
               resultIndex={activeRoulette.result_index}

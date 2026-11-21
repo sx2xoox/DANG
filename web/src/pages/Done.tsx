@@ -114,7 +114,7 @@ export default function Done() {
         <section className="code-slip" aria-labelledby="code-title">
           <div className="code-slip-head">
             <h2 id="code-title">사연 조회 코드</h2>
-            <p>이 코드로 내 결과와 방송 결과(다시보기 링크)를 다시 보고, 후기와 후속 보고를 남기거나 사연을 지울 수 있어요. 잃어버리면 다시 찾을 수 없어요.</p>
+            <p>이 코드로 내 결과와 방송 결과(다시보기 링크)를 다시 보고, 후기와 상담 그 후 이야기를 남기거나 사연을 지울 수 있어요. 잃어버리면 다시 찾을 수 없어요.</p>
           </div>
           <div className="code-slip-pair">
             <div>

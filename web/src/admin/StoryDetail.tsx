@@ -8,6 +8,7 @@ import { useSite } from "../lib/site";
 import { MASCOT_ANIMALS } from "@shared/mascots.ts";
 import ReadMode from "./ReadMode";
 import { PrivateMessagePanel, ResultPanel, ReviewPanel } from "./StoryExtras";
+import { NoteBox } from "./NoteBox";
 
 type Props = {
   id: string;
@@ -208,6 +209,7 @@ export default function StoryDetail({ id, onChanged, onDeleted, onBack }: Props)
         <p className="adm-dim adm-small">오래 기다린 사연이라 사연자에게 "사연은 잘 받았어요. 다음 방송 후보에 남아 있어요" 안내가 보이고 있어요.</p>
       )}
 
+      <NoteBox id={s.id} initial={s.host_note} onSaved={() => changed()} />
       <PrivateMessagePanel data={data} onChanged={changed} />
       <ResultPanel data={data} onChanged={changed} />
       <ReviewPanel data={data} onChanged={changed} />
