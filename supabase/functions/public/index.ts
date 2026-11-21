@@ -205,7 +205,7 @@ async function submit(req: Request, body: Record<string, unknown>) {
   };
   if (!["chzzk", "anon"].includes(nameMode)) bad("이름 방식을 골라주세요.");
   if (!displayName) bad("이름을 정해주세요.");
-  if (!box.ageGroups.some((g) => g.id === ageGroup)) bad("학년대를 골라주세요.");
+  if (!box.ageGroups.some((g) => g.id === ageGroup)) bad("연령대를 선택해주세요.");
   if (age !== null && (age < 8 || age > 99)) bad("나이는 숫자로 알려주세요. (적지 않아도 돼요)");
   if (!box.genders.some((g) => g.id === gender)) bad("성별을 골라주세요.");
   if (!box.categories.some((c) => c.id === category)) bad("고민 종류를 골라주세요.");

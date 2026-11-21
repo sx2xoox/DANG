@@ -1196,7 +1196,7 @@ async function exportCsv() {
     .select("receipt_no, created_at, display_name, name_mode, visibility, age, gender, category, summary, body, temperature, wish, stamp, voice, status, starred, flags, aired_at, vod_url, host_note, consent_shorts, ref, age_group, age_public, worry_animals(name, emoji), reviews(reaction, comment)")
     .order("created_at", { ascending: true });
   const label = (list: { id: string; label: string }[], id: string) => list.find((o) => o.id === id)?.label ?? id;
-  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "학년대", "나이", "나이 방송공개", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일", "다시보기", "다웅의 한마디", "후기 반응", "한 줄 후기", "쇼츠 사용 동의", "유입 영상"];
+  const head = ["접수번호", "날짜", "이름", "이름방식", "공개방식", "연령대", "나이", "나이 방송공개", "성별", "종류", "한줄요약", "본문", "온도", "듣고싶은말", "우표", "목소리", "상태", "별표", "표시", "고민동물", "방송일", "다시보기", "다웅의 한마디", "후기 반응", "한 줄 후기", "쇼츠 사용 동의", "유입 영상"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [head.map(esc).join(",")];
   for (const s of (data ?? []) as any[]) {

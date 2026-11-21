@@ -76,7 +76,7 @@ export default function Stats() {
         />
         <Bars title="이번 주 종류별" rows={cat} />
         <Bars title="이번 주 감정 우표" rows={stamps} />
-        <Bars title="이번 주 학년대" rows={ages} empty="이번 주 사연이 아직 없어요." />
+        <Bars title="이번 주 연령대" rows={ages} empty="이번 주 사연이 아직 없어요." />
         <Bars
           title="많이 나온 고민 동물"
           rows={d.top_animals.map(([label, value]) => ({ label, value }))}

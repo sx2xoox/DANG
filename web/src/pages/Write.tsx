@@ -155,7 +155,7 @@ export default function Write() {
   const valid: Record<number, string | null> = {
     1: !d.name_mode ? "이름 방식을 골라주세요." : !displayName ? "치지직 닉네임을 적어주세요." : null,
     2: !d.age_group
-      ? "학년대를 골라주세요."
+      ? "연령대를 선택해주세요."
       : ageNum !== null && (!Number.isInteger(ageNum) || ageNum < 8 || ageNum > 99)
         ? "나이는 숫자로 적어주세요. (적지 않아도 돼요)"
         : !d.gender
@@ -391,12 +391,12 @@ export default function Write() {
         )}
 
         {d.step === 2 && (
-          <Step title="나에 대해 알려주세요" headingRef={headingRef} hint="방송에서는 학년대만 말해요. 정확한 나이는 원할 때만 적어주세요.">
+          <Step title="나에 대해 알려주세요" headingRef={headingRef} hint="방송에서는 연령대만 말해요. 정확한 나이는 원할 때만 적어주세요.">
             <div className="field">
               <span className="label" id="group-label">
-                학년대
+                연령대
               </span>
-              <ChoiceGroup name="age_group" label="학년대" value={d.age_group} onChange={(v) => set("age_group", v)} options={GOMIN.ageGroups} />
+              <ChoiceGroup name="age_group" label="연령대" value={d.age_group} onChange={(v) => set("age_group", v)} options={GOMIN.ageGroups} />
             </div>
             <div className="field">
               <label htmlFor="age">
@@ -427,7 +427,7 @@ export default function Write() {
                   <input type="checkbox" checked={!!d.age_public} onChange={(e) => set("age_public", e.target.checked)} />
                   <span>
                     방송에서 정확한 나이를 말해도 돼요
-                    <small className="check-sub">체크하지 않으면 방송에서는 "{optionLabel(GOMIN.ageGroups, d.age_group) || "학년대"}"까지만 말해요.</small>
+                    <small className="check-sub">체크하지 않으면 방송에서는 "{optionLabel(GOMIN.ageGroups, d.age_group) || "연령대"}"까지만 말해요.</small>
                   </span>
                 </label>
               )}
