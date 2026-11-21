@@ -116,6 +116,21 @@ export default function Broadcast() {
       setBusy(false);
     }
   };
+  // 대기 목록에서 "띄우기": 오른쪽 미리 보기에만 띄워요. 방송 화면에는 "방송에 띄우기"를 눌러야 나가요.
+  const loadCand = async (id: string) => {
+    setBusy(true);
+    try {
+      const b = peek[id] ?? (await call<StoryBundle>("get", { id }));
+      setSkipped([]);
+      setCand(b);
+      setCandDel(false);
+      requestAnimationFrame(() => document.querySelector(".adm-cand")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    } catch (e) {
+      toast(errMsg(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   const closeCand = () => {
     setCand(null);
     setSkipped([]);
@@ -315,7 +330,7 @@ export default function Broadcast() {
     <section className="adm-cand" aria-label="뽑은 사연 미리 보기">
       <div className="adm-cand-head">
         <span className="adm-tag warn">아직 방송 화면에 안 나갔어요</span>
-        <span className="adm-dim adm-small">내용을 확인하고 띄우세요. 시청자에게는 안 보여요.</span>
+        <span className="adm-dim adm-small">내용을 확인하고 "방송에 띄우기"를 누르세요. 그 전까지 시청자에게는 안 보여요.</span>
       </div>
       {cand.story.flags.includes("care") && <CareNote />}
       <RiskNote flags={cand.story.flags} />
@@ -578,7 +593,7 @@ export default function Broadcast() {
       )}
       {tab === "wait" && (
         <>
-      <p className="adm-dim adm-small">오래 기다린 순서예요. 같은 날짜 사연이 여럿이면 그중에서 하나를 뽑아요. "방송 예정" 사연은 먼저 뽑아요. 사연을 누르면 내용을 볼 수 있어요.</p>
+      <p className="adm-dim adm-small">오래 기다린 순서예요. 같은 날짜 사연이 여럿이면 그중에서 하나를 뽑아요. "방송 예정" 사연은 먼저 뽑아요. 사연을 누르면 내용을 볼 수 있고, "띄우기"를 누르면 오른쪽에 먼저 떠요.</p>
       {groups.length === 0 && <p className="adm-dim">방송 대기 목록이 비어 있어요.</p>}
       {groups.map(([day, rows], gi) => (
         <div key={day} className="adm-qgroup">
@@ -609,7 +624,15 @@ export default function Broadcast() {
                   <span className="adm-q-side">
                     {r.scheduled && <span className="adm-tag blue">방송 예정</span>}
                     <FlagChips flags={r.flags.filter((f) => !f.startsWith("ai:"))} />
-                    {r.status === "on_air" && <span className="adm-st st-on_air">방송 중</span>}
+                    {r.status === "on_air" ? (
+                      <span className="adm-st st-on_air">방송 중</span>
+                    ) : cand?.story.id === r.id ? (
+                      <span className="adm-tag warn">미리 보는 중</span>
+                    ) : (
+                      <button className="btn btn-sm" disabled={busy} onClick={() => loadCand(r.id)}>
+                        띄우기
+                      </button>
+                    )}
                   </span>
                   {isOpen && (
                     <div className="adm-q-peek">
@@ -626,8 +649,8 @@ export default function Broadcast() {
                       </details>
                       <div className="adm-q-actions">
                         {r.status !== "on_air" && (
-                          <button className="btn btn-primary" disabled={busy} onClick={() => showDrawn(r.id)}>
-                            방송에 띄우기
+                          <button className="btn btn-primary" disabled={busy} onClick={() => loadCand(r.id)}>
+                            띄우기
                           </button>
                         )}
                         <button className="btn" onClick={() => starPeek(r)} aria-pressed={r.starred}>
@@ -683,15 +706,18 @@ export default function Broadcast() {
       </header>
       <BroadcastSessionBar key={sessionTick} />
       {pickBar}
-      {candPanel}
       <div className={wide ? "adm-bc-grid" : "stack"}>
         {wide ? (
           <>
             {queuePanel}
-            {console_}
+            <div className="stack">
+              {candPanel}
+              {console_}
+            </div>
           </>
         ) : (
           <>
+            {candPanel}
             {console_}
             {queuePanel}
           </>
