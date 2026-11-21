@@ -168,7 +168,7 @@ const Phone: React.FC = () => {
   const local = frame - S.phone[0];
   const enter = spring({ frame: local, fps, config: { damping: 15, stiffness: 170 } });
   const exit = interpolate(frame, [M.phoneOut, M.phoneOut + 6], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
-  // 화면 안 단계: 학년대 → 온도 → 우표
+  // 화면 안 단계: 연령대 → 온도 → 우표
   const step = frame < M.slide1 ? 0 : frame < M.slide2 ? 1 : 2;
   const slide = (start: number) => interpolate(frame, [start, start + 6], [100, 0], { ...clamp, easing: Easing.out(Easing.cubic) });
   const offset = step === 1 ? slide(M.slide1) : step === 2 ? slide(M.slide2) : 0;
@@ -217,7 +217,7 @@ const StepAge: React.FC = () => {
   const ripple = interpolate(frame, [M.tap, M.tap + 10], [0, 1], clamp);
   return (
     <div>
-      <div style={stepTitle}>학년대를 골라줘</div>
+      <div style={stepTitle}>연령대를 선택해줘</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, margin: "0 56px" }}>
         {AGE.map((a, i) => {
           const on = picked && i === 2;
