@@ -84,3 +84,8 @@ html .adm h2,
 html .adm .adm-title {
   font-weight: 400;
 }
+
+/* 연성체는 굵은 글꼴이 없어서, 억지로 굵게 하면 획이 많은 글자(뽑·뻥 등)가 뭉개져요 */
+.toast {
+  font-weight: 400;
+}

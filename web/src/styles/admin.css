@@ -2707,3 +2707,13 @@
 .adm-flag.is-reason {
   font-weight: 400;
 }
+
+/* 방송: 이상한 사연 반려·삭제 줄, 위험 안내 */
+.adm-controls-danger {
+  border-top: 1px dashed var(--line);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+.adm-risk b {
+  margin-right: 6px;
+}

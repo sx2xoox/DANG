@@ -72,4 +72,5 @@ export const FLAG_LABEL: Record<string, string> = {
   pii: "개인정보 의심",
   school: "학교·실명 의심",
   ai_review: "AI 확인 필요",
+  sexual: "성적인 내용",
 };

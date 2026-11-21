@@ -110,6 +110,33 @@ export function CareNote() {
   );
 }
 
+/** 위험 표시가 있는 사연: 방송 전 확인이 필요하다는 빨간 안내 (AI 가 본 이유 포함) */
+export function RiskNote({ flags }: { flags: string[] }) {
+  const risky = flags.filter((f) => f !== "care");
+  if (!risky.length) return null;
+  const reasons = risky.filter((f) => f.startsWith("ai:")).map((f) => f.slice(3));
+  const marks = risky.filter((f) => !f.startsWith("ai:") && f !== "ai_review").map((f) => FLAG_LABEL[f] ?? f);
+  return (
+    <p className="adm-care adm-risk" role="note">
+      <b>방송 전 확인 필요</b>
+      {reasons.length > 0 && <> AI 판단: {reasons.join(", ")}.</>}
+      {marks.length > 0 && <> 걸린 표시: {marks.join(", ")}.</>} 방송에서 읽어도 괜찮은지 꼭 확인해 주세요.
+    </p>
+  );
+}
+
+/** 승인 전에 한 번 더 묻기: 위험 표시가 있으면 확인 창 */
+export function confirmRiskyApprove(items: { receipt_no: number; flags: string[] }[]): boolean {
+  const risky = items.filter((s) => s.flags.length > 0);
+  if (!risky.length) return true;
+  const lines = risky.slice(0, 5).map((s) => {
+    const why = s.flags.filter((f) => f.startsWith("ai:")).map((f) => f.slice(3));
+    const marks = s.flags.filter((f) => !f.startsWith("ai:") && f !== "ai_review").map((f) => FLAG_LABEL[f] ?? f);
+    return `#${s.receipt_no}: ${[...why, ...marks].join(", ") || "AI 확인 필요"}`;
+  });
+  return window.confirm(`위험 표시가 있는 사연이 ${risky.length}개 있어요.\n${lines.join("\n")}\n\n그래도 방송 대기에 넣을까요?`);
+}
+
 export function Kbd({ children }: { children: string }) {
   return <kbd className="adm-kbd">{children}</kbd>;
 }

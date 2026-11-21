@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { errMsg, typingTarget, useAdmin, useWide, type ListItem, type StoryBundle } from "./api";
-import { AnimalMini, CareNote, Facts, FlagChips, Kbd, Temp, Who } from "./parts";
+import { AnimalMini, CareNote, Facts, FlagChips, Kbd, Temp, Who, RiskNote, confirmRiskyApprove } from "./parts";
 import { StampSticker, Spinner, useToast } from "../components/ui";
 import { formatDate, shortDate } from "../lib/format";
 
@@ -57,6 +57,7 @@ export default function Review() {
   const decide = useCallback(
     async (ids: string[], status: "approved" | "rejected") => {
       if (!ids.length || busy) return;
+      if (status === "approved" && !confirmRiskyApprove((items ?? []).filter((s) => ids.includes(s.id)))) return;
       setBusy(true);
       try {
         await call("set_status", { ids, status });
@@ -74,7 +75,7 @@ export default function Review() {
         setBusy(false);
       }
     },
-    [busy, call, pendingCount, setPendingCount, toast],
+    [busy, call, items, pendingCount, setPendingCount, toast],
   );
 
   const doUndo = async () => {
@@ -257,6 +258,7 @@ export default function Review() {
                 {open && (
                   <div className="adm-rv-body">
                     {s.flags.includes("care") && <CareNote />}
+                    <RiskNote flags={s.flags} />
                     <div className="adm-rv-grid">
                       <div className="adm-rv-main">
                         <p className="adm-rv-meta">

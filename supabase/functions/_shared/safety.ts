@@ -88,6 +88,13 @@ export function needsCare(text: string): boolean {
   return hits(text, CARE_WORDS).length > 0;
 }
 
+/** 성적인 내용 (방송 전 확인용) */
+const SEXUAL = ["성행위", "섹스", "섹파", "성관계", "야동", "자위", "19금", "몸캠", "원나잇", "떡치", "야스", "sex"];
+
+export function containsSexual(text: string): boolean {
+  return hits(text, SEXUAL).length > 0;
+}
+
 export function containsProfanity(text: string): boolean {
   return hits(text, PROFANITY).length > 0;
 }
@@ -97,6 +104,7 @@ export function detectFlags(text: string): string[] {
   const flags: string[] = [];
   if (needsCare(text)) flags.push("care");
   if (containsProfanity(text)) flags.push("profanity");
+  if (containsSexual(text)) flags.push("sexual");
   if (hits(text, TARGETING).length > 0 || AT_HANDLE.test(text)) flags.push("targeting");
   AT_HANDLE.lastIndex = 0;
   if (findContacts(text).length > 0) flags.push("pii");

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { GOMIN, optionEmoji, optionLabel } from "@shared/boxes.ts";
 import { dayLabel, errMsg, useAdmin, useWide, type BroadcastState, type ListItem, type StoryBundle } from "./api";
-import { AnimalMini, CareNote, FlagChips, StatusChip } from "./parts";
+import { AnimalMini, CareNote, FlagChips, RiskNote, StatusChip } from "./parts";
 import type { RouletteCandidate } from "../components/Roulette";
 import { Dialog, StampSticker, Spinner, useToast } from "../components/ui";
 import { personLabel } from "../lib/format";
@@ -159,6 +159,25 @@ export default function Broadcast() {
     }
   };
 
+  // 방송 중에 이상한 사연을 발견했을 때: 반려(사연자에게 "이번엔 소개 안 됨") 또는 삭제
+  const [confirmDel, setConfirmDel] = useState(false);
+  const dropCurrent = async (how: "reject" | "delete") => {
+    if (!story) return;
+    const st = story.story;
+    try {
+      if (how === "reject") await call("set_status", { ids: [st.id], status: "rejected" });
+      else await call("delete", { id: st.id });
+      setBs(await call<BroadcastState>("broadcast", { op: "clear" }));
+      storyIdRef.current = null;
+      setStory(null);
+      setConfirmDel(false);
+      toast(how === "reject" ? `#${st.receipt_no} 사연을 반려했어요` : `#${st.receipt_no} 사연을 삭제했어요`);
+      await refresh();
+    } catch (e) {
+      toast(errMsg(e));
+    }
+  };
+
   const changeFont = (d: number) => {
     const next = Math.min(44, Math.max(16, font + d));
     setFont(next);
@@ -241,6 +260,7 @@ export default function Broadcast() {
       {s && story && (
         <>
           {s.flags.includes("care") && <CareNote />}
+          <RiskNote flags={s.flags} />
           <div className="adm-cues">
             <div>
               <span className="adm-label">읽어줄 목소리</span>
@@ -335,6 +355,33 @@ export default function Broadcast() {
               ✓ 다 읽었어요
             </button>
           </div>
+          {isOwner && (
+            <div className="adm-controls-row adm-controls-danger">
+              <span className="adm-dim adm-small">이상한 사연이면</span>
+              <span className="spacer" />
+              <button className="btn btn-reject" onClick={() => dropCurrent("reject")} title="방송 화면에서 내리고 반려해요. 사연자에게는 '이번엔 소개되지 않아요'로 보여요.">
+                반려
+              </button>
+              <button className="btn btn-reject" onClick={() => setConfirmDel(true)} title="방송 화면에서 내리고 사연을 완전히 지워요.">
+                삭제
+              </button>
+            </div>
+          )}
+          {confirmDel && story && (
+            <Dialog title="이 사연을 삭제할까요?" onClose={() => setConfirmDel(false)}>
+              <p style={{ margin: 0 }}>
+                #{story.story.receipt_no} "{story.story.summary}" 사연을 방송 화면에서 내리고 완전히 지워요. 되돌릴 수 없어요.
+              </p>
+              <div className="row" style={{ justifyContent: "flex-end", marginTop: 14 }}>
+                <button className="btn" onClick={() => setConfirmDel(false)}>
+                  취소
+                </button>
+                <button className="btn btn-reject" onClick={() => dropCurrent("delete")}>
+                  삭제하기
+                </button>
+              </div>
+            </Dialog>
+          )}
         </div>
       )}
     </section>
@@ -399,7 +446,7 @@ export default function Broadcast() {
                   </span>
                 </span>
                 {r.scheduled && <span className="adm-tag blue">방송 예정</span>}
-                <FlagChips flags={r.flags.filter((f) => f === "care")} />
+                <FlagChips flags={r.flags.filter((f) => !f.startsWith("ai:"))} />
                 {r.status === "on_air" ? (
                   <span className="adm-st st-on_air">방송 중</span>
                 ) : (
