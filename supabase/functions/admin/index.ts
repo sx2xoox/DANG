@@ -429,13 +429,34 @@ async function pickNext(body: Record<string, unknown>) {
   const pool = scheduled.length ? scheduled : all;
   if (!pool.length) throw new HttpError(404, "방송 대기열에 사연이 없어요. 검토 대기에서 사연을 승인해 주세요.");
 
-  const day = kstDay(pool[0].created_at);
-  const sameDay = pool.filter((s) => kstDay(s.created_at) === day);
-  const result = sameDay[Math.floor(Math.random() * sameDay.length)];
+  // 미리 보기에서 "다른 사연 뽑기"로 넘긴 사연은 이번 뽑기에서 빼요.
+  const exclude = new Set(Array.isArray(body.exclude) ? body.exclude.map((x) => String(x)).slice(0, 200) : []);
+  const chosenId = str(body.id, 60);
+  let result: (typeof all)[number] | undefined;
+  let day: string;
+  let sameDay: typeof all;
+  if (chosenId) {
+    // 미리 보기에서 확인한 사연을 그대로 방송 화면에 띄워요.
+    result = all.find((s) => s.id === chosenId);
+    if (!result) throw new HttpError(404, "이 사연은 이미 방송했거나 방송 대기 목록에 없어요.");
+    day = kstDay(result.created_at);
+    sameDay = pool.filter((s) => kstDay(s.created_at) === day);
+  } else {
+    const left = pool.filter((s) => !exclude.has(s.id));
+    if (!left.length) throw new HttpError(404, "더 뽑을 다른 사연이 없어요.");
+    day = kstDay(left[0].created_at);
+    sameDay = left.filter((s) => kstDay(s.created_at) === day);
+    result = sameDay[Math.floor(Math.random() * sameDay.length)];
+  }
+
+  // 미리 보기: 방송 화면에는 아무것도 안 나가고, 뽑힌 사연만 알려줘요.
+  if (body.preview === true) {
+    return json({ preview: true, result: { ...result, broadcast_name: broadcastName(result) }, roulette: null, day, same_day_count: sameDay.length, queue_count: all.length, from_scheduled: scheduled.length > 0 });
+  }
 
   // 뽑기 연출은 사연이 하나여도 항상 보여줘요. 보드에는 기다리는 쪽지를 최대 12장 붙여요.
   // (뽑히는 사연은 위 규칙대로 가장 오래 기다린 날의 사연 중에서 골라요)
-  const others = pool.filter((s) => s.id !== result.id).sort(() => Math.random() - 0.5).slice(0, 11);
+  const others = pool.filter((s) => s.id !== result!.id).sort(() => Math.random() - 0.5).slice(0, 11);
   const candidates = [...others, result].sort(() => Math.random() - 0.5);
   const roulette = {
     id: randomToken(8),
@@ -444,7 +465,7 @@ async function pickNext(body: Record<string, unknown>) {
     day,
     same_day_count: sameDay.length,
     pool_count: pool.length,
-    result_index: candidates.findIndex((c) => c.id === result.id),
+    result_index: candidates.findIndex((c) => c.id === result!.id),
     candidates: candidates.map((c) => ({ id: c.id, name: broadcastName(c), summary: c.summary, stamp: c.stamp })),
   };
 

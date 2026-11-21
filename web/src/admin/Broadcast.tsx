@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { GOMIN, optionEmoji, optionLabel } from "@shared/boxes.ts";
 import { dayLabel, errMsg, useAdmin, useWide, type BroadcastState, type ListItem, type StoryBundle } from "./api";
-import { AnimalMini, CareNote, FlagChips, RiskNote, StatusChip } from "./parts";
+import { AnimalMini, CareNote, Facts, FlagChips, RiskNote, StatusChip, Who } from "./parts";
 import type { RouletteCandidate } from "../components/Roulette";
 import { Dialog, StampSticker, Spinner, useToast } from "../components/ui";
 import { personLabel } from "../lib/format";
@@ -98,18 +98,56 @@ export default function Broadcast() {
   const nextDay = waiting[0]?.created_day;
   const nextDayCount = waiting.filter((s) => s.created_day === nextDay).length;
 
-  const pickNext = async () => {
+  // 다음 사연 뽑기: 먼저 관리자 화면에서만 내용을 보여줘요. 방송 화면(OBS)에는 아직 안 나가요.
+  const [cand, setCand] = useState<StoryBundle | null>(null);
+  const [skipped, setSkipped] = useState<string[]>([]);
+  const [candDel, setCandDel] = useState(false);
+  const pickNext = async (again = false) => {
     setBusy(true);
     try {
-      const res = await call<PickRes>("pick_next");
-      // 쪽지 뽑기 연출은 방송 화면(OBS)에만 나와요. 관리자 화면에는 바로 결과가 떠요.
-      toast(`#${res.result.receipt_no} 사연을 뽑았어요 · 방송 화면에서 쪽지 뽑기가 나와요`);
+      const exclude = again && cand ? [...skipped, cand.story.id] : [];
+      const res = await call<PickRes>("pick_next", { preview: true, exclude });
+      const b = await call<StoryBundle>("get", { id: res.result.id });
+      setSkipped(exclude);
+      setCand(b);
+    } catch (e) {
+      toast(errMsg(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const closeCand = () => {
+    setCand(null);
+    setSkipped([]);
+    setCandDel(false);
+  };
+  // 확인한 사연을 방송 화면에 띄워요. 방금 뽑은 것처럼 쪽지 뽑기 연출이 나온 뒤 이 사연이 나와요.
+  const showDrawn = async (id: string) => {
+    setBusy(true);
+    try {
+      const res = await call<PickRes>("pick_next", { id });
+      toast(`#${res.result.receipt_no} 사연을 띄웠어요 · 방송 화면에서 쪽지 뽑기가 나와요`);
+      closeCand();
+      setOpenId(null);
       storyIdRef.current = null;
       await refresh();
     } catch (e) {
       toast(errMsg(e));
     } finally {
       setBusy(false);
+    }
+  };
+  const dropCand = async (how: "reject" | "delete") => {
+    if (!cand) return;
+    const st = cand.story;
+    try {
+      if (how === "reject") await call("set_status", { ids: [st.id], status: "rejected" });
+      else await call("delete", { id: st.id });
+      closeCand();
+      toast(how === "reject" ? `#${st.receipt_no} 사연을 반려했어요` : `#${st.receipt_no} 사연을 삭제했어요`);
+      await refresh();
+    } catch (e) {
+      toast(errMsg(e));
     }
   };
 
@@ -178,6 +216,47 @@ export default function Broadcast() {
     }
   };
 
+  // 방송 대기 목록에서 사연 내용 미리 보기 (검토 대기와 같은 정보 + 띄우기·별표·반려·삭제)
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [peek, setPeek] = useState<Record<string, StoryBundle>>({});
+  const [delTarget, setDelTarget] = useState<ListItem | null>(null);
+  const togglePeek = async (r: ListItem) => {
+    if (openId === r.id) {
+      setOpenId(null);
+      return;
+    }
+    setOpenId(r.id);
+    if (!peek[r.id]) {
+      try {
+        const b = await call<StoryBundle>("get", { id: r.id });
+        setPeek((m) => ({ ...m, [r.id]: b }));
+      } catch (e) {
+        toast(errMsg(e));
+      }
+    }
+  };
+  const starPeek = async (r: ListItem) => {
+    try {
+      const res = await call<{ starred: boolean }>("toggle_star", { id: r.id });
+      setQueue((list) => (list ?? []).map((x) => (x.id === r.id ? { ...x, starred: res.starred } : x)));
+    } catch (e) {
+      toast(errMsg(e));
+    }
+  };
+  const dropQueued = async (r: ListItem, how: "reject" | "delete") => {
+    try {
+      if (how === "reject") await call("set_status", { ids: [r.id], status: "rejected" });
+      else await call("delete", { id: r.id });
+      if (bs?.story_id === r.id) setBs(await call<BroadcastState>("broadcast", { op: "clear" }));
+      setOpenId(null);
+      setDelTarget(null);
+      toast(how === "reject" ? `#${r.receipt_no} 사연을 반려했어요` : `#${r.receipt_no} 사연을 삭제했어요`);
+      await refresh();
+    } catch (e) {
+      toast(errMsg(e));
+    }
+  };
+
   const changeFont = (d: number) => {
     const next = Math.min(44, Math.max(16, font + d));
     setFont(next);
@@ -198,8 +277,8 @@ export default function Broadcast() {
 
   const pickBar = (
     <section className="adm-pickbar" aria-label="다음 사연 뽑기">
-      <button className="btn btn-primary btn-xl" onClick={pickNext} disabled={busy || waiting.length === 0}>
-        {busy ? "뽑는 중…" : "다음 사연 뽑기"}
+      <button className="btn btn-primary btn-xl" onClick={() => pickNext()} disabled={busy || waiting.length === 0 || !!cand}>
+        {busy && !cand ? "뽑는 중…" : "다음 사연 뽑기"}
       </button>
       <p className="adm-pickbar-info">
         {waiting.length === 0 ? (
@@ -224,10 +303,84 @@ export default function Broadcast() {
             ) : (
               " 1개"
             )}
-            {" "}· 방송 화면에 쪽지 뽑기가 나와요
+            {" "}· 뽑으면 먼저 여기서 내용을 보여줘요
           </>
         )}
       </p>
+    </section>
+  );
+
+  const candRow = cand ? queue.find((q) => q.id === cand.story.id) : undefined;
+  const candPanel = cand && (
+    <section className="adm-cand" aria-label="뽑은 사연 미리 보기">
+      <div className="adm-cand-head">
+        <span className="adm-tag warn">아직 방송 화면에 안 나갔어요</span>
+        <span className="adm-dim adm-small">내용을 확인하고 띄우세요. 시청자에게는 안 보여요.</span>
+      </div>
+      {cand.story.flags.includes("care") && <CareNote />}
+      <RiskNote flags={cand.story.flags} />
+      <div className="adm-console-who">
+        <StampSticker stamp={cand.story.stamp} size="md" />
+        <div>
+          <p className="adm-dim">
+            <span className="adm-no">#{cand.story.receipt_no}</span> · {candRow ? <Who s={candRow} /> : cand.story.broadcast_name}
+          </p>
+          <h2 className="adm-summary">{cand.story.summary}</h2>
+        </div>
+      </div>
+      <div className="adm-console-text" style={{ fontSize: Math.min(font, 22) }}>
+        {cand.story.body}
+      </div>
+      {candRow && <Facts s={candRow} />}
+      {cand.follow_ups.length > 0 && (
+        <div className="adm-console-follow">
+          <p className="adm-label">상담 그 후 이야기</p>
+          {cand.follow_ups.map((f) => (
+            <p key={f.id}>{f.body}</p>
+          ))}
+        </div>
+      )}
+      <details className="adm-console-animal">
+        <summary>시청자가 받은 고민 동물</summary>
+        <AnimalMini a={cand.animal} state={cand.story.animal_state} />
+      </details>
+      <div className="adm-q-actions">
+        <button className="btn btn-primary" onClick={() => showDrawn(cand.story.id)} disabled={busy}>
+          방송에 띄우기
+        </button>
+        <button className="btn" onClick={() => pickNext(true)} disabled={busy}>
+          다른 사연 뽑기
+        </button>
+        <button className="btn btn-ghost" onClick={closeCand} disabled={busy}>
+          취소
+        </button>
+        {isOwner && (
+          <>
+            <span className="spacer" />
+            <button className="btn btn-reject" onClick={() => dropCand("reject")} disabled={busy} title="사연자에게는 '이번엔 소개되지 않아요'로 보여요.">
+              반려
+            </button>
+            <button className="btn btn-reject" onClick={() => setCandDel(true)} disabled={busy}>
+              삭제
+            </button>
+          </>
+        )}
+      </div>
+      {candDel && (
+        <Dialog title="이 사연을 삭제할까요?" onClose={() => setCandDel(false)}>
+          <p style={{ margin: 0 }}>
+            #{cand.story.receipt_no} "{cand.story.summary}" 사연을 완전히 지워요. 되돌릴 수 없어요.
+          </p>
+          <div className="row" style={{ justifyContent: "flex-end", marginTop: 14 }}>
+            <button className="btn" onClick={() => setCandDel(false)}>
+              취소
+            </button>
+            <button className="btn btn-reject" onClick={() => dropCand("delete")}>
+              삭제하기
+            </button>
+          </div>
+        </Dialog>
+      )}
     </section>
   );
 
@@ -253,7 +406,7 @@ export default function Broadcast() {
       {!s && (
         <div className="adm-empty">
           <p className="adm-title-sm">방송 화면에 띄운 사연이 없어요</p>
-          <p className="adm-dim">"다음 사연 뽑기"를 누르거나 대기열에서 사연을 골라 띄우세요.</p>
+          <p className="adm-dim">"다음 사연 뽑기"로 사연을 뽑아 내용을 확인한 뒤 띄우세요. 대기 목록에서 사연을 눌러 골라도 돼요.</p>
         </div>
       )}
 
@@ -425,41 +578,97 @@ export default function Broadcast() {
       )}
       {tab === "wait" && (
         <>
-      <p className="adm-dim adm-small">오래 기다린 순서예요. 같은 날짜 사연이 여럿이면 그중에서 룰렛을 돌려요. "방송 예정" 사연은 먼저 뽑아요.</p>
+      <p className="adm-dim adm-small">오래 기다린 순서예요. 같은 날짜 사연이 여럿이면 그중에서 하나를 뽑아요. "방송 예정" 사연은 먼저 뽑아요. 사연을 누르면 내용을 볼 수 있어요.</p>
       {groups.length === 0 && <p className="adm-dim">방송 대기 목록이 비어 있어요.</p>}
       {groups.map(([day, rows], gi) => (
         <div key={day} className="adm-qgroup">
           <p className="adm-qday">
             <b>{dayLabel(day)}</b>
             <span className="adm-mono">{rows.length}개</span>
-            {gi === 0 && rows.filter((r) => r.status === "approved").length > 1 && <span className="adm-tag">다음 룰렛</span>}
+            {gi === 0 && rows.filter((r) => r.status === "approved").length > 1 && <span className="adm-tag">다음 차례</span>}
           </p>
           <ul>
-            {rows.map((r) => (
-              <li key={r.id} className={r.id === bs.story_id && !bs.hidden ? "is-live" : ""}>
-                <span className="adm-no">#{r.receipt_no}</span>
-                <span className="adm-q-sum">
-                  <b>{r.summary}</b>
-                  <span className="adm-dim">
-                    {r.broadcast_name}
-                    {r.starred ? " · ★" : ""} · {r.waited_days}일째 기다림
-                  </span>
-                </span>
-                {r.scheduled && <span className="adm-tag blue">방송 예정</span>}
-                <FlagChips flags={r.flags.filter((f) => !f.startsWith("ai:"))} />
-                {r.status === "on_air" ? (
-                  <span className="adm-st st-on_air">방송 중</span>
-                ) : (
-                  <button className="btn btn-sm" onClick={() => op({ op: "show", id: r.id }, `#${r.receipt_no} 사연을 띄웠어요`)}>
-                    띄우기
+            {rows.map((r) => {
+              const isOpen = openId === r.id;
+              const d = peek[r.id];
+              return (
+                <li key={r.id} className={`${r.id === bs.story_id && !bs.hidden ? "is-live" : ""} ${isOpen ? "is-open" : ""}`}>
+                  <button type="button" className="adm-q-toggle" aria-expanded={isOpen} onClick={() => togglePeek(r)}>
+                    <span className="adm-no">#{r.receipt_no}</span>
+                    <span className="adm-q-sum">
+                      <b>{r.summary}</b>
+                      <span className="adm-dim">
+                        {r.broadcast_name}
+                        {r.starred ? " · ★" : ""} · {r.waited_days}일째 기다림
+                      </span>
+                    </span>
+                    <span className="adm-q-open" aria-hidden="true">
+                      {isOpen ? "접기 ▲" : "내용 보기 ▼"}
+                    </span>
                   </button>
-                )}
-              </li>
-            ))}
+                  <span className="adm-q-side">
+                    {r.scheduled && <span className="adm-tag blue">방송 예정</span>}
+                    <FlagChips flags={r.flags.filter((f) => !f.startsWith("ai:"))} />
+                    {r.status === "on_air" && <span className="adm-st st-on_air">방송 중</span>}
+                  </span>
+                  {isOpen && (
+                    <div className="adm-q-peek">
+                      {r.flags.includes("care") && <CareNote />}
+                      <RiskNote flags={r.flags} />
+                      <p className="adm-rv-meta">
+                        <Who s={r} />
+                      </p>
+                      {d ? <div className="adm-body">{d.story.body}</div> : <p className="adm-dim">본문 불러오는 중…</p>}
+                      <Facts s={r} />
+                      <details className="adm-console-animal">
+                        <summary>시청자가 받은 고민 동물</summary>
+                        {d ? <AnimalMini a={d.animal} state={r.animal_state} /> : <p className="adm-dim">불러오는 중…</p>}
+                      </details>
+                      <div className="adm-q-actions">
+                        {r.status !== "on_air" && (
+                          <button className="btn btn-primary" disabled={busy} onClick={() => showDrawn(r.id)}>
+                            방송에 띄우기
+                          </button>
+                        )}
+                        <button className="btn" onClick={() => starPeek(r)} aria-pressed={r.starred}>
+                          {r.starred ? "★ 별표 떼기" : "☆ 별표"}
+                        </button>
+                        {isOwner && (
+                          <>
+                            <span className="spacer" />
+                            <button className="btn btn-reject" onClick={() => dropQueued(r, "reject")}>
+                              반려
+                            </button>
+                            <button className="btn btn-reject" onClick={() => setDelTarget(r)}>
+                              삭제
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}
         </>
+      )}
+      {delTarget && (
+        <Dialog title="이 사연을 삭제할까요?" onClose={() => setDelTarget(null)}>
+          <p style={{ margin: 0 }}>
+            #{delTarget.receipt_no} "{delTarget.summary}" 사연을 완전히 지워요. 되돌릴 수 없어요.
+          </p>
+          <div className="row" style={{ justifyContent: "flex-end", marginTop: 14 }}>
+            <button className="btn" onClick={() => setDelTarget(null)}>
+              취소
+            </button>
+            <button className="btn btn-reject" onClick={() => dropQueued(delTarget, "delete")}>
+              삭제하기
+            </button>
+          </div>
+        </Dialog>
       )}
     </section>
   );
@@ -474,6 +683,7 @@ export default function Broadcast() {
       </header>
       <BroadcastSessionBar key={sessionTick} />
       {pickBar}
+      {candPanel}
       <div className={wide ? "adm-bc-grid" : "stack"}>
         {wide ? (
           <>

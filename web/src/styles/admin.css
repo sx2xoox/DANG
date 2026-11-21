@@ -2717,3 +2717,78 @@
 .adm-risk b {
   margin-right: 6px;
 }
+
+/* 방송 대기 목록: 눌러서 사연 내용 보기 */
+.adm-qgroup li {
+  flex-wrap: wrap;
+}
+.adm-q-toggle {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.adm-q-open {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-3, #7a6a5a);
+  white-space: nowrap;
+}
+.adm-q-side {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.adm-qgroup li.is-open {
+  background: #fffaf0;
+}
+.adm-q-peek {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 4px 6px;
+}
+.adm-q-peek .adm-body {
+  max-height: 340px;
+  overflow: auto;
+}
+.adm-q-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.adm-q-actions .spacer {
+  flex: 1;
+}
+
+/* 다음 사연 뽑기 → 방송에 띄우기 전 미리 보기 */
+.adm-cand {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--paper-w);
+  border: 2px dashed var(--line);
+  border-radius: 3px;
+}
+.adm-cand-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.adm-cand .adm-console-text {
+  max-height: 48vh;
+  overflow: auto;
+}
