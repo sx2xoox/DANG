@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { supabase, store, PENDING_CLAIMS, type PendingClaim } from "../lib/supabase";
 import { useSite } from "../lib/site";
 
@@ -58,6 +58,8 @@ export default function Login() {
           사이트에는 이메일을 따로 저장하지 않아요. 로그인 없이도 사연은 보낼 수 있어요.
           <br />
           로그인은 만 14세 이상만 할 수 있어요. 만 14세 미만이라면 로그인 없이 보내고, 접수번호와 비밀 코드로 확인해 주세요.
+          <br />
+          <Link to="/privacy">개인정보처리방침</Link>
         </p>
       </div>
     </div>

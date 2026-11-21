@@ -15,6 +15,7 @@ import Me from "./pages/Me";
 import MyStory from "./pages/MyStory";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/Privacy";
 
 // 관리자 / OBS 화면은 시청자에게 필요 없으므로 따로 불러옵니다.
 const AdminApp = lazy(() => import("./admin/AdminApp"));
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/me" element={<Me />} />
               <Route path="/me/story/:id" element={<MyStory />} />
               <Route path="/me/account" element={<Account />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

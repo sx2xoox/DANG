@@ -1489,3 +1489,32 @@
     animation: none;
   }
 }
+
+/* 바닥글 링크 · 개인정보처리방침 */
+.site-footer-links {
+  margin: 0;
+  font-size: 12px;
+}
+.site-footer-links a {
+  color: var(--text-faint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+:root[data-preset="cork"] .site-footer-links a {
+  color: var(--cb-ink, #2b2118);
+}
+.privacy-doc h2 {
+  font-size: 19px;
+  margin: 6px 0 8px;
+}
+.privacy-doc section p,
+.privacy-doc ul {
+  margin: 0;
+  line-height: 1.75;
+}
+.privacy-doc ul {
+  padding-left: 20px;
+}
+.privacy-doc li + li {
+  margin-top: 4px;
+}
