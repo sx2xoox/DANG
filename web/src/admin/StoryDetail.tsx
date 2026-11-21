@@ -5,6 +5,7 @@ import { AnimalCard } from "../components/AnimalCard";
 import { Dialog, Spinner, StampSticker, useToast } from "../components/ui";
 import { FLAG_LABEL, daysSince, formatDate } from "../lib/format";
 import { useSite } from "../lib/site";
+import { MASCOT_ANIMALS } from "@shared/mascots.ts";
 import ReadMode from "./ReadMode";
 import { PrivateMessagePanel, ResultPanel, ReviewPanel } from "./StoryExtras";
 
@@ -397,6 +398,7 @@ function AnimalEditForm({ animal, onSave }: { animal: AnimalRow; onSave: (a: Rec
         <div className="field" style={{ flex: 1 }}>
           <label htmlFor="ae-name">이름 (12자 이내)</label>
           <input id="ae-name" className="input" value={a.name} onChange={set("name")} maxLength={12} required />
+          <span className="adm-small adm-dim">이름 끝은 캐릭터가 있는 동물로: {MASCOT_ANIMALS.join(", ")}</span>
         </div>
       </div>
       <div className="field">

@@ -18,7 +18,7 @@ export default function Mascots() {
         <div>
           <h1 className="adm-title">캐릭터 도안</h1>
           <p className="adm-dim">
-            지금 그려진 고민 동물 {MASCOTS.length}마리예요. 고민 동물 이름 끝이 아래 이름과 맞으면 이 그림이 나오고, 맞는 그림이 없으면 예전처럼 이모지가 나와요.
+            지금 그려진 고민 동물 {MASCOTS.length}마리예요. 고민 동물은 이 중에서만 나와요 (수식어는 AI 가 사연마다 새로 지어요). 새 그림을 추가하면 AI 도 그 동물을 고를 수 있게 돼요.
             표정은 사연을 보낼 때 고른 감정 우표에 따라 바뀌어요.
           </p>
         </div>
@@ -29,7 +29,7 @@ export default function Mascots() {
         <div className="adm-ms-test-row">
           <input id="ms-test" className="input" value={test} onChange={(e) => setTest(e.target.value)} placeholder="예) 새벽 3시 부엉이" />
           <Mascot name={test} emoji="❔" mood={mood} size={72} />
-          <span className="adm-small">{hit ? `→ ${hit.ko} 그림` : "→ 아직 그려지지 않은 동물이라 이모지가 나와요"}</span>
+          <span className="adm-small">{hit ? `→ ${hit.ko} 그림` : "→ 캐릭터가 없는 동물이에요 (새 사연에는 나오지 않아요)"}</span>
         </div>
       </section>
 

@@ -3,9 +3,9 @@ import http from "node:http";
 import fs from "node:fs";
 const log = process.env.MOCK_LOG ?? "/tmp/mock-anthropic.log";
 const animals = [
-  { name: "답장 기다리는 미어캣", emoji: "🐾", why: "읽씹 화면만 고개 빼고 지켜보는 중이라서", quote: "1 사라졌는데요…?", hashtags: ["#관계고민", "#활활", "#판결파"] },
-  { name: "새벽 3시 부엉이", emoji: "🦉", why: "다들 잘 때 혼자 고민을 지키고 있어서", quote: "부엉… 벌써 3시야?", hashtags: ["#새벽고민", "#잠못듦", "#생각과다"] },
-  { name: "갈팡질팡 문어", emoji: "🐙", why: "여덟 다리가 다 다른 쪽을 가리켜서", quote: "잠깐, 다리 좀 정리할게.", hashtags: ["#멘붕", "#선택장애", "#정리중"] },
+  { name: "답장 기다리는 고양이", emoji: "🐱", why: "읽씹 화면만 고개 빼고 지켜보는 중이라서", quote: "1 사라졌는데요…?", hashtags: ["#관계고민", "#활활", "#판결파"] },
+  { name: "새벽 3시 고슴도치", emoji: "🦔", why: "다들 잘 때 혼자 고민을 지키고 있어서", quote: "…벌써 3시야?", hashtags: ["#새벽고민", "#잠못듦", "#생각과다"] },
+  { name: "갈팡질팡 병아리", emoji: "🐥", why: "발을 동동 구르며 어디로 갈지 몰라서", quote: "잠깐, 정신 좀 차릴게.", hashtags: ["#멘붕", "#선택장애", "#정리중"] },
 ];
 let n = 0;
 http.createServer((req, res) => {
