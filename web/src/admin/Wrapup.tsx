@@ -185,7 +185,7 @@ export default function Wrapup() {
         </div>
       ) : (
         <>
-          <section className="adm-panel adm-wu-head" aria-label="방송 정보">
+          <section className="adm-panel adm-wu-summary" aria-label="방송 정보">
             <div className="adm-wu-start">
               <span className="adm-label">방송 시작</span>
               {editStart !== null ? (
@@ -203,13 +203,31 @@ export default function Wrapup() {
                 </span>
               ) : (
                 <span className="row">
-                  <b>{formatDate(bc.started_at, true)}</b>
+                  <b className="adm-wu-date">{formatDate(bc.started_at, true)}</b>
                   <button className="btn btn-sm" onClick={() => setEditStart(toLocalInput(bc.started_at))}>
                     고치기
                   </button>
                 </span>
               )}
             </div>
+            <dl className="adm-wu-stats">
+              <div>
+                <dt>읽은 사연</dt>
+                <dd>{data.items.length}</dd>
+              </div>
+              <div>
+                <dt>결과 공개</dt>
+                <dd>{data.items.length - unpublished}</dd>
+              </div>
+              <div className={unpublished > 0 ? "is-warn" : ""}>
+                <dt>아직 비공개</dt>
+                <dd>{unpublished}</dd>
+              </div>
+              <div>
+                <dt>한마디</dt>
+                <dd>{rows.filter((r) => r.e.note.trim()).length}</dd>
+              </div>
+            </dl>
           </section>
 
           {done && (
@@ -225,10 +243,7 @@ export default function Wrapup() {
           )}
 
           <section className="adm-panel" aria-label="오늘 읽은 사연">
-            <h2 className="adm-h3">
-              읽은 사연 <span className="adm-mono adm-dim">{data.items.length}</span>
-              {unpublished > 0 && <span className="adm-tag warn">미공개 {unpublished}</span>}
-            </h2>
+            <h2 className="adm-h3">읽은 순서</h2>
             {data.items.length === 0 && <p className="adm-dim">이 방송에서 읽은 사연이 없어요.</p>}
             <ol className="adm-wu-list">
               {rows.map(({ it, e }, i) => (
@@ -237,34 +252,40 @@ export default function Wrapup() {
                     <span className="adm-wu-n">{i + 1}</span>
                     <StampSticker stamp={it.stamp} size="sm" />
                     <div className="adm-wu-sum">
-                      <Link to={`/admin/stories/${it.id}`} className="adm-no">
-                        #{it.receipt_no}
-                      </Link>{" "}
-                      <b>{it.summary}</b>
+                      <span>
+                        <Link to={`/admin/stories/${it.id}`} className="adm-no">
+                          #{it.receipt_no}
+                        </Link>{" "}
+                        <b>{it.summary}</b>
+                      </span>
                       <span className="adm-dim adm-small">
                         {it.broadcast_name}
                         {it.animal ? ` · ${it.animal.emoji} ${it.animal.name}` : ""}
-                        {it.read_started_at ? ` · ${timeLabel(it.read_started_at)} 읽기 시작` : " · 읽기 시작 기록 없음"}
+                        {it.read_started_at ? ` · ${timeLabel(it.read_started_at)} 읽음` : ""}
                         {it.logged_in ? " · 로그인(도감)" : ""}
                       </span>
-                      <span>
-                        <FlagChips flags={it.flags.filter((f) => f === "care")} />
-                        {it.result_published_at && <span className="adm-tag ok">공개됨</span>}
-                      </span>
                     </div>
+                    <span className="adm-wu-state">
+                      <FlagChips flags={it.flags.filter((f) => f === "care")} />
+                      {it.result_published_at ? <span className="adm-tag ok">공개됨</span> : <span className="adm-tag warn">비공개</span>}
+                    </span>
                   </div>
-                  <div className="adm-wu-fields">
-                    <div className="field adm-wu-note">
-                      <label htmlFor={`wu-n-${it.id}`}>다웅의 한마디 (선택, {HOST_NOTE_MAX}자)</label>
-                      <input
-                        id={`wu-n-${it.id}`}
-                        className="input"
-                        maxLength={HOST_NOTE_MAX}
-                        placeholder="예) 용기 낸 거 진짜 멋있어요!"
-                        value={e.note}
-                        onChange={(ev) => setEdit(it.id, { note: ev.target.value })}
-                      />
-                    </div>
+                  <div className="field adm-wu-note">
+                    <label htmlFor={`wu-n-${it.id}`}>
+                      한마디 <span className="adm-dim adm-small">(선택 · 사연자 결과 카드에 보여요)</span>
+                    </label>
+                    <textarea
+                      id={`wu-n-${it.id}`}
+                      className="input"
+                      rows={2}
+                      maxLength={HOST_NOTE_MAX}
+                      placeholder="예) 용기 낸 거 진짜 멋있어요!"
+                      value={e.note}
+                      onChange={(ev) => setEdit(it.id, { note: ev.target.value })}
+                    />
+                    <span className="adm-wu-count adm-mono">
+                      {[...e.note].length}/{HOST_NOTE_MAX}
+                    </span>
                   </div>
                 </li>
               ))}

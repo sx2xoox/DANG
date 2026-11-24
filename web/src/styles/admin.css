@@ -2154,10 +2154,13 @@
 }
 
 /* 오늘 방송 정리 */
-.adm-wu-head {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
-  gap: 16px 24px;
+.adm-panel.adm-wu-summary {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
   margin-bottom: 14px;
 }
 
@@ -2165,6 +2168,47 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.adm-wu-date {
+  font-size: 20px;
+}
+
+.adm-wu-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.adm-wu-stats > div {
+  min-width: 104px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper);
+  text-align: center;
+}
+
+.adm-wu-stats dt {
+  font-size: 13px;
+  color: var(--ink-3, #6b5b4b);
+}
+
+.adm-wu-stats dd {
+  margin: 2px 0 0;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.adm-wu-stats > div.is-warn {
+  border-color: var(--red);
+}
+
+.adm-wu-stats > div.is-warn dd {
+  color: var(--red);
 }
 
 .adm-wu-list {
@@ -2178,18 +2222,18 @@
 .adm-wu-list > li {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 0;
+  gap: 12px;
+  padding: 16px 0;
   border-top: 1px solid var(--line);
 }
 
-.adm-wu-list > li.is-published {
-  opacity: 0.8;
+.adm-wu-list > li.is-published .adm-wu-who {
+  opacity: 0.75;
 }
 
 .adm-wu-who {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
 }
 
@@ -2208,16 +2252,37 @@
 }
 
 .adm-wu-sum {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
+  font-size: 17px;
 }
 
-.adm-wu-fields {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  gap: 10px 14px;
+.adm-wu-state {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.adm-wu-note {
+  margin-left: 40px;
+}
+
+.adm-wu-note textarea {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+  font-size: 16px;
+}
+
+.adm-wu-count {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--ink-3, #6b5b4b);
 }
 
 .adm .input.is-bad {
@@ -2399,9 +2464,8 @@
 }
 
 @media (max-width: 899px) {
-  .adm-wu-head,
-  .adm-wu-fields {
-    grid-template-columns: 1fr;
+  .adm-wu-note {
+    margin-left: 0;
   }
   .adm-session-edit .input,
   .adm-wu-start .input {
@@ -2791,4 +2855,8 @@
 .adm-cand .adm-console-text {
   max-height: 48vh;
   overflow: auto;
+}
+
+.adm-alert-more {
+  margin: 6px 0 4px;
 }

@@ -107,6 +107,7 @@ const NAV: NavItem[] = [
 
 function AdminLayout() {
   const { role, isOwner, logout, call, alerts, refreshAlerts } = useAdmin();
+  const [careAll, setCareAll] = useState(false);
   const { info } = useSite();
 
   // 메뉴 배지와 알림: 들어올 때와 1분마다
@@ -174,7 +175,7 @@ function AdminLayout() {
               <b>확인 필요</b> 후속 보고에 자해·자살·학대·폭력 관련 표현이 있어요 ({alerts.care_followups.length}개). 사연자에게는 상담 연락처를 안내했어요.
             </p>
             <ul>
-              {alerts.care_followups.map((f) => (
+              {(careAll ? alerts.care_followups : alerts.care_followups.slice(0, 3)).map((f) => (
                 <li key={f.id}>
                   <Link to={`/admin/stories/${f.story_id}`} className="adm-no">
                     #{f.receipt_no}
@@ -189,6 +190,11 @@ function AdminLayout() {
                 </li>
               ))}
             </ul>
+            {alerts.care_followups.length > 3 && (
+              <button type="button" className="btn btn-sm adm-alert-more" onClick={() => setCareAll((v) => !v)} aria-expanded={careAll}>
+                {careAll ? "접기 ▲" : `나머지 ${alerts.care_followups.length - 3}개 더 보기 ▼`}
+              </button>
+            )}
             <p className="adm-dim adm-small">{HELP_LINES.map((h) => `${h.name} ${h.tel}`).join(" · ")}</p>
           </section>
         )}
