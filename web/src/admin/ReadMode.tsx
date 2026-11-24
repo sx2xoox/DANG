@@ -168,7 +168,7 @@ export default function ReadMode({ id, onClose, onChanged }: { id: string; onClo
           <button
             className="btn btn-primary"
             disabled={s.status === "read" || s.status === "pending" || s.status === "rejected"}
-            title="지금 시각을 기록하고 읽음으로 바꿔요. 다시보기 시간이 자동으로 계산돼요."
+            title="지금 시각을 기록하고 읽음으로 바꿔요."
             onClick={async () => {
               try {
                 const res = await call<{ offset_sec: number; auto_started: boolean; receipt_no: number }>("read_start", { id: s.id });

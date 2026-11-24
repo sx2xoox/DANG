@@ -43,14 +43,14 @@ export function ChannelButtons({ lead, compact = false, className = "" }: { lead
         {info.chzzk_url && (
           <a className="ch-btn ch-chzzk" href={info.chzzk_url} target="_blank" rel="noopener noreferrer" onClick={() => trackOut("chzzk")}>
             <ChzzkIcon />
-            <span>{info.on_air ? "지금 라이브 보기" : "치지직 팔로우"}</span>
-            {info.on_air && <i className="ch-live-dot" aria-label="방송 중" />}
+            <span>치지직 팔로우</span>
           </a>
         )}
         {info.youtube_url && (
           <a className="ch-btn ch-youtube" href={info.youtube_url} target="_blank" rel="noopener noreferrer" onClick={() => trackOut("youtube")}>
             <YoutubeIcon />
-            <span>유튜브 구독</span>
+            <span>{info.on_air ? "지금 유튜브 라이브 보기" : "유튜브 구독"}</span>
+            {info.on_air && <i className="ch-live-dot" aria-label="방송 중" />}
           </a>
         )}
       </div>}
@@ -61,12 +61,12 @@ export function ChannelButtons({ lead, compact = false, className = "" }: { lead
 /** 관리자가 "방송 시작"을 눌렀을 때 모든 시청자 화면 위에 뜨는 띠 */
 export function LiveBanner() {
   const { info } = useSite();
-  if (!info.on_air || !info.chzzk_url) return null;
+  if (!info.on_air || !info.youtube_url) return null;
   return (
-    <a className="live-banner" href={info.chzzk_url} target="_blank" rel="noopener noreferrer" onClick={() => trackOut("chzzk")}>
+    <a className="live-banner" href={info.youtube_url} target="_blank" rel="noopener noreferrer" onClick={() => trackOut("youtube")}>
       <i className="live-dot" aria-hidden="true" />
       <b>지금 방송 중!</b>
-      <span>사연 읽는 중이에요. 치지직에서 같이 보기 →</span>
+      <span>사연 읽는 중이에요. 유튜브 생방송에서 같이 보기 →</span>
     </a>
   );
 }

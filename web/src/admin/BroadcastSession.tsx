@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { formatOffset } from "@shared/results.ts";
 import { errMsg, useAdmin, type Broadcast } from "./api";
 import { Dialog, useToast } from "../components/ui";
 
 /** "읽기 시작" 결과 안내 문구 */
 export function readStartMessage(res: { offset_sec: number; auto_started: boolean; receipt_no: number }): string {
   if (res.auto_started) return `#${res.receipt_no} 읽기 시작! 방송 시작이 없어서 지금을 방송 시작으로 기록했어요. 오늘 방송 정리에서 고칠 수 있어요`;
-  return `#${res.receipt_no} 읽기 시작 · 다시보기 ${formatOffset(res.offset_sec)} 지점으로 기록했어요`;
+  return `#${res.receipt_no} 읽기 시작을 기록했어요`;
 }
 
 /** datetime-local 입력칸 값 (이 기기 시간대 기준) */
@@ -78,7 +77,7 @@ export function BroadcastSessionBar() {
       const r = await call<{ broadcast: Broadcast; recalculated: number }>("broadcast_update", { id: current.id, started_at: new Date(value).toISOString() });
       setCurrent(r.broadcast);
       setEditing(false);
-      toast(r.recalculated ? `시작 시각을 고치고 사연 ${r.recalculated}개의 다시보기 시간을 다시 계산했어요` : "방송 시작 시각을 고쳤어요");
+      toast(r.recalculated ? `방송 시작 시각을 고쳤어요` : "방송 시작 시각을 고쳤어요");
     } catch (e) {
       toast(errMsg(e));
     }
@@ -92,7 +91,7 @@ export function BroadcastSessionBar() {
         <div>
           <p className="adm-session-title">아직 방송 시작을 기록하지 않았어요</p>
           <p className="adm-dim adm-small">
-            방송을 켤 때 눌러두면, 사이트에 "지금 방송 중!" 띠가 뜨고 사연마다 "읽기 시작"을 누를 때 다시보기 시간(예: 1시간 12분)이 자동으로 계산돼요.
+            방송을 켤 때 눌러두면, 사이트에 "지금 방송 중!" 띠가 떠요. 사연을 읽을 때 "읽기 시작"을 누르면 오늘 읽은 사연으로 기록돼요.
           </p>
         </div>
         <button className="btn btn-primary btn-lg" onClick={() => start(false)}>
@@ -158,7 +157,7 @@ export function BroadcastSessionBar() {
       )}
       {confirmEnd && (
         <Dialog title="방송을 끝낼까요?" onClose={() => setConfirmEnd(false)}>
-          <p>사이트의 "지금 방송 중!" 표시가 내려가요. 다시보기 정리와 결과 공개는 나중에 "오늘 방송 정리"에서 하면 돼요.</p>
+          <p>사이트의 "지금 방송 중!" 표시가 내려가요. 결과 공개는 나중에 "오늘 방송 정리"에서 하면 돼요.</p>
           <div className="row">
             <button className="btn" onClick={() => setConfirmEnd(false)}>
               취소

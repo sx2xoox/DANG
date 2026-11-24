@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { clockToOffset, formatOffset, HOST_NOTE_MAX, offsetToClock, validVodUrl, vodLink } from "@shared/results.ts";
+import { HOST_NOTE_MAX } from "@shared/results.ts";
 import { errMsg, useAdmin, type Broadcast } from "./api";
 import { FlagChips } from "./parts";
 import { toLocalInput, timeLabel } from "./BroadcastSession";
@@ -24,14 +24,13 @@ type Item = {
 };
 
 type Data = { broadcast: Broadcast | null; recent: Broadcast[]; items: Item[]; vod_time_param: string };
-type Edit = { clock: string; note: string };
+type Edit = { note: string };
 
 /**
  * 오늘 방송 정리
  *  1) 오늘 읽은 사연을 읽은 순서대로
- *  2) 다시보기 주소를 한 번 붙여넣으면 모든 사연에 시간이 붙은 링크
- *  3) 사연마다 시간·한마디 고치기
- *  4) "결과 공개" 한 번으로 사연자 결과 카드를 한꺼번에 공개
+ *  2) 사연마다 한마디 고치기
+ *  3) "결과 공개" 한 번으로 사연자 결과 카드를 한꺼번에 공개
  */
 export default function Wrapup() {
   const { call } = useAdmin();
@@ -39,7 +38,6 @@ export default function Wrapup() {
   const [params, setParams] = useSearchParams();
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
-  const [vod, setVod] = useState("");
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -49,8 +47,7 @@ export default function Wrapup() {
 
   const apply = (d: Data) => {
     setData(d);
-    setVod(d.broadcast?.vod_url ?? "");
-    setEdits(Object.fromEntries(d.items.map((i) => [i.id, { clock: offsetToClock(i.vod_offset_sec), note: i.host_note ?? "" }])));
+    setEdits(Object.fromEntries(d.items.map((i) => [i.id, { note: i.host_note ?? "" }])));
     setDirty(false);
   };
 
@@ -71,17 +68,7 @@ export default function Wrapup() {
     load();
   }, [load]);
 
-  const vodOk = !vod.trim() || validVodUrl(vod.trim());
-  const rows = useMemo(
-    () =>
-      (data?.items ?? []).map((it) => {
-        const e = edits[it.id] ?? { clock: "", note: "" };
-        const off = clockToOffset(e.clock);
-        const bad = e.clock.trim() !== "" && off === null;
-        return { it, e, off, bad, link: vodOk && vod.trim() ? vodLink(vod.trim(), off, data?.vod_time_param) : null };
-      }),
-    [data, edits, vod, vodOk],
-  );
+  const rows = useMemo(() => (data?.items ?? []).map((it) => ({ it, e: edits[it.id] ?? { note: "" } })), [data, edits]);
 
   if (error)
     return (
@@ -93,21 +80,17 @@ export default function Wrapup() {
 
   const bc = data.broadcast;
   const unpublished = data.items.filter((i) => !i.result_published_at).length;
-  const anyBad = rows.some((r) => r.bad) || rows.some((r) => [...r.e.note].length > HOST_NOTE_MAX);
+  const anyBad = rows.some((r) => [...r.e.note].length > HOST_NOTE_MAX);
 
   const setEdit = (id: string, patch: Partial<Edit>) => {
-    setEdits((m) => ({ ...m, [id]: { ...(m[id] ?? { clock: "", note: "" }), ...patch } }));
+    setEdits((m) => ({ ...m, [id]: { ...(m[id] ?? { note: "" }), ...patch } }));
     setDirty(true);
   };
 
   const save = async (quiet = false) => {
     if (!bc) return false;
-    if (!vodOk) {
-      toast("다시보기 주소는 https:// 로 시작하는 주소로 넣어주세요");
-      return false;
-    }
     if (anyBad) {
-      toast("시간이나 한마디를 확인해 주세요");
+      toast("한마디 길이를 확인해 주세요");
       return false;
     }
     setBusy(true);
@@ -115,8 +98,8 @@ export default function Wrapup() {
       apply(
         await call<Data>("wrapup_save", {
           broadcast_id: bc.id,
-          vod_url: vod.trim(),
-          items: rows.map((r) => ({ id: r.it.id, offset_sec: r.off, host_note: r.e.note.trim() })),
+          vod_url: "",
+          items: rows.map((r) => ({ id: r.it.id, offset_sec: r.it.vod_offset_sec, host_note: r.e.note.trim() })),
         }),
       );
       if (!quiet) toast("저장했어요");
@@ -151,7 +134,7 @@ export default function Wrapup() {
     try {
       await call("broadcast_update", { id: bc.id, started_at: new Date(editStart).toISOString() });
       setEditStart(null);
-      toast("방송 시작 시각을 고치고 다시보기 시간을 다시 계산했어요");
+      toast("방송 시작 시각을 고쳤어요");
       await load(bc.id);
     } catch (e) {
       toast(errMsg(e));
@@ -164,7 +147,7 @@ export default function Wrapup() {
         <div>
           <h1 className="adm-title">오늘 방송 정리</h1>
           <p className="adm-dim">
-            방송이 끝나고 치지직에 다시보기가 올라오면, 주소를 한 번만 붙여넣으세요. 사연마다 읽기 시작한 시간이 붙은 링크가 들어가요. 확인하고 "결과 공개"를 누르면 끝! (다음 날 해도 돼요)
+            오늘 읽은 사연을 확인하고, 필요하면 한마디를 고친 뒤 "결과 공개"를 누르면 끝! (다음 날 해도 돼요)
           </p>
         </div>
         {data.recent.length > 1 && (
@@ -226,25 +209,6 @@ export default function Wrapup() {
                   </button>
                 </span>
               )}
-              <span className="adm-dim adm-small">시작 시각을 고치면 사연별 시간도 다시 계산돼요.</span>
-            </div>
-            <div className="field adm-wu-vod">
-              <label htmlFor="wu-vod">다시보기 주소 (다시보기가 올라온 뒤 한 번만 붙여넣기)</label>
-              <input
-                id="wu-vod"
-                className="input"
-                inputMode="url"
-                placeholder="https://chzzk.naver.com/video/..."
-                value={vod}
-                onChange={(e) => {
-                  setVod(e.target.value);
-                  setDirty(true);
-                }}
-              />
-              {!vodOk && <span className="adm-error">https:// 로 시작하는 주소를 넣어주세요.</span>}
-              <span className="adm-dim adm-small">
-                주소 끝에 {data.vod_time_param === "t" ? "t=초" : "currentTime=초"}가 붙어요. (유튜브 주소는 t=초) 형식은 설정에서 바꿀 수 있어요. 결과를 먼저 공개했어도, 나중에 주소를 넣고 저장하면 사연자 화면에 링크가 자동으로 붙어요.
-              </span>
             </div>
           </section>
 
@@ -267,7 +231,7 @@ export default function Wrapup() {
             </h2>
             {data.items.length === 0 && <p className="adm-dim">이 방송에서 읽은 사연이 없어요.</p>}
             <ol className="adm-wu-list">
-              {rows.map(({ it, e, off, bad, link }, i) => (
+              {rows.map(({ it, e }, i) => (
                 <li key={it.id} className={it.result_published_at ? "is-published" : ""}>
                   <div className="adm-wu-who">
                     <span className="adm-wu-n">{i + 1}</span>
@@ -290,18 +254,6 @@ export default function Wrapup() {
                     </div>
                   </div>
                   <div className="adm-wu-fields">
-                    <div className="field">
-                      <label htmlFor={`wu-t-${it.id}`}>다시보기 시간</label>
-                      <input
-                        id={`wu-t-${it.id}`}
-                        className={`input adm-mono ${bad ? "is-bad" : ""}`}
-                        placeholder="1:12:00"
-                        value={e.clock}
-                        onChange={(ev) => setEdit(it.id, { clock: ev.target.value })}
-                        aria-invalid={bad}
-                      />
-                      <span className={bad ? "adm-error" : "adm-dim adm-small"}>{bad ? "예) 1:12:00 또는 72:00" : off !== null ? formatOffset(off) : "비워두면 처음부터"}</span>
-                    </div>
                     <div className="field adm-wu-note">
                       <label htmlFor={`wu-n-${it.id}`}>다웅의 한마디 (선택, {HOST_NOTE_MAX}자)</label>
                       <input
@@ -314,11 +266,6 @@ export default function Wrapup() {
                       />
                     </div>
                   </div>
-                  {link && (
-                    <a className="adm-wu-link adm-small" href={link} target="_blank" rel="noopener noreferrer">
-                      {link}
-                    </a>
-                  )}
                 </li>
               ))}
             </ol>
@@ -338,8 +285,7 @@ export default function Wrapup() {
       {confirm && bc && (
         <Dialog title="결과를 공개할까요?" onClose={() => setConfirm(false)}>
           <p>
-            이 방송에서 읽은 사연 {unpublished}개의 결과 카드가 사연자에게 열려요. 다시보기 링크와 한마디가 함께 보이고, 로그인한 사연자의 고민 동물은 도감에 모여요.
-            {!vod.trim() && <b> 다시보기 주소가 아직 비어 있어요. 지금 공개해도 되고, 다시보기가 올라온 뒤 주소를 넣고 저장하면 링크가 자동으로 붙어요.</b>}
+            이 방송에서 읽은 사연 {unpublished}개의 결과 카드가 사연자에게 열려요. 한마디가 함께 보이고, 로그인한 사연자의 고민 동물은 도감에 모여요.
           </p>
           <div className="row">
             <button className="btn" onClick={() => setConfirm(false)}>

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { formatOffset, PRIVATE_MESSAGE_MAX, reactionEmoji, reactionLabel } from "@shared/results.ts";
+import { PRIVATE_MESSAGE_MAX, reactionEmoji, reactionLabel } from "@shared/results.ts";
 import { errMsg, REVIEW_STATUS_LABEL, useAdmin, type StoryBundle } from "./api";
 import { FlagChips } from "./parts";
 import { useToast } from "../components/ui";
 import { formatDate } from "../lib/format";
 
-/** 방송 결과 (읽은 사연): 방송 회차, 다시보기 시간/링크, 한마디, 공개 여부 */
+/** 방송 결과 (읽은 사연): 방송 회차, 한마디, 공개 여부 */
 export function ResultPanel({ data, onChanged }: { data: StoryBundle; onChanged: () => Promise<void> }) {
   const { call, isOwner } = useAdmin();
   const toast = useToast();
@@ -38,22 +38,6 @@ export function ResultPanel({ data, onChanged }: { data: StoryBundle; onChanged:
         <div>
           <dt>읽기 시작</dt>
           <dd>{s.read_started_at ? formatDate(s.read_started_at, true) : "기록 없음"}</dd>
-        </div>
-        <div>
-          <dt>다시보기 시간</dt>
-          <dd>{s.vod_offset_sec !== null ? formatOffset(s.vod_offset_sec) : "비어 있음"}</dd>
-        </div>
-        <div>
-          <dt>다시보기 링크</dt>
-          <dd>
-            {s.vod_url ? (
-              <a href={s.vod_url} target="_blank" rel="noopener noreferrer" className="adm-break">
-                {s.vod_url}
-              </a>
-            ) : (
-              "비어 있음"
-            )}
-          </dd>
         </div>
         <div className="adm-facts-wide">
           <dt>다웅의 한마디</dt>

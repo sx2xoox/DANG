@@ -513,7 +513,7 @@ export default function Broadcast() {
             </button>
             <span className="spacer" />
             {s.status !== "read" ? (
-              <button className="btn btn-done" onClick={readStart} title="지금 시각을 기록하고 읽음으로 바꿔요. 다시보기 시간이 자동으로 계산돼요.">
+              <button className="btn btn-done" onClick={readStart} title="지금 시각을 기록하고 읽음으로 바꿔요.">
                 ▶ 읽기 시작
               </button>
             ) : (
@@ -701,7 +701,7 @@ export default function Broadcast() {
       <header className="adm-head">
         <div>
           <h1 className="adm-title">방송</h1>
-          <p className="adm-dim">방송을 켜면 "방송 시작"부터 누르세요. 사연을 뽑아 OBS에 띄우고, 읽기 시작할 때 "읽기 시작"을 누르면 다시보기 시간이 자동으로 기록돼요.</p>
+          <p className="adm-dim">방송을 켜면 "방송 시작"부터 누르세요. 사연을 뽑아 내용을 확인하고 OBS에 띄운 뒤, 읽기 시작할 때 "읽기 시작"을 누르세요.</p>
         </div>
       </header>
       <BroadcastSessionBar key={sessionTick} />

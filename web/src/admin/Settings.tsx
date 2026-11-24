@@ -161,16 +161,6 @@ export default function Settings() {
             onChange={(e) => set("auto_notice_days", Number(e.target.value))}
           />
         </div>
-        <div className="field" style={{ maxWidth: 420 }}>
-          <label htmlFor="st-vod">다시보기 링크 시간 형식</label>
-          <select id="st-vod" className="select" value={s.vod_time_param} onChange={(e) => set("vod_time_param", e.target.value as SettingsData["vod_time_param"])}>
-            <option value="currentTime">?currentTime=초 (치지직 기본)</option>
-            <option value="t">?t=초</option>
-          </select>
-          <small className="adm-dim adm-small">
-            링크를 눌렀을 때 그 시간으로 바로 가지 않으면 다른 형식으로 바꿔보세요. 유튜브 주소는 자동으로 t=초를 써요. 사연자 화면에는 "1시간 12분부터"도 글자로 함께 보여요.
-          </small>
-        </div>
 
         <h2 className="adm-h3">디자인</h2>
         <div className="adm-presets" role="radiogroup" aria-label="디자인 프리셋">
@@ -236,7 +226,7 @@ function ManagerSection({ enabled, onChanged }: { enabled: boolean; onChanged: (
     <section className="adm-panel adm-form" aria-label="매니저 코드">
       <h2 className="adm-h3">매니저 코드</h2>
       <p className="adm-dim">
-        매니저는 사연 보기, 별표, 다음 사연 뽑기와 방송 화면 조작, 방송 시작·읽기 시작만 할 수 있어요. 승인·반려, 후기 승인, 방송 결과 공개, 다시보기 링크 입력, 황금 동물 지급, 삭제, 설정은 방장만 해요.
+        매니저는 사연 보기, 별표, 다음 사연 뽑기와 방송 화면 조작, 방송 시작·읽기 시작만 할 수 있어요. 승인·반려, 후기 승인, 방송 결과 공개, 황금 동물 지급, 삭제, 설정은 방장만 해요.
       </p>
       <p>
         상태: <b>{enabled ? "켜짐" : "꺼짐"}</b>

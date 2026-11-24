@@ -1,10 +1,11 @@
-import { formatOffset } from "@shared/results.ts";
 import { formatDate } from "../lib/format";
+import { useSite } from "../lib/site";
+import { trackOut } from "../lib/growth";
 import type { AirResult } from "../lib/mystory";
 
-/** 방송 결과: "방송에서 읽었어요!" + 방송 날짜 + 다시보기 링크(읽기 시작한 시간부터) + 다웅의 한마디(선택) */
+/** 방송 결과: "방송에서 읽었어요!" + 방송 날짜 + 한마디(선택) + 유튜브 생방송 안내 */
 export function AirResultCard({ result }: { result: AirResult }) {
-  const at = formatOffset(result.vod_offset_sec);
+  const { info } = useSite();
   return (
     <section className="air-result" aria-labelledby="air-title">
       <div className="air-badge" aria-hidden="true">
@@ -13,19 +14,17 @@ export function AirResultCard({ result }: { result: AirResult }) {
       <div className="air-main">
         <h2 id="air-title">방송에서 읽었어요!</h2>
         {result.aired_at && <p className="air-date">{formatDate(result.aired_at)} 방송</p>}
-        {result.vod_url ? (
-          <a className="post-btn post-btn-main air-vod" href={result.vod_url} target="_blank" rel="noopener noreferrer">
-            ▶ 다시보기{at ? ` · ${at}부터` : ""}
-          </a>
-        ) : (
-          <p className="air-novod">다시보기가 올라오면 여기에 링크가 생겨요.</p>
-        )}
-        {result.vod_url && at && <p className="air-hint">링크가 처음부터 열리면 {at} 지점으로 옮겨서 보세요.</p>}
         {result.host_note && (
           <blockquote className="air-note">
             <span className="air-note-who">방송에서 남긴 한마디</span>
             <p>{result.host_note}</p>
           </blockquote>
+        )}
+        <p className="air-novod">사연은 유튜브 생방송에서 같이 들어요{info.schedule_text ? ` · ${info.schedule_text}` : ""}</p>
+        {info.youtube_url && (
+          <a className="post-btn post-btn-main air-vod" href={info.youtube_url} target="_blank" rel="noopener noreferrer" onClick={() => trackOut("youtube")}>
+            ▶ 유튜브 생방송 보러 가기
+          </a>
         )}
       </div>
     </section>
