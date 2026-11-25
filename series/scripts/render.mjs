@@ -13,9 +13,8 @@ const SITE = "dawoong-gomin.pages.dev";
 
 // 편 목록은 TypeScript 파일이라, Remotion 에게 목록을 물어봐요.
 const list = execFileSync(bin, ["compositions", "src/index.ts", "--quiet"], { cwd: root, encoding: "utf8" })
-  .split("\n")
-  .map((l) => l.trim().split(/\s+/)[0])
-  .filter((id) => /^s\d+/.test(id));
+  .split(/\s+/)
+  .filter((id) => /^s\d+$/.test(id));
 const want = process.argv.slice(2);
 const ids = want.length ? list.filter((id) => want.includes(id)) : list;
 if (!ids.length) {
