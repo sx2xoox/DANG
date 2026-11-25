@@ -1,7 +1,7 @@
 // 시리즈 쇼츠 뽑기
 //   npm run render            → 전부
 //   npm run render -- s03 s04 → 고른 편만
-// 결과: out/<편>/video.mp4 (영상), cover.jpg (첫 화면 = 썸네일), post.txt (제목·설명·해시태그·추적 주소)
+// 결과: out/<편>/video.mp4 (영상), cover.jpg (썸네일), post.txt (제목·설명·해시태그·추적 주소)
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -28,7 +28,7 @@ for (const id of ids) {
   fs.mkdirSync(dir, { recursive: true });
   console.log(`\n▶ ${id} 영상 뽑는 중…`);
   execFileSync(bin, ["render", "src/index.ts", id, path.join(dir, "video.mp4")], { cwd: root, stdio: "inherit" });
-  execFileSync(bin, ["still", "src/index.ts", id, path.join(dir, "cover.jpg"), "--frame=20"], { cwd: root, stdio: "inherit" });
+  execFileSync(bin, ["still", "src/index.ts", `${id}-cover`, path.join(dir, "cover.jpg")], { cwd: root, stdio: "inherit" });
   // 올릴 글 (episodes.ts 의 post 부분)
   const block = src.slice(src.indexOf(`id: "${id}"`));
   const pick = (k) => (block.match(new RegExp(`${k}: "((?:[^"\\\\]|\\\\.)*)"`)) || [])[1]?.replace(/\\n/g, "\n").replace(/\\"/g, '"') ?? "";

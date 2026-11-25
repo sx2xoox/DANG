@@ -1,5 +1,6 @@
 import React from "react";
-import { Composition } from "remotion";
+import { Composition, Still } from "remotion";
+import { Cover } from "./Cover";
 import { EPISODES } from "./episodes";
 import { FPS, H, W } from "./kit";
 import { Check, CHECK_FRAMES } from "./formats/Check";
@@ -10,6 +11,10 @@ import { Poll, POLL_FRAMES } from "./formats/Poll";
 // 목록에 있는 편마다 영상 하나씩 (이름 = 편 id)
 export const Root: React.FC = () => (
   <>
+    {/* 썸네일 (편마다 하나, 이름 = 편-cover) */}
+    {EPISODES.map((ep) => (
+      <Still key={`${ep.id}-cover`} id={`${ep.id}-cover`} component={Cover} width={W} height={H} defaultProps={{ ep }} />
+    ))}
     {EPISODES.map((ep) => {
       const common = { id: ep.id, fps: FPS, width: W, height: H };
       switch (ep.format) {
