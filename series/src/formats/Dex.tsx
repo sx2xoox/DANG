@@ -4,7 +4,7 @@ import { C, CorkBg, F, Headline, Note, Outro, Polaroid, Pop, shake, useFonts, us
 
 /**
  * ② 고민 동물 도감: "○○한 사람 특징" 3가지 → 그런 너의 고민 동물 공개
- *  0s 제목(첫 화면부터 보임) · 1.5s~ 특징 3개 · 8s 공개 · 13s 댓글 유도 · 15s 마무리
+ *  0s 제목·물음표 카드(첫 화면) · 0.7s~ 특징 3개 (1.1초 간격) · 5.1s 공개 · 6.5s 댓글 유도 · 8.8s 마무리 (총 11.3초)
  */
 export type DexProps = {
   hook: string; // 첫 화면 제목 ([[강조]] 가능)
@@ -13,16 +13,16 @@ export type DexProps = {
   ask: string; // 공개 뒤 한 줄 (댓글 유도)
 };
 
-export const DEX_FRAMES = 600;
-const T = { teaseOut: 34, traits: [45, 105, 165], clear: 228, reveal: 240, develop: 282, ask: 360, outro: 450 };
+export const DEX_FRAMES = 340;
+const T = { teaseOut: 16, traits: [22, 56, 90], clear: 146, reveal: 154, develop: 178, ask: 196, outro: 265 };
 const NOTE_COLORS = [C.noteY, C.noteP, C.noteB];
 
 export const Dex: React.FC<DexProps> = ({ hook, traits, animal, ask }) => {
   useFonts();
   const frame = useCurrentFrame();
   const notesOut = useOut(T.clear);
-  const dev = interpolate(frame, [T.reveal + 10, T.develop], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const flip = interpolate(frame, [T.reveal, T.reveal + 10], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const dev = interpolate(frame, [T.reveal + 4, T.develop], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const flip = interpolate(frame, [T.reveal, T.reveal + 4], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill style={{ transform: shake(frame, [T.traits[0], T.traits[1], T.traits[2], T.develop], 8) }}>
@@ -35,7 +35,7 @@ export const Dex: React.FC<DexProps> = ({ hook, traits, animal, ask }) => {
 
       {/* 첫 화면: 물음표 카드 (썸네일) */}
       {frame < T.teaseOut + 10 && (
-        <div style={{ position: "absolute", top: 600, left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", opacity: interpolate(frame, [T.teaseOut, T.teaseOut + 8], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }), transform: `scale(${interpolate(frame, [T.teaseOut, T.teaseOut + 8], [1, 0.8], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })}) rotate(-3deg)` }}>
+        <div style={{ position: "absolute", top: 600, left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", opacity: interpolate(frame, [T.teaseOut, T.teaseOut + 6], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }), transform: `scale(${interpolate(frame, [T.teaseOut, T.teaseOut + 6], [1, 0.8], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })}) rotate(-3deg)` }}>
           <Polaroid id={null} width={600} />
           <div style={{ marginTop: 40, background: C.ink, color: "#fff", fontFamily: F.body, fontSize: 54, padding: "14px 34px", borderRadius: 999 }}>다 해당되면 너는 이 동물</div>
         </div>
@@ -58,10 +58,10 @@ export const Dex: React.FC<DexProps> = ({ hook, traits, animal, ask }) => {
       )}
 
       {/* 공개 */}
-      {frame >= T.reveal - 12 && (
+      {frame >= T.reveal - 8 && (
         <>
           <div style={{ position: "absolute", top: 520, left: 0, right: 0, textAlign: "center" }}>
-            <Pop at={T.reveal - 12} y={20} from={0.9}>
+            <Pop at={T.reveal - 8} y={20} from={0.9}>
               <div style={{ fontFamily: F.body, fontSize: 62, color: C.ink }}>이런 너의 고민 동물은…</div>
             </Pop>
           </div>

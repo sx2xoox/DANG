@@ -310,13 +310,14 @@ export const Polaroid: React.FC<{ id: string | null; name?: string; quote?: stri
   );
 };
 
-/** 모든 편의 마지막 장면 (5초): 사이트로 오게 하는 안내 */
+/** 모든 편의 마지막 장면 (2.5초): 사이트로 오게 하는 안내. 맨 위에 그려서 앞 장면 글씨가 남지 않아요. */
+export const OUTRO_FRAMES = 75;
 export const Outro: React.FC<{ at: number; line?: string; pals?: string[] }> = ({ at, line = "말 못 한 고민,\n[[익명]]으로 보내 봐", pals = ["rabbit", "hedgehog", "bear", "raccoon"] }) => {
   const frame = useCurrentFrame();
   if (frame < at) return null;
-  const o = interpolate(frame - at, [0, 6], [0, 1], clamp);
+  const o = interpolate(frame - at, [0, 4], [0, 1], clamp);
   return (
-    <AbsoluteFill style={{ opacity: o }}>
+    <AbsoluteFill style={{ opacity: o, zIndex: 100 }}>
       <CorkBg />
       <div style={{ position: "absolute", top: 300, left: 0, right: 0 }}>
         <Pop at={at + 2}>
@@ -324,7 +325,7 @@ export const Outro: React.FC<{ at: number; line?: string; pals?: string[] }> = (
         </Pop>
       </div>
       <div style={{ position: "absolute", top: 720, left: 0, right: 0, textAlign: "center" }}>
-        <Pop at={at + 12} y={30} from={0.9}>
+        <Pop at={at + 5} y={30} from={0.9}>
           <div style={{ fontFamily: F.body, fontSize: 56, color: C.ink, lineHeight: 1.35 }}>
             보내면 바로 <b style={{ color: C.red, fontWeight: 400 }}>나만의 고민 동물</b>이 나오고
             <br />
@@ -333,14 +334,14 @@ export const Outro: React.FC<{ at: number; line?: string; pals?: string[] }> = (
         </Pop>
       </div>
       <div style={{ position: "absolute", top: 940, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-        <Pop at={at + 22} from={1.15} y={0}>
+        <Pop at={at + 9} from={1.15} y={0}>
           <div style={{ background: C.ink, color: "#fff", padding: "22px 44px", borderRadius: 999, fontFamily: F.mono, fontSize: 50, letterSpacing: "-0.01em" }}>{SITE}</div>
           <div style={{ textAlign: "center", fontFamily: F.hand, fontSize: 64, color: C.ink, marginTop: 18 }}>프로필 링크에서 바로 가기 ↗</div>
         </Pop>
       </div>
       <div style={{ position: "absolute", top: 1230, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 8 }}>
         {pals.map((p, i) => (
-          <Pop key={p} at={at + 26 + i * 4} y={60} from={0.6} rot={(i % 2 ? 4 : -4)}>
+          <Pop key={p} at={at + 11 + i * 2} y={60} from={0.6} rot={(i % 2 ? 4 : -4)}>
             <Mascot id={p} size={230} />
           </Pop>
         ))}

@@ -14,19 +14,19 @@ export type LetterProps = {
   save?: string;
 };
 
-const LINE_GAP = 40;
-const FIRST = 45;
+const LINE_GAP = 24;
+const FIRST = 26;
 
 export function letterFrames(lines: string[]) {
   const end = FIRST + lines.length * LINE_GAP;
-  return end + 150 + 150; // 서명·저장 안내 5초 + 마무리 5초
+  return end + 60 + 75; // 서명·저장 안내 2초 + 마무리 2.5초
 }
 
 const Line: React.FC<{ at: number; text: string }> = ({ at, text }) => {
   const frame = useCurrentFrame();
   if (!text) return <div style={{ height: 40 }} />;
   // 손으로 쓰듯 왼쪽부터 드러남
-  const p = interpolate(frame, [at, at + 22], [0, 100], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const p = interpolate(frame, [at, at + 14], [0, 100], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   return (
     <div
       style={{
@@ -77,10 +77,10 @@ export const Letter: React.FC<LetterProps> = ({ title, lines, to = "오늘도 �
   useFonts();
   const frame = useCurrentFrame();
   const end = FIRST + lines.length * LINE_GAP;
-  const outro = end + 150;
+  const outro = end + 60;
   const bob = Math.sin(frame / 14) * 6;
-  const k = interpolate(frame, [26, 40], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const paperO = interpolate(frame, [30, 40], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const k = interpolate(frame, [14, 24], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const paperO = interpolate(frame, [16, 24], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   return (
     <AbsoluteFill>
       <CorkBg />
@@ -106,7 +106,7 @@ export const Letter: React.FC<LetterProps> = ({ title, lines, to = "오늘도 �
             <Line key={i} at={FIRST + i * LINE_GAP} text={t} />
           ))}
           <div style={{ textAlign: "right", marginTop: 26 }}>
-            <Pop at={end + 6} y={10} from={1.1}>
+            <Pop at={end + 2} y={10} from={1.1}>
               <span style={{ fontFamily: F.hand, fontSize: 64, color: C.red }}>— {from}</span>
             </Pop>
           </div>
@@ -138,7 +138,7 @@ export const Letter: React.FC<LetterProps> = ({ title, lines, to = "오늘도 �
       )}
 
       <div style={{ position: "absolute", top: 1500, left: 0, right: 0, textAlign: "center" }}>
-        <Pop at={end + 30} rot={-2}>
+        <Pop at={end + 12} rot={-2}>
           <span style={{ display: "inline-block", background: C.ink, color: "#fff", fontFamily: F.body, fontSize: 54, padding: "16px 34px", borderRadius: 999 }}>
             📌 {save}
           </span>

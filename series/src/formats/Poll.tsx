@@ -4,7 +4,7 @@ import { Bubble, C, CorkBg, F, Headline, Mascot, Note, Outro, Pop, shake, useFon
 
 /**
  * ③ 너라면? 투표: 상황 하나 → A vs B → 댓글로 골라줘
- *  0s 제목·상황·A·B (첫 화면부터 다 보임 = 썸네일) · 1.3s VS · 5.5s 댓글 말풍선 · 13s 마무리
+ *  0s 제목·상황·A·B (첫 화면부터 다 보임 = 썸네일) · 0.5s VS · 2.3s 댓글 유도 · 2.9s~ 댓글 말풍선 · 7.7s 마무리 (총 10.2초)
  */
 export type PollProps = {
   hook: string;
@@ -14,8 +14,8 @@ export type PollProps = {
   comments: string[]; // 4개 정도
 };
 
-export const POLL_FRAMES = 540;
-const T = { vs: 40, ask: 165, noteOut: 180, comments: [195, 225, 255, 285], outro: 390 };
+export const POLL_FRAMES = 305;
+const T = { vs: 14, ask: 70, noteOut: 84, comments: [88, 102, 116, 130], outro: 230 };
 
 const Choice: React.FC<{ label: "A" | "B"; text: string; mascot: string; color: string }> = ({ label, text, mascot, color }) => (
   <div style={{ position: "relative", width: 430, background: C.poster, border: `6px solid ${C.ink}`, boxShadow: `10px 12px 0 ${C.ink}`, padding: "30px 26px 34px", boxSizing: "border-box", textAlign: "center" }}>
@@ -34,7 +34,7 @@ export const Poll: React.FC<PollProps> = ({ hook, situation, a, b, comments }) =
   const frame = useCurrentFrame();
   const vsS = interpolate(frame, [T.vs, T.vs + 6, T.vs + 12], [2.4, 0.9, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const choicesUp = 0;
-  const noteO = interpolate(frame, [T.noteOut, T.noteOut + 8], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const noteO = interpolate(frame, [T.noteOut, T.noteOut + 5], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill style={{ transform: shake(frame, [T.vs], 9) }}>
@@ -74,7 +74,7 @@ export const Poll: React.FC<PollProps> = ({ hook, situation, a, b, comments }) =
         </Pop>
       </div>
       {comments.slice(0, 4).map((c, i) => (
-        <div key={i} style={{ position: "absolute", top: [440, 545, 650, 755][i], left: i % 2 ? undefined : 80, right: i % 2 ? 170 : undefined, zIndex: 10 }}>
+        <div key={i} style={{ position: "absolute", top: [420, 505, 590, 675][i], left: i % 2 ? undefined : 80, right: i % 2 ? 170 : undefined, zIndex: 10 }}>
           <Pop at={T.comments[i]} from={0.6} y={30} rot={i % 2 ? 3 : -3}>
             <Bubble color={[C.noteP, C.noteB, C.noteG, C.noteV][i]} tail={i % 2 ? "r" : "l"} size={48}>
               {c}

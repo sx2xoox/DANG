@@ -4,7 +4,7 @@ import { C, CorkBg, F, Headline, Outro, Polaroid, Pop, Tape, shake, useFonts } f
 
 /**
  * ④ 이런 적 있으면 너도: 체크리스트 5줄 → 3개 이상이면 너는 이 동물
- *  0s 제목·체크리스트(첫 화면부터 보임 = 썸네일) · 1.5s~ 한 줄씩 체크 · 11s 결과 공개 · 14s 댓글 유도 · 16s 마무리
+ *  0s 제목·체크리스트(첫 화면부터 보임 = 썸네일) · 0.7s~ 한 줄씩 체크 (0.8초 간격) · 5s 결과 공개 · 6.5s 댓글 유도 · 8.8s 마무리 (총 11.3초)
  */
 export type CheckProps = {
   hook: string;
@@ -13,9 +13,9 @@ export type CheckProps = {
   ask: string;
 };
 
-export const CHECK_FRAMES = 630;
-const STEP = 48;
-const T = { first: 45, reveal: 330, ask: 400, outro: 480 };
+export const CHECK_FRAMES = 340;
+const STEP = 24;
+const T = { first: 20, reveal: 150, ask: 196, outro: 265 };
 
 const Row: React.FC<{ at: number; text: string }> = ({ at, text }) => {
   const frame = useCurrentFrame();
@@ -38,11 +38,11 @@ const Row: React.FC<{ at: number; text: string }> = ({ at, text }) => {
 export const Check: React.FC<CheckProps> = ({ hook, items, animal, ask }) => {
   useFonts();
   const frame = useCurrentFrame();
-  const padOut = interpolate(frame, [T.reveal - 14, T.reveal], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const dev = interpolate(frame, [T.reveal + 8, T.reveal + 40], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const padOut = interpolate(frame, [T.reveal - 8, T.reveal], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const dev = interpolate(frame, [T.reveal + 4, T.reveal + 24], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   return (
-    <AbsoluteFill style={{ transform: shake(frame, [T.reveal + 40], 9) }}>
+    <AbsoluteFill style={{ transform: shake(frame, [T.reveal + 24], 9) }}>
       <CorkBg />
       <div style={{ position: "absolute", top: 200, left: 0, right: 0 }}>
         <Headline text={hook} size={76} />
