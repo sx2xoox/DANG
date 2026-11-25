@@ -1,12 +1,13 @@
 import React from "react";
-import { AbsoluteFill, Img, staticFile } from "remotion";
+import { AbsoluteFill } from "remotion";
 import type { Episode } from "./episodes";
-import { C, CorkBg, F, Headline, Mascot, Tape, useFonts } from "./kit";
+import { C, CorkBg, F, Headline, Mascot, Tape, useFonts, W } from "./kit";
+import { TraitNotes } from "./formats/Dex";
 
 /**
  * 썸네일 (커버) 이미지: 1080 × 1920
  *  - 인스타 프로필 격자는 가운데 3:4 (위아래 240px 씩 잘림) 만 보여서, 중요한 건 y 300 ~ 1620 안에 둬요.
- *  - 도감·체크리스트는 정답 동물을 실루엣으로 가려서 궁금하게
+ *  - 도감은 특징을 "?" 포스트잇으로 가려서, 체크리스트는 목록을 그대로 보여줘서 궁금하게
  */
 const LABEL: Record<Episode["format"], string> = {
   dex: "고민 동물 도감",
@@ -14,18 +15,6 @@ const LABEL: Record<Episode["format"], string> = {
   check: "공감 테스트",
   letter: "다웅의 편지",
 };
-
-const Silhouette: React.FC<{ id: string; bg?: string }> = ({ id, bg = "#d6e9f5" }) => (
-  <div style={{ width: 640, background: "#fffefb", padding: "32px 32px 0", boxSizing: "border-box", boxShadow: "0 30px 40px -14px rgba(50,30,10,0.55)", position: "relative", transform: "rotate(-3deg)" }}>
-    <Tape style={{ left: -36, top: -16, transform: "rotate(-22deg)" }} />
-    <Tape color={C.tapeB} style={{ right: -36, top: -16, transform: "rotate(20deg)" }} />
-    <div style={{ width: 576, height: 576, background: bg, display: "grid", placeItems: "center", position: "relative", overflow: "hidden" }}>
-      <Img src={staticFile(`mascots/${id}.webp`)} style={{ width: 470, height: 470, objectFit: "contain", filter: "brightness(0) opacity(0.82)" }} />
-      <span style={{ position: "absolute", fontFamily: F.title, fontSize: 300, color: "#fff", WebkitTextStroke: `10px ${C.ink}`, paintOrder: "stroke", lineHeight: 1 }}>?</span>
-    </div>
-    <div style={{ padding: "22px 0 30px", textAlign: "center", fontFamily: F.title, fontSize: 64, color: C.ink }}>너는 어떤 동물?</div>
-  </div>
-);
 
 export const Cover: React.FC<{ ep: Episode }> = ({ ep }) => {
   useFonts();
@@ -37,11 +26,26 @@ export const Cover: React.FC<{ ep: Episode }> = ({ ep }) => {
         <span style={{ display: "inline-block", background: C.red, color: "#fff", fontFamily: F.title, fontSize: 46, padding: "10px 34px", borderRadius: 999, transform: "rotate(-2deg)" }}>{LABEL[ep.format]}</span>
       </div>
       <div style={{ position: "absolute", top: 420, left: 0, right: 0 }}>
-        <Headline text={ep.format === "poll" ? ep.props.situation : hook} size={ep.format === "poll" ? 70 : 92} width={960} />
+        <Headline text={ep.format === "poll" ? ep.props.situation : hook} size={ep.format === "poll" ? 70 : ep.format === "dex" ? 82 : 92} width={960} />
       </div>
 
       <div style={{ position: "absolute", top: 800, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-        {(ep.format === "dex" || ep.format === "check") && <Silhouette id={ep.props.animal.id} bg={ep.props.animal.bg} />}
+        {ep.format === "dex" && (
+          <div style={{ position: "relative", width: W, height: 840, marginTop: -100, transform: "scale(0.9)", transformOrigin: "50% 0" }}>
+            <TraitNotes traits={ep.props.traits} />
+          </div>
+        )}
+        {ep.format === "check" && (
+          <div style={{ width: 860, background: "#fffdf3", backgroundImage: "repeating-linear-gradient(transparent 0 106px, rgba(47,127,209,0.12) 106px 109px)", padding: "50px 46px 40px", boxShadow: "0 24px 34px -14px rgba(50,30,10,0.5)", transform: "rotate(-1deg)", position: "relative" }}>
+            <Tape style={{ left: "50%", marginLeft: -95, top: -26 }} />
+            {ep.props.items.slice(0, 5).map((t, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 26, padding: "18px 0", borderBottom: "3px dashed rgba(43,33,24,0.18)" }}>
+                <div style={{ flex: "none", width: 70, height: 70, border: `6px solid ${C.ink}`, borderRadius: 10, background: "#fff" }} />
+                <div style={{ fontFamily: F.hand, fontSize: 66, lineHeight: 1.05, color: C.ink, wordBreak: "keep-all" }}>{t}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {ep.format === "poll" && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 40 }}>
@@ -75,10 +79,12 @@ export const Cover: React.FC<{ ep: Episode }> = ({ ep }) => {
         )}
       </div>
 
-      {(ep.format === "poll" || ep.format === "letter") && (
-        <div style={{ position: "absolute", top: 1440, left: 0, right: 0, textAlign: "center" }}>
+      {(ep.format === "poll" || ep.format === "letter" || ep.format === "dex") && (
+        <div style={{ position: "absolute", top: ep.format === "dex" ? 1500 : 1440, left: 0, right: 0, textAlign: "center" }}>
           <span style={{ display: "inline-block", background: C.ink, color: "#fff", fontFamily: ep.format === "poll" ? F.title : F.body, fontSize: 62, padding: "16px 44px", borderRadius: 999, transform: "rotate(-2deg)" }}>
-            {ep.format === "poll" ? (
+            {ep.format === "dex" ? (
+              "너는 몇 개나 해당돼? 👀"
+            ) : ep.format === "poll" ? (
               <>
                 댓글로 <span style={{ color: "#ff8a78" }}>A</span> / <span style={{ color: "#8cc4ff" }}>B</span> 골라줘!
               </>
